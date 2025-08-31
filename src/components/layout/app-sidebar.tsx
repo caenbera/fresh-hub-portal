@@ -44,26 +44,22 @@ export function AppSidebar() {
     ));
   };
 
-  return (
-    <>
-      <SidebarHeader>
-        <Link href="/" className="flex items-center gap-2">
-          <Sprout className="h-6 w-6 text-primary" />
-          <span className="font-bold font-headline text-lg">Fresh Hub</span>
-        </Link>
-      </SidebarHeader>
-      <SidebarContent>
-        {role === 'client' && (
+  const renderSidebarContent = () => {
+    switch (role) {
+      case 'client':
+        return (
           <SidebarMenu>
             {renderNavItems(clientNav)}
           </SidebarMenu>
-        )}
-        {role === 'admin' && (
-           <SidebarMenu>
+        );
+      case 'admin':
+        return (
+          <SidebarMenu>
             {renderNavItems(adminNav)}
           </SidebarMenu>
-        )}
-        {role === 'superadmin' && (
+        );
+      case 'superadmin':
+        return (
           <>
             <SidebarGroup>
               <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
@@ -79,7 +75,22 @@ export function AppSidebar() {
               </SidebarMenu>
             </SidebarGroup>
           </>
-        )}
+        );
+      default:
+        return null;
+    }
+  };
+  
+  return (
+    <>
+      <SidebarHeader>
+        <Link href="/" className="flex items-center gap-2">
+          <Sprout className="h-6 w-6 text-primary" />
+          <span className="font-bold font-headline text-lg">Fresh Hub</span>
+        </Link>
+      </SidebarHeader>
+      <SidebarContent>
+        {renderSidebarContent()}
       </SidebarContent>
     </>
   );
