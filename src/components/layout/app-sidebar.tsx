@@ -45,40 +45,43 @@ export function AppSidebar() {
   };
 
   const renderSidebarContent = () => {
-    switch (role) {
-      case 'client':
-        return (
-          <SidebarMenu>
-            {renderNavItems(clientNav)}
-          </SidebarMenu>
-        );
-      case 'admin':
-        return (
-          <SidebarMenu>
-            {renderNavItems(adminNav)}
-          </SidebarMenu>
-        );
-      case 'superadmin':
-        return (
-          <>
-            <SidebarGroup>
-              <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
-              <SidebarMenu>
-                {renderNavItems([...adminNav, ...superAdminNav])}
-              </SidebarMenu>
-            </SidebarGroup>
-            <SidebarSeparator />
-            <SidebarGroup>
-              <SidebarGroupLabel>Client Portal</SidebarGroupLabel>
-               <SidebarMenu>
-                {renderNavItems(clientNav)}
-              </SidebarMenu>
-            </SidebarGroup>
-          </>
-        );
-      default:
-        return null;
+    if (role === 'superadmin') {
+      return (
+        <>
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
+            <SidebarMenu>
+              {renderNavItems([...adminNav, ...superAdminNav])}
+            </SidebarMenu>
+          </SidebarGroup>
+          <SidebarSeparator />
+          <SidebarGroup>
+            <SidebarGroupLabel>Client Portal</SidebarGroupLabel>
+             <SidebarMenu>
+              {renderNavItems(clientNav)}
+            </SidebarMenu>
+          </SidebarGroup>
+        </>
+      );
     }
+    
+    if (role === 'admin') {
+      return (
+        <SidebarMenu>
+          {renderNavItems(adminNav)}
+        </SidebarMenu>
+      );
+    }
+
+    if (role === 'client') {
+      return (
+        <SidebarMenu>
+          {renderNavItems(clientNav)}
+        </SidebarMenu>
+      );
+    }
+
+    return null;
   };
   
   return (
