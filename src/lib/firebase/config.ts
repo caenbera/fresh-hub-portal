@@ -4,12 +4,12 @@ import { getFirestore } from 'firebase/firestore';
 import { getFunctions } from 'firebase/functions';
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  projectId: "fresh-hub-portal",
+  appId: "1:313694782184:web:3052d3a83bdbb30be47f5d",
+  storageBucket: "fresh-hub-portal.firebasestorage.app",
+  apiKey: "AIzaSyA8fBBeVEYQByO3HuU3xECXTyda5g82iuQ",
+  authDomain: "fresh-hub-portal.firebaseapp.com",
+  messagingSenderId: "313694782184"
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
