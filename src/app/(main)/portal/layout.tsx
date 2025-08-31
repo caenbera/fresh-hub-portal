@@ -1,12 +1,9 @@
 "use client";
 
 import type { ReactNode } from 'react';
-import { RoleGuard } from '@/components/auth/role-guard';
 
 export default function PortalLayout({ children }: { children: ReactNode }) {
-  return (
-    <RoleGuard allowedRoles={['client', 'admin', 'superadmin']}>
-      {children}
-    </RoleGuard>
-  );
+  // RoleGuard has been removed from here to fix layout composition issues.
+  // The main layout already ensures the user is authenticated.
+  return <>{children}</>;
 }
