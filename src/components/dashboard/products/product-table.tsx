@@ -41,6 +41,7 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
           </TableHead>
           <TableHead>Name</TableHead>
           <TableHead>Category</TableHead>
+          <TableHead className="hidden md:table-cell">Description</TableHead>
           <TableHead>Stock</TableHead>
           <TableHead>Price</TableHead>
           <TableHead>
@@ -64,6 +65,9 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
               </TableCell>
               <TableCell className="font-medium">{product.name}</TableCell>
               <TableCell>{product.category}</TableCell>
+              <TableCell className="hidden md:table-cell max-w-[200px] truncate">
+                {product.description}
+              </TableCell>
               <TableCell>{product.stock}</TableCell>
               <TableCell>{formatCurrency(product.price)}</TableCell>
               <TableCell>
@@ -87,7 +91,7 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
           ))
         ) : (
           <TableRow>
-            <TableCell colSpan={6} className="h-24 text-center">
+            <TableCell colSpan={7} className="h-24 text-center">
               No products found. Add one to get started!
             </TableCell>
           </TableRow>

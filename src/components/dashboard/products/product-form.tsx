@@ -7,12 +7,14 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { addProduct, updateProduct } from '@/lib/firestore/products';
 import type { Product } from '@/types';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
+  description: z.string().min(10, 'Description must be at least 10 characters.'),
   category: z.string().min(2, 'Category is required.'),
   stock: z.coerce.number().int().min(0, 'Stock cannot be negative.'),
   price: z.coerce.number().min(0.01, 'Price must be positive.'),
@@ -34,6 +36,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: product?.name || '',
+      description: product?.description || '',
       category: product?.category || '',
       stock: product?.stock || 0,
       price: product?.price || 0,
@@ -76,6 +79,19 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
               <FormLabel>Product Name</FormLabel>
               <FormControl>
                 <Input placeholder="e.g., Avocados" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Describe the product..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

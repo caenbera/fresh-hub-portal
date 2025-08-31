@@ -6,8 +6,8 @@ export interface UserProfile {
   uid: string;
   email: string;
   businessName: string;
-  phone: string;
   address: string;
+  phone: string;
   role: UserRole;
   createdAt: Timestamp;
 }
@@ -15,6 +15,7 @@ export interface UserProfile {
 export interface Product {
   id: string;
   name: string;
+  description: string;
   photoUrl: string;
   stock: number;
   price: number;
