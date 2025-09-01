@@ -19,7 +19,9 @@ export function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
     if (loading) return;
 
     if (!role || !allowedRoles.includes(role)) {
-      router.push('/portal');
+      // Redirect to a safe default page if the role is not allowed
+      // This could be the login page or a generic "access denied" page
+      router.push('/login'); 
     }
   }, [role, loading, allowedRoles, router]);
 
@@ -28,9 +30,11 @@ export function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
     return <div>Loading...</div>; // Or a spinner
   }
 
+  // If the role is not allowed, render nothing to prevent content flashing
   if (!role || !allowedRoles.includes(role)) {
     return null;
   }
 
+  // If the role is allowed, render the children components
   return <>{children}</>;
 }

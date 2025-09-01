@@ -1,5 +1,1 @@
-import { OrderHistoryClient } from '@/components/portal/history/order-history-client';
-
-export default function OrderHistoryPage() {
-  return <OrderHistoryClient />;
-}
+// This file will be moved to /app/(main)/client/history/page.tsx

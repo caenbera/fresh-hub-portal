@@ -1,5 +1,1 @@
-import { ProductsPageClient } from '@/components/dashboard/products/products-page-client';
-
-export default function ManageProductsPage() {
-  return <ProductsPageClient />;
-}
+// This file will be moved to /app/(main)/admin/products/page.tsx

@@ -12,8 +12,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, getIdTokenResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
+import type { UserRole } from '@/types';
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
@@ -33,15 +34,35 @@ export function LoginForm() {
     },
   });
 
+  const getRedirectPath = (role: UserRole | null): string => {
+    switch (role) {
+      case 'superadmin':
+      case 'admin':
+        return '/admin/dashboard';
+      case 'client':
+        return '/client/new-order';
+      default:
+        return '/';
+    }
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      
+      const tokenResult = await getIdTokenResult(userCredential.user);
+      const claims = tokenResult.claims;
+      const userRole: UserRole = claims.superadmin ? 'superadmin' : claims.admin ? 'admin' : 'client';
+
       toast({
         title: "Login Successful",
         description: "Welcome back!",
       });
-      router.push('/dashboard'); 
+      
+      const redirectPath = getRedirectPath(userRole);
+      router.push(redirectPath);
+
     } catch (error: any) {
       toast({
         variant: "destructive",

@@ -13,18 +13,18 @@ export function AppSidebar() {
   const t = useTranslation(locale);
 
   const clientNav = [
-    { href: '/portal', label: t('sidebar_new_order'), icon: ShoppingCart },
-    { href: '/portal/history', label: t('sidebar_order_history'), icon: History },
+    { href: '/client/new-order', label: t('sidebar_new_order'), icon: ShoppingCart },
+    { href: '/client/history', label: t('sidebar_order_history'), icon: History },
   ];
 
   const adminNav = [
-    { href: '/dashboard', label: t('sidebar_dashboard'), icon: LayoutDashboard },
-    { href: '/dashboard/orders', label: t('sidebar_manage_orders'), icon: Package },
-    { href: '/dashboard/products', label: t('sidebar_manage_products'), icon: Apple },
+    { href: '/admin/dashboard', label: t('sidebar_dashboard'), icon: LayoutDashboard },
+    { href: '/admin/orders', label: t('sidebar_manage_orders'), icon: Package },
+    { href: '/admin/products', label: t('sidebar_manage_products'), icon: Apple },
   ];
 
   const superAdminNav = [
-    { href: '/dashboard/users', label: t('sidebar_manage_users'), icon: Users },
+    { href: '/admin/users', label: t('sidebar_manage_users'), icon: Users },
   ];
 
   const renderNavItems = (items: { href: string; label: string; icon: React.ElementType }[]) => {
@@ -32,7 +32,7 @@ export function AppSidebar() {
       <SidebarMenuItem key={item.href}>
         <SidebarMenuButton
           asChild
-          isActive={pathname === item.href}
+          isActive={pathname.startsWith(item.href)}
           tooltip={item.label}
         >
           <Link href={item.href}>
@@ -72,7 +72,7 @@ export function AppSidebar() {
           </>
         )}
         {role === 'admin' && (
-           <SidebarMenu>
+          <SidebarMenu>
             {renderNavItems(adminNav)}
           </SidebarMenu>
         )}

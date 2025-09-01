@@ -1,9 +1,2 @@
-"use client";
-
-import type { ReactNode } from 'react';
-
-export default function PortalLayout({ children }: { children: ReactNode }) {
-  // RoleGuard has been removed from here to fix layout composition issues.
-  // The main layout already ensures the user is authenticated.
-  return <>{children}</>;
-}
+// This file is no longer needed as the layout logic has been moved to /client/layout.tsx
+// It will be deleted as part of the file restructuring.

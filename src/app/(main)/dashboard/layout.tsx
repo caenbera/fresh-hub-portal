@@ -1,9 +1,2 @@
-"use client";
-
-import type { ReactNode } from 'react';
-
-export default function DashboardLayout({ children }: { children: ReactNode }) {
-  // RoleGuard has been removed from here to fix layout composition issues.
-  // Protection is handled at the page level or in the main layout if needed.
-  return <>{children}</>;
-}
+// This file is no longer needed as the layout logic has been moved to /admin/layout.tsx
+// It will be deleted as part of the file restructuring.
