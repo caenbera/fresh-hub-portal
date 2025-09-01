@@ -1,3 +1,4 @@
+
 import {
   Table,
   TableBody,
@@ -23,9 +24,10 @@ import { updateOrder } from '@/lib/firestore/orders';
 
 interface OrdersTableProps {
   orders: Order[];
+  onViewDetails: (order: Order) => void;
 }
 
-export function OrdersTable({ orders }: OrdersTableProps) {
+export function OrdersTable({ orders, onViewDetails }: OrdersTableProps) {
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     try {
       await updateOrder(orderId, { status: newStatus });
@@ -95,8 +97,12 @@ export function OrdersTable({ orders }: OrdersTableProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuItem onSelect={() => onViewDetails(order)}>
+                      View Details
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
+                    <DropdownMenuLabel>Change Status</DropdownMenuLabel>
                     {availableStatuses.map(status => (
                        <DropdownMenuItem 
                           key={status}
