@@ -11,15 +11,25 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Sprout } from 'lucide-react';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, role } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     // This effect handles redirection AFTER loading is complete.
     if (!loading && !user) {
       router.replace('/login');
+    } else if (!loading && user && role) {
+      // Redirect to the appropriate dashboard after login
+      const currentPath = window.location.pathname;
+      if (currentPath === '/' || currentPath === '/login' || currentPath === '/signup') {
+         if (role === 'admin' || role === 'superadmin') {
+            router.replace('/admin/dashboard');
+         } else {
+            router.replace('/client/dashboard');
+         }
+      }
     }
-  }, [user, loading, router]);
+  }, [user, loading, role, router]);
 
   if (loading) {
     // Show a full-screen loader while auth context is resolving.

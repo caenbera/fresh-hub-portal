@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { useLanguage } from "@/context/language-context";
 import { useTranslation } from "@/lib/i18n";
@@ -29,13 +30,45 @@ export default function NewOrderPage() {
   const { products, loading: productsLoading } = useProducts();
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   
   const [selection, setSelection] = useState<OrderSelection>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (productsLoading) return;
+
+    const repeatParam = searchParams.get('repeat');
+    const addParam = searchParams.get('add');
+    let newSelection: OrderSelection = {};
+
+    const itemsToParse = repeatParam || addParam;
+
+    if (itemsToParse) {
+        itemsToParse.split(',').forEach(item => {
+            const [productId, quantityStr] = item.split(':');
+            const quantity = Number(quantityStr);
+            const product = products.find(p => p.id === productId);
+
+            if (product && quantity > 0 && product.stock > 0) {
+                 newSelection[productId] = { product, quantity: Math.min(quantity, product.stock) };
+            }
+        });
+        setSelection(newSelection);
+         // Clear query params after processing
+        window.history.replaceState({}, '', '/client/new-order');
+    }
+
+  }, [searchParams, products, productsLoading]);
+
+
   const handleQuantityChange = (product: Product, quantityStr: string) => {
     let quantity = Number(quantityStr);
     const productId = product.id;
+
+    if (isNaN(quantity) || quantity < 0) {
+      quantity = 0;
+    }
 
     if (quantity > product.stock) {
       quantity = product.stock;

@@ -29,6 +29,7 @@ export function AppSidebar() {
   // Definimos todos los enlaces en un solo lugar para mayor claridad
   const navLinks = {
     client: [
+      { href: '/client/dashboard', label: 'Dashboard', icon: LayoutDashboard },
       { href: '/client/new-order', label: t('sidebar_new_order'), icon: ShoppingCart },
       { href: '/client/history', label: t('sidebar_order_history'), icon: History },
     ],
