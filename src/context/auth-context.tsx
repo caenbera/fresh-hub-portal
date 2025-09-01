@@ -34,11 +34,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (firebaseUser) {
         setUser(firebaseUser);
 
-        // Get custom claims for role
-        const tokenResult = await getIdTokenResult(firebaseUser);
-        const claims = tokenResult.claims;
-        const userRole = claims.superadmin ? 'superadmin' : claims.admin ? 'admin' : 'client';
-        setRole(userRole);
+        // Get custom claims for role by forcing a token refresh
+        try {
+          const tokenResult = await getIdTokenResult(firebaseUser, true);
+          const claims = tokenResult.claims;
+          const userRole: UserRole = claims.superadmin ? 'superadmin' : claims.admin ? 'admin' : 'client';
+          setRole(userRole);
+        } catch (error) {
+          console.error("Error getting user role:", error);
+          setRole(null); // Set role to null if claims fail
+        }
 
         // Listen for user profile changes from Firestore
         const userDocRef = doc(db, 'users', firebaseUser.uid);
@@ -49,6 +54,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUserProfile(null);
           }
           setLoading(false);
+        }, (error) => {
+           console.error("Error fetching user profile:", error);
+           setUserProfile(null);
+           setLoading(false);
         });
 
         return () => unsubProfile();
@@ -65,7 +74,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const value = { user, userProfile, role, loading };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  // Render children only when not loading to prevent flashing of incorrect UI
+  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

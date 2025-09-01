@@ -42,7 +42,8 @@ export function LoginForm() {
       case 'client':
         return '/client/new-order';
       default:
-        return '/';
+        // Fallback to a safe page if role is somehow null
+        return '/client/new-order';
     }
   };
 
@@ -51,7 +52,8 @@ export function LoginForm() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       
-      const tokenResult = await getIdTokenResult(userCredential.user);
+      // Force refresh the token to get the latest claims. This is crucial.
+      const tokenResult = await getIdTokenResult(userCredential.user, true);
       const claims = tokenResult.claims;
       const userRole: UserRole = claims.superadmin ? 'superadmin' : claims.admin ? 'admin' : 'client';
 
@@ -61,7 +63,8 @@ export function LoginForm() {
       });
       
       const redirectPath = getRedirectPath(userRole);
-      router.push(redirectPath);
+      // Use replace to prevent user from going back to login page
+      router.replace(redirectPath);
 
     } catch (error: any) {
       toast({
