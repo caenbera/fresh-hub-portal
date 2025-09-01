@@ -1,7 +1,7 @@
 "use client";
 
 import Link from 'next/link';
-import { Sprout } from 'lucide-react';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from '@/components/landing/language-switcher';
 import { useLanguage } from '@/context/language-context';
@@ -12,27 +12,27 @@ export function LandingHeader() {
   const t = useTranslation(locale);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="mr-4 flex items-center">
-          <Link href="/" className="flex items-center gap-2">
-            <Sprout className="h-6 w-6 text-primary" />
-            <span className="font-bold font-headline">Fresh Hub</span>
-          </Link>
+    <header className="bg-white shadow-lg sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+                <div className="flex items-center space-x-3">
+                    <Image src="https://i.postimg.cc/y86gF4Cp/the-fresh-hub-noback.png" alt="The Fresh Hub" width={48} height={48} className="h-12 w-auto" />
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">The Fresh Hub</h1>
+                        <p className="text-sm text-gray-600">{t('header_subtitle')}</p>
+                    </div>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <LanguageSwitcher />
+                     <Button variant="ghost" asChild>
+                        <Link href="/login">{t('nav_login')}</Link>
+                    </Button>
+                    <Button asChild>
+                        <Link href="/signup">{t('nav_signup')}</Link>
+                    </Button>
+                </div>
+            </div>
         </div>
-        <nav className="flex flex-1 items-center space-x-6 text-sm font-medium">
-          <Link href="#features" className="text-foreground/60 transition-colors hover:text-foreground/80">{t('nav_features')}</Link>
-        </nav>
-        <div className="flex items-center justify-end space-x-2">
-          <LanguageSwitcher />
-          <Button variant="ghost" asChild>
-            <Link href="/login">{t('nav_login')}</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/signup">{t('nav_signup')}</Link>
-          </Button>
-        </div>
-      </div>
     </header>
   );
 }

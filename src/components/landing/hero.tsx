@@ -1,38 +1,46 @@
 "use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/context/language-context';
 import { useTranslation } from '@/lib/i18n';
 
 export function Hero() {
-  const { locale } = useLanguage();
-  const t = useTranslation(locale);
+    const { locale } = useLanguage();
+    const t = useTranslation(locale);
 
-  return (
-    <section className="container grid lg:grid-cols-2 gap-12 items-center py-20 sm:py-32">
-      <div className="flex flex-col items-start gap-6">
-        <h1 className="text-4xl md:text-5xl lg:text-6xl font-headline font-bold !leading-tight tracking-tighter">
-          {t('hero_title')}
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          {t('hero_subtitle')}
-        </p>
-        <Button size="lg" asChild>
-          <Link href="/login">{t('hero_cta')}</Link>
-        </Button>
-      </div>
-      <div className="relative">
-        <Image
-          src="https://picsum.photos/800/600"
-          alt="Fresh produce"
-          width={800}
-          height={600}
-          className="rounded-xl shadow-2xl"
-          data-ai-hint="fresh produce"
-        />
-      </div>
-    </section>
-  );
+    return (
+        <section className="hero-bg text-white py-20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center fade-in">
+                    <h1 className="text-5xl md:text-6xl font-bold mb-6 text-shadow"
+                        dangerouslySetInnerHTML={{ __html: t('hero_title_html') }}
+                    />
+                    <p className="text-xl md:text-2xl mb-8 text-shadow"
+                        dangerouslySetInnerHTML={{ __html: t('hero_subtitle_html') }}
+                    />
+                    <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-6 mb-12">
+                        <div className="flex items-center space-x-2">
+                            <i className="fas fa-check-circle text-yellow-300 text-xl"></i>
+                            <span className="text-lg">{t('hero_feature1')}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <i className="fas fa-truck text-yellow-300 text-xl"></i>
+                            <span className="text-lg">{t('hero_feature2')}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <i className="fas fa-handshake text-yellow-300 text-xl"></i>
+                            <span className="text-lg">{t('hero_feature3')}</span>
+                        </div>
+                    </div>
+                    <div className="space-y-4 md:space-y-0 md:space-x-4 md:flex justify-center">
+                        <a href="#cotizacion" className="inline-block bg-accent-orange text-white px-8 py-4 rounded-lg text-lg font-bold hover:bg-orange-600 transition pulse-custom">
+                            <i className="fas fa-calculator mr-2"></i>{t('hero_cta_quote')}
+                        </a>
+                        <a href="#muestra" className="inline-block bg-yellow-400 text-gray-900 px-8 py-4 rounded-lg text-lg font-bold hover:bg-yellow-300 transition">
+                            <i className="fas fa-gift mr-2"></i>{t('hero_cta_sample')}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    );
 }
