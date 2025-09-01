@@ -43,8 +43,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           
           let userRole: UserRole = 'client'; // Default to client
           
-          // The email check for superadmin acts as a failsafe
-          if (firebaseUser.email === SUPER_ADMIN_EMAIL || claims.superadmin) {
+          // The email check for superadmin is the primary, failsafe authority.
+          if (firebaseUser.email === SUPER_ADMIN_EMAIL) {
             userRole = 'superadmin';
           } else if (claims.admin) {
             userRole = 'admin';
@@ -57,14 +57,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const unsubProfile = onSnapshot(userDocRef, (doc) => {
             if (doc.exists()) {
               const profileData = { ...doc.data(), uid: doc.id } as UserProfile;
-              // If the role in firestore is different from the claim, it might indicate a recent change.
-              // For simplicity, we trust the claim determined above.
+              // We trust the role determined by claims/email check above, as it's more secure.
+              // The role in Firestore is for display/management but not for security checks in the app.
               setUserProfile(profileData);
             } else {
-              // This can happen briefly during sign up before the user document is created.
               setUserProfile(null);
             }
-            // We are ready to show the UI only after claims and profile are checked.
             setLoading(false);
           }, (error) => {
              console.error("Error getting user profile:", error);

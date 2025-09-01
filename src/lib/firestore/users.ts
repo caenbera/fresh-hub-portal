@@ -11,10 +11,10 @@ export const updateUserRole = (uid: string, newRole: 'admin' | 'client') => {
 };
 
 export const addAdminInvite = (email: string) => {
-  // Use the email as the document ID for easy lookup
+  // Use the email as the document ID for easy lookup and to prevent duplicates.
   const inviteDocRef = doc(db, 'adminInvites', email);
   return setDoc(inviteDocRef, {
-    email: email,
+    email: email.toLowerCase(),
     role: 'admin',
   });
 };
