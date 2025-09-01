@@ -5,6 +5,7 @@ import {
   deleteDoc,
   doc,
   serverTimestamp,
+  type WithFieldValue
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import type { Product } from '@/types';
@@ -16,10 +17,11 @@ type ProductUpdateInput = Partial<ProductInput>;
 const productsCollection = collection(db, 'products');
 
 export const addProduct = (productData: ProductInput) => {
-  return addDoc(productsCollection, {
+  const dataWithTimestamp: WithFieldValue<ProductInput> = {
     ...productData,
     createdAt: serverTimestamp(),
-  });
+  };
+  return addDoc(productsCollection, dataWithTimestamp);
 };
 
 export const updateProduct = (id: string, productData: ProductUpdateInput) => {
