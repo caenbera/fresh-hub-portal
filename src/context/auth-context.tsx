@@ -13,7 +13,7 @@ interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
   role: UserRole | null;
-  loading: boolean;
+  loading: boolean; // El estado de carga es clave
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -32,51 +32,45 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // User is signed in, start the process of fetching roles and profile.
-        // Keep loading true until everything is fetched.
-        setLoading(true);
         setUser(firebaseUser);
 
         try {
-          // 1. Force refresh the token to get the latest custom claims. This is critical.
+          // Forzar la actualización del token para obtener los últimos claims
           const tokenResult = await getIdTokenResult(firebaseUser, true);
           const claims = tokenResult.claims;
+
+          // --- ¡EL PASO DE DEPURACIÓN MÁS IMPORTANTE! ---
+          console.log('Firebase Custom Claims:', claims);
+          // ----------------------------------------------
+
           const userRole: UserRole = claims.superadmin ? 'superadmin' : claims.admin ? 'admin' : 'client';
           setRole(userRole);
 
-          // 2. Set up a listener for the user's profile document from Firestore.
+          // Escuchar cambios en el perfil de Firestore
           const userDocRef = doc(db, 'users', firebaseUser.uid);
-          const unsubProfile = onSnapshot(userDocRef, 
-            (doc) => {
-              if (doc.exists()) {
-                setUserProfile({ ...doc.data(), uid: doc.id } as UserProfile);
-              } else {
-                console.error("User profile document does not exist.");
-                setUserProfile(null);
-              }
-              // 3. Only set loading to false after both claims and profile are fetched.
-              setLoading(false);
-            }, 
-            (error) => {
-               console.error("Error fetching user profile:", error);
-               // In case of error, log out the user's state and stop loading
-               setUser(null);
-               setUserProfile(null);
-               setRole(null);
-               setLoading(false);
+          const unsubProfile = onSnapshot(userDocRef, (doc) => {
+            if (doc.exists()) {
+              setUserProfile({ ...doc.data(), uid: doc.id } as UserProfile);
+            } else {
+              setUserProfile(null);
             }
-          );
-          // Return the profile listener's unsubscribe function to be called on cleanup
+            // Terminar la carga solo después de tener los claims Y el perfil
+            setLoading(false);
+          }, (error) => {
+             console.error("Error al obtener perfil:", error);
+             setLoading(false);
+          });
+
           return () => unsubProfile();
         } catch (error) {
-           console.error("Error fetching user claims:", error);
+           console.error("Error al obtener claims del usuario:", error);
+           // Si falla la obtención de roles, es un estado de error
            setUser(null);
-           setUserProfile(null);
            setRole(null);
            setLoading(false);
         }
       } else {
-        // No user is signed in. Clear all state and finish loading.
+        // Usuario no autenticado
         setUser(null);
         setUserProfile(null);
         setRole(null);
@@ -84,7 +78,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
-    // This is the main unsubscribe function for the auth state listener
     return () => unsubscribe();
   }, []);
 
