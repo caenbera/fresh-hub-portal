@@ -31,8 +31,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true); // Start loading whenever auth state changes
       if (firebaseUser) {
+        // User is signed in, start the process of fetching roles and profile.
+        // Keep loading true until everything is fetched.
+        setLoading(true);
         setUser(firebaseUser);
 
         try {
