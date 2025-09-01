@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, type ReactNode } from 'react';
@@ -7,37 +8,42 @@ import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/layout/app-sidebar';
 import { DashboardHeader } from '@/components/layout/dashboard-header';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Sprout } from 'lucide-react';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    // This effect handles redirection AFTER loading is complete.
     if (!loading && !user) {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [user, loading, router]);
 
   if (loading) {
+    // Show a full-screen loader while auth context is resolving.
+    // This prevents rendering any child components prematurely.
     return (
-      <div className="flex h-screen w-screen items-center justify-center">
-        <div className="flex items-center space-x-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
-            </div>
+      <div className="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background">
+        <div className="flex items-center gap-3 text-2xl font-semibold font-headline text-primary">
+            <Sprout className="h-8 w-8 animate-spin" />
+            <span>Authenticating...</span>
+        </div>
+        <div className="space-y-2 w-full max-w-sm">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-[80%]" />
         </div>
       </div>
     );
   }
 
   if (!user) {
-    // This can happen briefly between loading=false and the redirect effect running.
-    // Return null to avoid rendering children that assume a user is present.
+    // This prevents a brief flash of content if the redirect hasn't happened yet.
     return null; 
   }
 
+  // Once loading is false and user exists, render the full layout.
   return (
     <SidebarProvider>
       <Sidebar>

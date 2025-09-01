@@ -1,3 +1,4 @@
+
 "use client";
 
 import { createContext, useState, useEffect, useContext } from 'react';
@@ -30,41 +31,46 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true); // Start loading whenever auth state might change
       if (firebaseUser) {
         setUser(firebaseUser);
 
-        // This is the critical part: force a refresh of the ID token
-        // to get the latest custom claims for the user role.
         try {
+          // This is the critical part: force a refresh of the ID token
+          // to get the latest custom claims for the user role.
           const tokenResult = await getIdTokenResult(firebaseUser, true);
           const claims = tokenResult.claims;
           const userRole: UserRole = claims.superadmin ? 'superadmin' : claims.admin ? 'admin' : 'client';
           setRole(userRole);
+
+          // Listen for user profile changes from Firestore
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const unsubProfile = onSnapshot(userDocRef, 
+            (doc) => {
+              if (doc.exists()) {
+                setUserProfile({ ...doc.data(), uid: doc.id } as UserProfile);
+              } else {
+                setUserProfile(null);
+              }
+              // Only set loading to false after role AND profile are set
+              setLoading(false);
+            }, 
+            (error) => {
+               console.error("Error fetching user profile:", error);
+               setUserProfile(null);
+               setRole(null);
+               setLoading(false);
+            }
+          );
+
+          return () => unsubProfile();
+
         } catch (error) {
            console.error("Error fetching custom claims:", error);
-           setRole(null); // Default to null on error
+           setUserProfile(null);
+           setRole(null);
+           setLoading(false);
         }
-        
-        // Listen for user profile changes from Firestore
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const unsubProfile = onSnapshot(userDocRef, 
-          (doc) => {
-            if (doc.exists()) {
-              setUserProfile({ ...doc.data(), uid: doc.id } as UserProfile);
-            } else {
-              setUserProfile(null);
-            }
-            // Only set loading to false after profile and role are set
-            setLoading(false);
-          }, 
-          (error) => {
-             console.error("Error fetching user profile:", error);
-             setUserProfile(null);
-             setLoading(false);
-          }
-        );
-
-        return () => unsubProfile();
       } else {
         setUser(null);
         setUserProfile(null);
