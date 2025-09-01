@@ -35,7 +35,7 @@ export default function RootLayout({
 
 
   return (
-    <html lang={locale}>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <title>Fresh Hub Portal</title>
         <meta name="description" content="Wholesale fresh produce for Chicago's latin businesses." />
