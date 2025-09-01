@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Sprout, LayoutDashboard, ShoppingCart, Apple, Package, Users, History } from 'lucide-react';
@@ -53,7 +54,7 @@ export function AppSidebar() {
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        {role === 'superadmin' && (
+        {role === 'superadmin' ? (
           <>
             <SidebarGroup>
               <SidebarGroupLabel>{t('sidebar_admin_panel')}</SidebarGroupLabel>
@@ -70,13 +71,11 @@ export function AppSidebar() {
               </SidebarMenu>
             </SidebarGroup>
           </>
-        )}
-        {role === 'admin' && (
+        ) : role === 'admin' ? (
           <SidebarMenu>
             {renderNavItems(adminNav)}
           </SidebarMenu>
-        )}
-        {role === 'client' && (
+        ) : (
           <SidebarMenu>
             {renderNavItems(clientNav)}
           </SidebarMenu>
