@@ -29,36 +29,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
         setUser(firebaseUser);
 
-        // Get custom claims for role by forcing a token refresh
-        try {
-          const tokenResult = await getIdTokenResult(firebaseUser, true);
-          const claims = tokenResult.claims;
-          const userRole: UserRole = claims.superadmin ? 'superadmin' : claims.admin ? 'admin' : 'client';
-          setRole(userRole);
-        } catch (error) {
-          console.error("Error getting user role:", error);
-          setRole(null); // Set role to null if claims fail
-        }
+        // This is the critical part: force a refresh of the ID token
+        // to get the latest custom claims for the user role.
+        getIdTokenResult(firebaseUser, true)
+          .then((tokenResult) => {
+            const claims = tokenResult.claims;
+            const userRole: UserRole = claims.superadmin ? 'superadmin' : claims.admin ? 'admin' : 'client';
+            setRole(userRole);
+          })
+          .catch((error) => {
+            console.error("Error fetching custom claims:", error);
+            setRole(null); // Default to null on error
+          });
 
         // Listen for user profile changes from Firestore
         const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const unsubProfile = onSnapshot(userDocRef, (doc) => {
-          if (doc.exists()) {
-            setUserProfile({ ...doc.data(), uid: doc.id } as UserProfile);
-          } else {
-            setUserProfile(null);
+        const unsubProfile = onSnapshot(userDocRef, 
+          (doc) => {
+            if (doc.exists()) {
+              setUserProfile({ ...doc.data(), uid: doc.id } as UserProfile);
+            } else {
+              setUserProfile(null);
+            }
+            setLoading(false);
+          }, 
+          (error) => {
+             console.error("Error fetching user profile:", error);
+             setUserProfile(null);
+             setLoading(false);
           }
-          setLoading(false);
-        }, (error) => {
-           console.error("Error fetching user profile:", error);
-           setUserProfile(null);
-           setLoading(false);
-        });
+        );
 
         return () => unsubProfile();
       } else {
@@ -74,7 +79,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const value = { user, userProfile, role, loading };
 
-  // Render children only when not loading to prevent flashing of incorrect UI
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
