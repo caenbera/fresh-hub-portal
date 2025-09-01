@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -9,10 +10,44 @@ import {
 import { DollarSign, Package, PackageX } from 'lucide-react';
 import { useLanguage } from '@/context/language-context';
 import { useTranslation } from '@/lib/i18n';
+import { useAllOrders } from '@/hooks/use-all-orders';
+import { useProducts } from '@/hooks/use-products';
+import { isToday, isThisMonth } from 'date-fns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function DashboardPage() {
   const { locale } = useLanguage();
   const t = useTranslation(locale);
+  const { orders, loading: ordersLoading } = useAllOrders();
+  const { products, loading: productsLoading } = useProducts();
+
+  const dashboardData = useMemo(() => {
+    if (ordersLoading || productsLoading) {
+      return null;
+    }
+
+    const todayOrders = orders.filter(order => order.createdAt && isToday(order.createdAt.toDate())).length;
+    
+    const monthSales = orders
+      .filter(order => order.createdAt && isThisMonth(order.createdAt.toDate()))
+      .reduce((sum, order) => sum + order.total, 0);
+
+    const lowStockProducts = products.filter(product => product.stock < 10).length;
+
+    return {
+      todayOrders,
+      monthSales,
+      lowStockProducts,
+    };
+  }, [orders, products, ordersLoading, productsLoading]);
+  
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
+
 
   return (
     <div className="flex flex-col gap-4">
@@ -26,7 +61,7 @@ export default function DashboardPage() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5</div>
+            {ordersLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{dashboardData?.todayOrders}</div>}
             <p className="text-xs text-muted-foreground">{t('dashboard_card_new_orders_desc')}</p>
           </CardContent>
         </Card>
@@ -36,7 +71,7 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$12,450.50</div>
+            {ordersLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{formatCurrency(dashboardData?.monthSales || 0)}</div>}
             <p className="text-xs text-muted-foreground">{t('dashboard_card_sales_month_desc')}</p>
           </CardContent>
         </Card>
@@ -46,7 +81,7 @@ export default function DashboardPage() {
             <PackageX className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">3</div>
+            {productsLoading ? <Skeleton className="h-8 w-1/4" /> : <div className="text-2xl font-bold">{dashboardData?.lowStockProducts}</div>}
             <p className="text-xs text-muted-foreground">{t('dashboard_card_low_stock_desc')}</p>
           </CardContent>
         </Card>

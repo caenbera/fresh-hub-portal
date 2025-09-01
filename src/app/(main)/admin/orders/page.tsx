@@ -3,10 +3,14 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/context/language-context";
 import { useTranslation } from "@/lib/i18n";
+import { useAllOrders } from "@/hooks/use-all-orders";
+import { Skeleton } from "@/components/ui/skeleton";
+import { OrdersTable } from "@/components/dashboard/orders/orders-table";
 
 export default function ManageOrdersPage() {
   const { locale } = useLanguage();
   const t = useTranslation(locale);
+  const { orders, loading } = useAllOrders();
   
   return (
     <div className="flex flex-col gap-4">
@@ -17,7 +21,15 @@ export default function ManageOrdersPage() {
           <CardDescription>{t('orders_card_desc')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <p>{t('orders_table_placeholder')}</p>
+          {loading ? (
+             <div className="space-y-4">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : (
+            <OrdersTable orders={orders} />
+          )}
         </CardContent>
       </Card>
     </div>
