@@ -4,8 +4,6 @@ const admin = require("firebase-admin");
 
 admin.initializeApp();
 
-const SUPER_ADMIN_EMAIL = 'superadmin@thefreshhub.com';
-
 /**
  * Cloud Function that triggers when a new Firebase user is created.
  * It checks if the user's email exists in the 'adminInvites' collection.
@@ -20,34 +18,35 @@ exports.processSignUp = functions.auth.user().onCreate(async (user) => {
     return null;
   }
   
-  // Explicitly ignore the super admin email to prevent accidental processing
-  if (email === SUPER_ADMIN_EMAIL) {
-    functions.logger.log(`Super admin user ${email} registered. No special claims needed via this function.`);
-    return null;
-  }
+  // Special handling for the superadmin email is not needed here,
+  // as their role is determined on the client-side for simplicity.
+  // This function focuses on promoting pre-approved admins.
 
   const inviteDocRef = admin.firestore().collection("adminInvites").doc(email);
 
   try {
     const inviteDoc = await inviteDocRef.get();
 
-    if (inviteDoc.exists && inviteDoc.data().role === "admin") {
-      functions.logger.log(`Invite found for ${email}. Setting admin claim for user ${uid}.`);
+    if (inviteDoc.exists) {
+      functions.logger.log(`Admin invite found for ${email}. Setting 'admin' custom claim for user ${uid}.`);
+      // Set the custom claim to mark the user as an admin
       await admin.auth().setCustomUserClaims(uid, { admin: true });
-      functions.logger.log(`Successfully set admin claim for user ${uid} (${email}).`);
+      functions.logger.log(`Successfully set 'admin' custom claim for user ${uid} (${email}).`);
       
-      // Delete the invite so it can't be reused.
-      await inviteDocRef.delete();
+      // Optional: Delete the invite so it can't be reused.
+      // For simplicity and robustness, we can leave this out for now.
+      // If needed in the future, it can be added back carefully.
+      // await inviteDocRef.delete();
       
       return { result: `Admin claim assigned to ${email}` };
     }
 
-    functions.logger.log(`No admin invite found for ${email}. User will be a client.`);
-    return null;
+    functions.logger.log(`No admin invite found for ${email}. User will be a standard client.`);
+    return null; // No invite found, do nothing.
     
   } catch (error) {
     functions.logger.error(`Error processing signup for ${email}:`, error);
-    // We re-throw the error to ensure Firebase knows the function failed.
+    // Re-throw the error to ensure Firebase knows the function failed and can potentially retry.
     throw new functions.https.HttpsError(
       "internal",
       "An error occurred while processing the user's role."
