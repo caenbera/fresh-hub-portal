@@ -50,7 +50,6 @@ export default function SetupAdminRolePage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="font-headline">Super Admin Setup</CardTitle>
@@ -65,6 +64,5 @@ export default function SetupAdminRolePage() {
           {!user && <p className="text-sm text-destructive mt-2 text-center">Please log in first.</p>}
         </CardContent>
       </Card>
-    </div>
   );
 }
