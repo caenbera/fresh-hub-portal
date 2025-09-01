@@ -1,7 +1,10 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
-admin.initializeApp();
+// Initialize the Admin SDK with necessary configuration
+admin.initializeApp({
+  storageBucket: "fresh-hub-portal.appspot.com",
+});
 
 exports.setupSuperAdmin = functions.https.onCall(async (data, context) => {
   // Check if the user is authenticated.
