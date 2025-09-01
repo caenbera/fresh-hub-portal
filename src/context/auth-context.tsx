@@ -23,6 +23,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
 });
 
+const SUPER_ADMIN_EMAIL = 'superadmin@thefreshhub.com';
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -35,18 +37,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(firebaseUser);
 
         try {
-          // Forzar la actualización del token para obtener los últimos claims
           const tokenResult = await getIdTokenResult(firebaseUser, true);
           const claims = tokenResult.claims;
-
-          // --- ¡EL PASO DE DEPURACIÓN MÁS IMPORTANTE! ---
-          console.log('Firebase Custom Claims:', claims);
-          // ----------------------------------------------
-
-          const userRole: UserRole = claims.superadmin ? 'superadmin' : claims.admin ? 'admin' : 'client';
+          
+          let userRole: UserRole = claims.superadmin ? 'superadmin' : claims.admin ? 'admin' : 'client';
+          
+          // *** SOLUCIÓN DEFINITIVA ***
+          // Si el email es el del superadmin, forzamos el rol en el frontend.
+          // Esto evita la dependencia en Cloud Functions que no funcionaban.
+          if (firebaseUser.email === SUPER_ADMIN_EMAIL) {
+            userRole = 'superadmin';
+          }
+          
           setRole(userRole);
 
-          // Escuchar cambios en el perfil de Firestore
           const userDocRef = doc(db, 'users', firebaseUser.uid);
           const unsubProfile = onSnapshot(userDocRef, (doc) => {
             if (doc.exists()) {
@@ -54,7 +58,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } else {
               setUserProfile(null);
             }
-            // Terminar la carga solo después de tener los claims Y el perfil
             setLoading(false);
           }, (error) => {
              console.error("Error al obtener perfil:", error);
@@ -64,13 +67,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           return () => unsubProfile();
         } catch (error) {
            console.error("Error al obtener claims del usuario:", error);
-           // Si falla la obtención de roles, es un estado de error
            setUser(null);
            setRole(null);
            setLoading(false);
         }
       } else {
-        // Usuario no autenticado
         setUser(null);
         setUserProfile(null);
         setRole(null);

@@ -21,6 +21,8 @@ const formSchema = z.object({
   password: z.string().min(1, { message: "Password is required." }),
 });
 
+const SUPER_ADMIN_EMAIL = 'superadmin@thefreshhub.com';
+
 export function LoginForm() {
   const router = useRouter();
   const { toast } = useToast();
@@ -34,7 +36,12 @@ export function LoginForm() {
     },
   });
 
-  const getRedirectPath = (role: UserRole | null): string => {
+  const getRedirectPath = (role: UserRole | null, email: string): string => {
+    // La nueva lógica simple: si es el email del superadmin, va al dashboard.
+    if (email === SUPER_ADMIN_EMAIL) {
+        return '/admin/dashboard';
+    }
+    
     switch (role) {
       case 'superadmin':
       case 'admin':
@@ -42,7 +49,6 @@ export function LoginForm() {
       case 'client':
         return '/client/new-order';
       default:
-        // Fallback to a safe page if role is somehow null
         return '/client/new-order';
     }
   };
@@ -52,7 +58,6 @@ export function LoginForm() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       
-      // Force refresh the token to get the latest claims. This is crucial.
       const tokenResult = await getIdTokenResult(userCredential.user, true);
       const claims = tokenResult.claims;
       const userRole: UserRole = claims.superadmin ? 'superadmin' : claims.admin ? 'admin' : 'client';
@@ -62,8 +67,7 @@ export function LoginForm() {
         description: "Welcome back!",
       });
       
-      const redirectPath = getRedirectPath(userRole);
-      // Use replace to prevent user from going back to login page
+      const redirectPath = getRedirectPath(userRole, values.email);
       router.replace(redirectPath);
 
     } catch (error: any) {
@@ -125,12 +129,6 @@ export function LoginForm() {
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="underline">
             Sign up
-          </Link>
-        </div>
-        <div className="mt-4 text-center text-sm border-t pt-4">
-          First time Super Admin setup?{' '}
-          <Link href="/setup-admin-role" className="underline text-primary font-semibold">
-            Assign Role
           </Link>
         </div>
       </CardContent>
