@@ -56,7 +56,7 @@ export function AppSidebar() {
         {role === 'superadmin' && (
           <>
             <SidebarGroup>
-              <SidebarGroupLabel>Admin Panel</SidebarGroupLabel>
+              <SidebarGroupLabel>{t('sidebar_admin_panel')}</SidebarGroupLabel>
               <SidebarMenu>
                 {renderNavItems(adminNav)}
                 {renderNavItems(superAdminNav)}
@@ -64,7 +64,7 @@ export function AppSidebar() {
             </SidebarGroup>
             <SidebarSeparator />
             <SidebarGroup>
-              <SidebarGroupLabel>Client Portal</SidebarGroupLabel>
+              <SidebarGroupLabel>{t('sidebar_client_portal')}</SidebarGroupLabel>
                <SidebarMenu>
                 {renderNavItems(clientNav)}
               </SidebarMenu>

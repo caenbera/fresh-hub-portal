@@ -20,6 +20,8 @@
     "sidebar_manage_orders": "Manage Orders",
     "sidebar_manage_products": "Manage Products",
     "sidebar_manage_users": "Manage Users",
+    "sidebar_admin_panel": "Admin Panel",
+    "sidebar_client_portal": "Client Portal",
 
     "dashboard_title": "Dashboard",
     "dashboard_card_new_orders": "New Orders Today",
