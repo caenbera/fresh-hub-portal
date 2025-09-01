@@ -29,24 +29,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setLoading(true);
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
 
         // This is the critical part: force a refresh of the ID token
         // to get the latest custom claims for the user role.
-        getIdTokenResult(firebaseUser, true)
-          .then((tokenResult) => {
-            const claims = tokenResult.claims;
-            const userRole: UserRole = claims.superadmin ? 'superadmin' : claims.admin ? 'admin' : 'client';
-            setRole(userRole);
-          })
-          .catch((error) => {
-            console.error("Error fetching custom claims:", error);
-            setRole(null); // Default to null on error
-          });
-
+        try {
+          const tokenResult = await getIdTokenResult(firebaseUser, true);
+          const claims = tokenResult.claims;
+          const userRole: UserRole = claims.superadmin ? 'superadmin' : claims.admin ? 'admin' : 'client';
+          setRole(userRole);
+        } catch (error) {
+           console.error("Error fetching custom claims:", error);
+           setRole(null); // Default to null on error
+        }
+        
         // Listen for user profile changes from Firestore
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         const unsubProfile = onSnapshot(userDocRef, 
@@ -56,6 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } else {
               setUserProfile(null);
             }
+            // Only set loading to false after profile and role are set
             setLoading(false);
           }, 
           (error) => {
@@ -79,7 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const value = { user, userProfile, role, loading };
 
-  return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

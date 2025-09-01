@@ -33,6 +33,8 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
+    // This can happen briefly between loading=false and the redirect effect running.
+    // Return null to avoid rendering children that assume a user is present.
     return null; 
   }
 
