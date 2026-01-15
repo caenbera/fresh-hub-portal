@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
 import type { UserRole, UserProfile } from '@/types';
@@ -51,7 +51,6 @@ export function LoginForm() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
       
-      // Fetch user profile from Firestore to determine role
       const userDocRef = doc(db, 'users', userCredential.user.uid);
       const userDoc = await getDoc(userDocRef);
 
@@ -80,6 +79,40 @@ export function LoginForm() {
       setIsLoading(false);
     }
   }
+
+  const handlePasswordReset = async () => {
+    const email = form.getValues('email');
+    if (!email) {
+      form.setError("email", { type: "manual", message: "Please enter your email to reset the password." });
+      return;
+    }
+    const emailState = form.getFieldState('email');
+    if (emailState.invalid) {
+        toast({
+            variant: "destructive",
+            title: "Invalid Email",
+            description: "Please enter a valid email address.",
+        });
+        return;
+    }
+
+    setIsLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({
+        title: "Password Reset Email Sent",
+        description: `Check your ${email} inbox for a link to reset your password.`,
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to send password reset email.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Card className="mx-auto max-w-sm w-full">
@@ -112,7 +145,17 @@ export function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <div className="flex items-center">
+                    <FormLabel>Password</FormLabel>
+                    <button
+                      type="button"
+                      onClick={handlePasswordReset}
+                      disabled={isLoading}
+                      className="ml-auto inline-block text-sm underline disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Forgot your password?
+                    </button>
+                  </div>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
