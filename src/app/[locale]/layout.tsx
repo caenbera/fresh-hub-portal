@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { NextIntlClientProvider, useMessages } from 'next-intl';
-import './globals.css';
+import '../globals.css';
 import { AuthProvider } from '@/context/auth-context';
 import { Toaster } from '@/components/ui/toaster';
 
