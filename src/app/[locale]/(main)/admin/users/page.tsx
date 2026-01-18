@@ -38,7 +38,7 @@ export default function ManageUsersPage() {
   
   return (
     <RoleGuard allowedRoles={['superadmin']}>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 p-4 sm:p-6 lg:p-8">
         <h1 className="text-2xl font-headline font-bold">{t('users_title')}</h1>
 
         <Card>

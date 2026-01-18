@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import type { Product as ProductType, OrderItem } from '@/types';
 import { CalendarIcon, Search, Star, MessageSquarePlus, Pencil, Minus, Plus, ShoppingBasket } from 'lucide-react';
@@ -23,7 +24,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 // Temporary product data from the prototype
 const products: (Omit<ProductType, 'id'> & {id: number, isFavorite: boolean})[] = [
     { id: 1, name: "Tomate Chonto Maduro", price: 20, stock: 100, category: "verduras", isFavorite: true, photoUrl: "https://i.postimg.cc/TY6YMwmY/tomate_chonto.png", description: 'Tomate maduro de alta calidad', createdAt: new Date() as any },
-    { id: 2, name: "Cebolla Cabezona Blanca", price: 29, stock: 100, category: "verduras", isFavorite: true, photoUrl: "https://i.postimg.cc/TPwHKV88/cebolla-blanca.png", description: 'Cebolla blanca fresca', createdAt: new Date() as any },
+    { id: 2, name: "Cebolla Cabezona Blanca", price: 29, stock: 100, category: "verduras", isFavorite: true, photoUrl: "https://i.postimg.cc/TPwHKV88/cebolla_blanca.png", description: 'Cebolla blanca fresca', createdAt: new Date() as any },
     { id: 3, name: "Papa Pastusa Lavada", price: 30.50, stock: 100, category: "verduras", isFavorite: false, photoUrl: "https://i.postimg.cc/ncJcbz7t/papa_pastusa.png", description: 'Papa pastusa lavada y lista', createdAt: new Date() as any },
     { id: 4, name: "Limón Tahití", price: 40, stock: 100, category: "frutas", isFavorite: true, photoUrl: "https://i.postimg.cc/43dFY6CX/limon.png", description: 'Limón Tahití jugoso', createdAt: new Date() as any },
     { id: 5, name: "Aguacate Hass", price: 25, stock: 100, category: "frutas", isFavorite: false, photoUrl: "https://i.postimg.cc/BZDQVDjB/aguacate_hass.png", description: 'Aguacate Hass en su punto', createdAt: new Date() as any },
@@ -45,6 +46,54 @@ const categories = [
 
 interface Cart { [productId: number]: number };
 interface Notes { [productId: number]: string };
+
+const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+
+// This is the content for the checkout, shared between Dialog and Sheet
+const CheckoutContent = ({ orderItems, notes, total, deliveryDate, isSubmitting, handleSubmitOrder, t }: any) => (
+  <>
+    <SheetHeader className="p-4 text-left sm:text-center">
+      <SheetTitle>{t('confirmOrder')}</SheetTitle>
+    </SheetHeader>
+    <div className="p-4 flex-grow overflow-y-auto">
+        <div className="flex items-center gap-2 p-2 mb-4 bg-gray-100 rounded-md text-sm">
+          <CalendarIcon className="h-4 w-4 text-primary" />
+          <span className="text-muted-foreground">{t('delivery')}:</span> 
+          <span className="font-semibold">{deliveryDate ? format(deliveryDate, 'PPP', {locale: es}) : 'N/A'}</span>
+        </div>
+        <h3 className="text-sm font-semibold text-muted-foreground mb-2 uppercase">{t('selectedItems')}</h3>
+        <div className="space-y-2">
+          {orderItems.map((item: any) => (
+            <div key={item.productId} className="flex gap-3 items-start p-2 border-b">
+                <Image src={item.photoUrl} alt={item.productName} width={40} height={40} className="rounded-md object-cover"/>
+                <div className="flex-grow">
+                    <p className="font-semibold text-sm">{item.productName}</p>
+                    <p className="text-xs text-muted-foreground">{item.quantity} x {formatCurrency(item.price)}</p>
+                    {notes[Number(item.productId)] && <p className="text-xs text-blue-600 bg-blue-50 p-1 rounded-md mt-1"><b className="font-bold">Nota:</b> {notes[Number(item.productId)]}</p>}
+                </div>
+                <p className="font-semibold text-sm">{formatCurrency(item.quantity * item.price)}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4">
+          <label className="text-sm font-semibold text-muted-foreground uppercase">{t('observations')}</label>
+          <Textarea placeholder={t('observationsPlaceholder')} className="mt-1"/>
+        </div>
+    </div>
+    <div className="p-4 bg-gray-50 border-t sticky bottom-0">
+        <div className="w-full">
+          <div className="flex justify-between items-center mb-2">
+              <span className="text-muted-foreground font-medium">{t('total')}</span>
+              <span className="text-2xl font-bold">{formatCurrency(total)}</span>
+          </div>
+          <Button onClick={handleSubmitOrder} disabled={isSubmitting} size="lg" className="w-full">
+            {isSubmitting ? t('sendingOrder') : t('sendOrder')}
+          </Button>
+        </div>
+    </div>
+  </>
+);
+
 
 export default function NewOrderPage() {
   const t = useTranslations('ClientNewOrderPage');
@@ -174,14 +223,22 @@ export default function NewOrderPage() {
         setIsSubmitting(false);
     }
   };
-
-  const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  
+  const checkoutProps = {
+    orderItems,
+    notes,
+    total,
+    deliveryDate,
+    isSubmitting,
+    handleSubmitOrder,
+    t,
+  };
 
   return (
     <div className="flex flex-col h-full bg-gray-50/50">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b p-2 sm:p-4">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b py-2">
+        <div className="flex items-center gap-2 mb-2 px-2 sm:px-4">
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className={cn("w-[240px] justify-start text-left font-normal", !deliveryDate && "text-muted-foreground")}>
@@ -199,7 +256,7 @@ export default function NewOrderPage() {
           </div>
         </div>
 
-        <div className="overflow-x-auto whitespace-nowrap pb-1 [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="overflow-x-auto whitespace-nowrap pb-1 [-ms-overflow-style:none] [scrollbar-width:none] px-2 sm:px-4">
           {categories.map(cat => (
             <Button
               key={cat.id}
@@ -261,51 +318,21 @@ export default function NewOrderPage() {
         </DialogContent>
       </Dialog>
       
-      {/* Checkout Dialog */}
-      <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
-        <DialogContent className="sm:max-w-md p-0">
-          <DialogHeader className="p-4 border-b">
-            <DialogTitle>{t('confirmOrder')}</DialogTitle>
-          </DialogHeader>
-          <div className="p-4 max-h-[60vh] overflow-y-auto">
-             <div className="flex items-center gap-2 p-2 mb-4 bg-gray-100 rounded-md text-sm">
-                <CalendarIcon className="h-4 w-4 text-primary" />
-                <span className="text-muted-foreground">{t('delivery')}:</span> 
-                <span className="font-semibold">{deliveryDate ? format(deliveryDate, 'PPP', {locale: es}) : 'N/A'}</span>
-             </div>
-             <h3 className="text-sm font-semibold text-muted-foreground mb-2 uppercase">{t('selectedItems')}</h3>
-             <div className="space-y-2">
-                {orderItems.map(item => (
-                  <div key={item.productId} className="flex gap-3 items-start p-2 border-b">
-                      <Image src={item.photoUrl} alt={item.productName} width={40} height={40} className="rounded-md object-cover"/>
-                      <div className="flex-grow">
-                          <p className="font-semibold text-sm">{item.productName}</p>
-                          <p className="text-xs text-muted-foreground">{item.quantity} x {formatCurrency(item.price)}</p>
-                          {notes[Number(item.productId)] && <p className="text-xs text-blue-600 bg-blue-50 p-1 rounded-md mt-1"><b className="font-bold">Nota:</b> {notes[Number(item.productId)]}</p>}
-                      </div>
-                      <p className="font-semibold text-sm">{formatCurrency(item.quantity * item.price)}</p>
-                  </div>
-                ))}
-             </div>
-             <div className="mt-4">
-                <label className="text-sm font-semibold text-muted-foreground uppercase">{t('observations')}</label>
-                <Textarea placeholder={t('observationsPlaceholder')} className="mt-1"/>
-             </div>
-          </div>
-          <DialogFooter className="p-4 bg-gray-50 border-t sticky bottom-0">
-             <div className="w-full">
-                <div className="flex justify-between items-center mb-2">
-                    <span className="text-muted-foreground font-medium">{t('total')}</span>
-                    <span className="text-2xl font-bold">{formatCurrency(total)}</span>
-                </div>
-                <Button onClick={handleSubmitOrder} disabled={isSubmitting} size="lg" className="w-full">
-                  {isSubmitting ? t('sendingOrder') : t('sendOrder')}
-                </Button>
-             </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
+      {/* Checkout: Sheet for Mobile, Dialog for Desktop */}
+      {isMobile ? (
+        <Sheet open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
+          <SheetContent side="bottom" className="h-[90dvh] p-0 flex flex-col">
+            <CheckoutContent {...checkoutProps} />
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
+          <DialogContent className="max-w-md p-0 flex flex-col">
+             <CheckoutContent {...checkoutProps} />
+          </DialogContent>
+        </Dialog>
+      )}
+
       {/* Floating Cart Bar */}
       {totalItems > 0 && (
         <div className="fixed bottom-16 sm:bottom-4 left-1/2 -translate-x-1/2 w-[95%] max-w-lg z-30">

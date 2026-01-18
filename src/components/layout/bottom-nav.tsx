@@ -41,7 +41,7 @@ export function BottomNavBar({ navConfig }: { navConfig: NavDefinition }) {
               }`}
             >
               <item.icon className="w-5 h-5 mb-1" />
-              <span className="text-[11px]">{item.label}</span>
+              <span className="text-[11px] leading-tight whitespace-normal">{item.label}</span>
             </Link>
           ))}
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>

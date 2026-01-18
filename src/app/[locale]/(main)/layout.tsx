@@ -61,7 +61,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
       <AppSidebar />
       <div className="relative flex min-h-svh flex-1 flex-col bg-background">
         {!isMobile && <DashboardHeader />}
-        <main className="p-4 sm:p-6 lg:p-8 flex-1">{children}</main>
+        <main className="flex-1">{children}</main>
       </div>
     </SidebarProvider>
   );
