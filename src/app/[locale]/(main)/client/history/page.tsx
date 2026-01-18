@@ -1,5 +1,9 @@
 import { OrderHistoryClient } from '@/components/portal/history/order-history-client';
 
 export default function OrderHistoryPage() {
-  return <OrderHistoryClient />;
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <OrderHistoryClient />
+    </div>
+  );
 }

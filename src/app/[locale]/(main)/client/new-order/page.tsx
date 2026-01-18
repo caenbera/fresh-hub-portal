@@ -51,7 +51,7 @@ const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { styl
 
 // This is the content for the checkout, shared between Dialog and Sheet
 const CheckoutContent = ({ orderItems, notes, total, deliveryDate, isSubmitting, handleSubmitOrder, t }: any) => (
-  <>
+  <div className="flex flex-col h-full">
     <SheetHeader className="p-4 text-left sm:text-center">
       <SheetTitle>{t('confirmOrder')}</SheetTitle>
     </SheetHeader>
@@ -80,7 +80,7 @@ const CheckoutContent = ({ orderItems, notes, total, deliveryDate, isSubmitting,
           <Textarea placeholder={t('observationsPlaceholder')} className="mt-1"/>
         </div>
     </div>
-    <div className="p-4 bg-gray-50 border-t sticky bottom-0">
+    <div className="p-4 bg-gray-50 border-t">
         <div className="w-full">
           <div className="flex justify-between items-center mb-2">
               <span className="text-muted-foreground font-medium">{t('total')}</span>
@@ -91,7 +91,7 @@ const CheckoutContent = ({ orderItems, notes, total, deliveryDate, isSubmitting,
           </Button>
         </div>
     </div>
-  </>
+  </div>
 );
 
 
@@ -238,10 +238,10 @@ export default function NewOrderPage() {
     <div className="flex flex-col h-full bg-gray-50/50">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-sm border-b py-2">
-        <div className="flex items-center gap-2 mb-2 px-2 sm:px-4">
+        <div className="flex items-center gap-2 mb-2 px-4">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("w-[240px] justify-start text-left font-normal", !deliveryDate && "text-muted-foreground")}>
+              <Button variant="outline" className={cn("flex-1 justify-start text-left font-normal", !deliveryDate && "text-muted-foreground")}>
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {deliveryDate ? format(deliveryDate, "PPP", {locale: es}) : <span>{t('pickDate')}</span>}
               </Button>
@@ -250,25 +250,27 @@ export default function NewOrderPage() {
               <Calendar mode="single" selected={deliveryDate} onSelect={setDeliveryDate} initialFocus/>
             </PopoverContent>
           </Popover>
-          <div className="relative flex-grow">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder={t('searchPlaceholder')} className="pl-9" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
         </div>
 
-        <div className="overflow-x-auto whitespace-nowrap pb-1 [-ms-overflow-style:none] [scrollbar-width:none] px-2 sm:px-4">
-          {categories.map(cat => (
-            <Button
-              key={cat.id}
-              variant={activeCategory === cat.id ? 'default' : 'outline'}
-              size="sm"
-              className="rounded-full mr-2 h-8"
-              onClick={() => setActiveCategory(cat.id)}
-            >
-              {cat.icon && <cat.icon className={cn("mr-2 h-4 w-4", activeCategory === cat.id ? '' : 'text-yellow-500')} />}
-              {t(cat.id)}
-            </Button>
-          ))}
+        <div className="overflow-x-auto whitespace-nowrap pb-1 [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="px-4">
+            {categories.map(cat => (
+              <Button
+                key={cat.id}
+                variant={activeCategory === cat.id ? 'default' : 'outline'}
+                size="sm"
+                className="rounded-full mr-2 h-8"
+                onClick={() => setActiveCategory(cat.id)}
+              >
+                {cat.icon && <cat.icon className={cn("mr-2 h-4 w-4", activeCategory === cat.id ? '' : 'text-yellow-500')} />}
+                {t(cat.id)}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
       
@@ -282,9 +284,9 @@ export default function NewOrderPage() {
               <div key={p.id} className="bg-background border-b p-2 flex items-center gap-3">
                 <Image src={p.photoUrl} alt={p.name} width={55} height={55} className="rounded-lg object-cover bg-gray-100 shrink-0" />
                 <div className="flex-grow min-w-0">
-                  <p className="font-semibold leading-tight truncate">{p.name}</p>
+                  <p className="font-semibold text-sm leading-tight">{p.name}</p>
                   <div className="text-sm text-muted-foreground flex items-center">
-                    <span>{formatCurrency(p.price)} / {isMobile ? 'Un' : 'Unidad'}</span>
+                    <span>{formatCurrency(p.price)} / Un</span>
                      <Button variant="ghost" size="sm" className={cn("h-auto px-1 py-0 ml-1 text-xs", hasNote && "text-primary hover:text-primary")} onClick={() => handleOpenNoteModal(p as any)}>
                         {hasNote ? <Pencil className="h-3 w-3 mr-1" /> : <MessageSquarePlus className="h-3 w-3 mr-1" />}
                         {t('note')}
@@ -327,7 +329,7 @@ export default function NewOrderPage() {
         </Sheet>
       ) : (
         <Dialog open={isCheckoutOpen} onOpenChange={setIsCheckoutOpen}>
-          <DialogContent className="max-w-md p-0 flex flex-col">
+          <DialogContent className="max-w-md p-0">
              <CheckoutContent {...checkoutProps} />
           </DialogContent>
         </Dialog>
@@ -335,7 +337,7 @@ export default function NewOrderPage() {
 
       {/* Floating Cart Bar */}
       {totalItems > 0 && (
-        <div className="fixed bottom-16 sm:bottom-4 left-1/2 -translate-x-1/2 w-[95%] max-w-lg z-30">
+        <div className="fixed bottom-[75px] inset-x-4 z-30 sm:bottom-4 sm:left-1/2 sm:-translate-x-1/2 sm:w-full sm:max-w-md">
             <div className="bg-background/80 backdrop-blur-lg rounded-xl shadow-2xl p-3 flex justify-between items-center border">
                  <div>
                     <p className="text-xs text-muted-foreground">{totalItems} {t('items')}</p>

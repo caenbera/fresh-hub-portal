@@ -210,7 +210,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8 bg-gray-50/50 p-0 sm:p-4 rounded-xl">
+    <div className="flex flex-col gap-8 bg-gray-50/50 p-4 sm:p-6 lg:p-8 rounded-xl">
       {/* HEADER */}
       <div>
         <h1 className="text-2xl font-bold text-gray-800">Hola, Administrador 👋</h1>

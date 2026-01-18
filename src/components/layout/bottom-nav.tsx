@@ -29,29 +29,29 @@ export function BottomNavBar({ navConfig }: { navConfig: NavDefinition }) {
   return (
     <>
       <div className="fixed bottom-0 left-0 z-40 w-full h-16 bg-card border-t md:hidden" style={{paddingBottom: 'env(safe-area-inset-bottom)'}}>
-        <div className="grid h-full max-w-lg grid-cols-4 mx-auto">
+        <div className="grid h-full grid-cols-4 mx-auto">
           {mainNavItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className={`inline-flex flex-col items-center justify-center px-1 pt-2 font-medium text-center group ${
+              className={`flex flex-col items-center justify-center px-1 pt-2 font-medium text-center group ${
                 pathname.startsWith(item.href)
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               <item.icon className="w-5 h-5 mb-1" />
-              <span className="text-[11px] leading-tight whitespace-normal">{item.label}</span>
+              <span className="text-[11px] leading-tight whitespace-normal text-center">{item.label}</span>
             </Link>
           ))}
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
                 <button
                     type="button"
-                    className="inline-flex flex-col items-center justify-center px-1 pt-2 font-medium text-center group text-muted-foreground hover:text-foreground"
+                    className="flex flex-col items-center justify-center px-1 pt-2 font-medium text-center group text-muted-foreground hover:text-foreground"
                 >
                     <MoreHorizontal className="w-5 h-5 mb-1" />
-                    <span className="text-[11px]">{t('more')}</span>
+                    <span className="text-[11px] whitespace-normal text-center">{t('more')}</span>
                 </button>
             </SheetTrigger>
             <SheetContent side="bottom" className="h-auto w-full rounded-t-2xl p-0">
