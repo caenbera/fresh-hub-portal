@@ -20,6 +20,7 @@ async function getMessages(locale: string) {
       LandingPageSolutionSection: (await import(`./messages/${locale}/LandingPageSolutionSection.json`)).default,
       LandingPageSpecialOffer: (await import(`./messages/${locale}/LandingPageSpecialOffer.json`)).default,
       LandingPageTestimonials: (await import(`./messages/${locale}/LandingPageTestimonials.json`)).default,
+      NavigationBar: (await import(`./messages/${locale}/NavigationBar.json`)).default,
     };
   } catch (error) {
     notFound();

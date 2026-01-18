@@ -1,0 +1,17 @@
+{
+  "dashboard": "Panel de Control",
+  "newOrder": "Nuevo Pedido",
+  "orderHistory": "Historial de Pedidos",
+  "manageOrders": "Gestionar Pedidos",
+  "manageProducts": "Gestionar Productos",
+  "manageUsers": "Gestionar Usuarios",
+  "adminPanel": "Panel de Administración",
+  "clientPortal": "Portal del Cliente",
+  "home": "Inicio",
+  "history": "Historial",
+  "myOrder": "Mi Pedido",
+  "more": "Más",
+  "settings": "Configuración",
+  "support": "Soporte",
+  "logout": "Cerrar Sesión"
+}

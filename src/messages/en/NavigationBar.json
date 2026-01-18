@@ -1,0 +1,17 @@
+{
+  "dashboard": "Dashboard",
+  "newOrder": "New Order",
+  "orderHistory": "Order History",
+  "manageOrders": "Manage Orders",
+  "manageProducts": "Manage Products",
+  "manageUsers": "Manage Users",
+  "adminPanel": "Admin Panel",
+  "clientPortal": "Client Portal",
+  "home": "Home",
+  "history": "History",
+  "myOrder": "My Order",
+  "more": "More",
+  "settings": "Settings",
+  "support": "Support",
+  "logout": "Logout"
+}
