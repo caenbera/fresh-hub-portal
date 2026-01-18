@@ -53,8 +53,8 @@ export function BridgeSection() {
             </ul>
           </div>
         </div>
-        <div className="mt-16 text-2xl font-bold font-headline bg-yellow-300 text-gray-900 inline-block px-6 py-3 rounded-lg">
-            <p>{t('bridge_the_bridge_title')}</p>
+        <div className="mt-16 bg-yellow-300 text-gray-900 inline-block px-6 py-3 rounded-lg">
+            <h3 className="text-2xl font-bold font-headline">{t('bridge_the_bridge_title')}</h3>
             <p className="text-base font-normal mt-1">{t('bridge_the_bridge_desc')}</p>
         </div>
       </div>
