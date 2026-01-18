@@ -1,13 +1,33 @@
-"use client";
+import { LandingPageHeader } from '@/components/landing/LandingHeader';
+import { Hero } from '@/components/landing/Hero';
+import { ProblemSection } from '@/components/landing/ProblemSection';
+import { AgitationSection } from '@/components/landing/AgitationSection';
+import { BridgeSection } from '@/components/landing/BridgeSection';
+import { SolutionSection } from '@/components/landing/SolutionSection';
+import { Testimonials } from '@/components/landing/Testimonials';
+import { ProductsSection } from '@/components/landing/ProductsSection';
+import { SpecialOffer } from '@/components/landing/SpecialOffer';
+import { ContactForms } from '@/components/landing/ContactForms';
+import { ContactInfo } from '@/components/landing/ContactInfo';
+import { Footer } from '@/components/landing/Footer';
 
-// This is a placeholder for the landing page.
-// The actual landing page will be built in subsequent steps.
-
-export default function HomePage() {
+export default function LandingPage() {
   return (
-    <div>
-      <h1>Landing Page Placeholder</h1>
-      <p>This page will be replaced with the actual landing page content.</p>
+    <div className="bg-gray-900 text-white font-body">
+      <LandingPageHeader />
+      <main>
+        <Hero />
+        <ProblemSection />
+        <AgitationSection />
+        <BridgeSection />
+        <SolutionSection />
+        <Testimonials />
+        <ProductsSection />
+        <SpecialOffer />
+        <ContactForms />
+        <ContactInfo />
+      </main>
+      <Footer />
     </div>
   );
 }

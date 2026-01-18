@@ -1,0 +1,25 @@
+
+{
+  "contact_forms_title": "Ready to Be Your Own Flavor Boss?",
+  "contact_forms_subtitle": "Talk to a specialist now - We assist you in Spanish",
+  "quote_form_title": "Personalized Quote",
+  "form_name_label": "Your Name",
+  "form_name_placeholder_es": "What's your name, friend?",
+  "form_name_placeholder": "What's your name",
+  "form_business_name_label": "Your Business Name",
+  "form_business_name_placeholder": "Taqueria La Guadalupana, Supermercado Mi Pueblo, etc.",
+  "form_phone_label": "Phone",
+  "form_products_interest_label": "Which products are you most interested in?",
+  "form_product_option_1": "Avocados and Vegetables",
+  "form_product_option_2": "Peppers and Spices",
+  "form_product_option_3": "Tropical Fruits",
+  "form_product_option_4": "Everything - Full Assortment",
+  "quote_form_button": "Send Request",
+  "sample_form_title": "Free Sample Box",
+  "form_business_name_placeholder_sample": "Name of your restaurant/supermarket",
+  "form_phone_placeholder": "Your phone number",
+  "form_address_label": "Delivery Address",
+  "form_address_placeholder": "Where do we deliver the free sample?",
+  "sample_form_button": "Request Free Delivery",
+  "form_submit_alert": "Thank you! We will contact you very soon. Have a great day, friend!"
+}

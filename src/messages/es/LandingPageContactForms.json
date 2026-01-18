@@ -1,0 +1,25 @@
+
+{
+    "contact_forms_title": "¿Listo para Ser tu Propio Jefe del Sabor?",
+    "contact_forms_subtitle": "Habla con un especialista ahora - Te atendemos en español",
+    "quote_form_title": "Cotización Personalizada",
+    "form_name_label": "Tu Nombre",
+    "form_name_placeholder_es": "Como te llamas, compadre",
+    "form_name_placeholder": "Como te llamas",
+    "form_business_name_label": "Nombre de tu Negocio",
+    "form_business_name_placeholder": "Taquería La Guadalupana, Supermercado Mi Pueblo, etc.",
+    "form_phone_label": "Teléfono",
+    "form_products_interest_label": "¿Qué productos te interesan más?",
+    "form_product_option_1": "Aguacates y Verduras",
+    "form_product_option_2": "Chiles y Especias",
+    "form_product_option_3": "Frutas Tropicales",
+    "form_product_option_4": "Todo - Surtido Completo",
+    "quote_form_button": "Enviar Solicitud",
+    "sample_form_title": "Caja de Muestra Gratis",
+    "form_business_name_placeholder_sample": "Nombre de tu restaurante/supermercado",
+    "form_phone_placeholder": "Tu número de teléfono",
+    "form_address_label": "Dirección de Entrega",
+    "form_address_placeholder": "Dónde te entregamos la muestra gratis",
+    "sample_form_button": "Solicitar Entrega Gratis",
+    "form_submit_alert": "¡Gracias! Nos pondremos en contacto contigo muy pronto. ¡Que tengas un excelente día, compadre!"
+}
