@@ -280,9 +280,9 @@ export default function NewOrderPage() {
             const hasNote = !!notes[p.id];
             return (
               <div key={p.id} className="bg-background border-b p-2 flex items-center gap-3">
-                <Image src={p.photoUrl} alt={p.name} width={55} height={55} className="rounded-lg object-cover bg-gray-100" />
-                <div className="flex-grow">
-                  <p className="font-semibold leading-tight">{p.name}</p>
+                <Image src={p.photoUrl} alt={p.name} width={55} height={55} className="rounded-lg object-cover bg-gray-100 shrink-0" />
+                <div className="flex-grow min-w-0">
+                  <p className="font-semibold leading-tight truncate">{p.name}</p>
                   <div className="text-sm text-muted-foreground flex items-center">
                     <span>{formatCurrency(p.price)} / {isMobile ? 'Un' : 'Unidad'}</span>
                      <Button variant="ghost" size="sm" className={cn("h-auto px-1 py-0 ml-1 text-xs", hasNote && "text-primary hover:text-primary")} onClick={() => handleOpenNoteModal(p as any)}>
@@ -292,7 +292,7 @@ export default function NewOrderPage() {
                   </div>
                   {quantity > 0 && <p className="font-bold text-primary text-sm mt-1">{formatCurrency(quantity * p.price)}</p>}
                 </div>
-                <div className="flex items-center gap-1 bg-gray-100 rounded-full border p-0.5">
+                <div className="flex items-center gap-1 bg-gray-100 rounded-full border p-0.5 shrink-0">
                    <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => handleQuantityChange(p.id, -1)}><Minus className="h-4 w-4" /></Button>
                    <Input readOnly value={quantity || ''} placeholder="0" className="h-7 w-10 text-center bg-transparent border-none p-0 focus-visible:ring-0 focus-visible:ring-offset-0" />
                    <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => handleQuantityChange(p.id, 1)}><Plus className="h-4 w-4" /></Button>
