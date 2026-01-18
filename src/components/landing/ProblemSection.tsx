@@ -1,42 +1,38 @@
 'use client';
-import { useTranslations } from 'next-intl';
-import Image from 'next/image';
+import { AlertTriangle, Clock, Languages } from 'lucide-react';
 
 export function ProblemSection() {
-  const t = useTranslations('LandingPageProblemSection');
-
-  const problems = [
-    { title: t('problem_1_title'), desc: t('problem_1_desc'), img: 'https://picsum.photos/seed/problem1/500/300', hint: 'bruised avocado' },
-    { title: t('problem_2_title'), desc: t('problem_2_desc'), img: 'https://picsum.photos/seed/problem2/500/300', hint: 'empty shelf' },
-    { title: t('problem_3_title'), desc: t('problem_3_desc'), img: 'https://picsum.photos/seed/problem3/500/300', hint: 'confused person' },
-  ];
-
   return (
-    <section className="py-12 lg:py-24 bg-gray-900">
-      <div className="container mx-auto px-4">
-        <div className="text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold font-headline">{t('problem_title')}</h2>
-          <p className="mt-4 text-lg text-gray-300">{t('problem_subtitle')}</p>
-        </div>
-        <div className="mt-12 grid md:grid-cols-3 gap-8">
-          {problems.map((problem, index) => (
-            <div key={index} className="bg-gray-800 rounded-lg overflow-hidden">
-              <Image 
-                src={problem.img}
-                alt={problem.title}
-                width={500}
-                height={300}
-                className="w-full h-48 object-cover"
-                data-ai-hint={problem.hint}
-              />
-              <div className="p-6">
-                <h3 className="font-bold text-xl text-yellow-300">{problem.title}</h3>
-                <p className="mt-2 text-gray-400">{problem.desc}</p>
-              </div>
+    <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+                <h2 className="text-4xl font-bold text-gray-900 mb-4">¿Te Suena Familiar Esta Situación?</h2>
+                <p className="text-xl text-gray-600">Los dolores de cabeza que todo dueño de negocio latino conoce...</p>
             </div>
-          ))}
+            <div className="grid md:grid-cols-3 gap-8">
+                <div className="bg-red-50 p-8 rounded-xl border-l-4 border-red-500 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                    <div className="text-red-500 text-3xl mb-4">
+                        <AlertTriangle size={36} />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">Productos de Mala Calidad</h3>
+                    <p className="text-gray-700">Cansado de que los aguacates lleguen golpeados, los chiles sin el picor correcto, o proveedores que no entienden la diferencia entre un jalapeño y un serrano.</p>
+                </div>
+                <div className="bg-orange-50 p-8 rounded-xl border-l-4 border-orange-500 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                    <div className="text-orange-500 text-3xl mb-4">
+                        <Clock size={36} />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">Entregas Impuntuales</h3>
+                    <p className="text-gray-700">La dificultad de encontrar tomatillo fresco, cilantro que huela 'de verdad' o plátanos en el punto exacto de maduración cuando los necesitas.</p>
+                </div>
+                <div className="bg-yellow-50 p-8 rounded-xl border-l-4 border-yellow-500 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                    <div className="text-yellow-600 text-3xl mb-4">
+                        <Languages size={36} />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-4">Barrera del Idioma</h3>
+                    <p className="text-gray-700">Proveedores que no te entienden, no hablan tu idioma, y no comprenden las necesidades específicas de tu negocio latino.</p>
+                </div>
+            </div>
         </div>
-      </div>
     </section>
   );
 }

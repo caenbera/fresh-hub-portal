@@ -1,39 +1,33 @@
 'use client';
-import { useTranslations } from 'next-intl';
-import { Link } from '@/navigation';
-import { Sprout, Phone } from 'lucide-react';
-import { LanguageSwitcher } from './language-switcher';
+
+import { Sprout, MessageCircle, Phone } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export function LandingPageHeader() {
-  const t = useTranslations('LandingPageHeader');
-
   return (
-    <header className="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50 p-4">
-      <div className="container mx-auto flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-2 text-white">
-          <Sprout className="h-8 w-8 text-primary" />
-          <span className="text-xl font-bold font-headline">Fresh Hub</span>
-        </Link>
-        <div className="hidden md:flex items-center gap-6">
-          <div className="text-center">
-            <p className="font-semibold">{t('header_speaks_spanish')}</p>
-            <p className="text-sm text-gray-300">{t('header_subtitle')}</p>
-          </div>
-          <a href="tel:+15551234567" className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
-            <Phone size={16} />
-            <span>{t('header_call_now')}</span>
-          </a>
+    <header className="bg-white shadow-lg sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+                <div className="flex items-center space-x-3">
+                    <Sprout className="h-12 w-12 text-primary" />
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900 font-headline">The Fresh Hub</h1>
+                        <p className="text-sm text-gray-600">Tu Socio de Confianza</p>
+                    </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2 text-green-600">
+                        <MessageCircle />
+                        <span className="font-semibold">Hablamos Español</span>
+                    </div>
+                    <Button asChild className="bg-accent text-white px-6 py-2 rounded-lg font-semibold hover:bg-orange-600 transition">
+                      <a href="tel:+1-555-FRESH">
+                          <Phone className="mr-2" size={16} />Llámanos Ahora
+                      </a>
+                    </Button>
+                </div>
+            </div>
         </div>
-        <div className="flex items-center gap-2">
-           <LanguageSwitcher />
-          <Link href="/login" className="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors hidden sm:block">
-            {t('nav_login')}
-          </Link>
-           <Link href="/signup" className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors hidden sm:block">
-            {t('nav_signup')}
-          </Link>
-        </div>
-      </div>
     </header>
   );
 }

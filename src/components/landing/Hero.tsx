@@ -1,52 +1,49 @@
 'use client';
-import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { CheckCircle } from 'lucide-react';
-import Image from 'next/image';
+import { CheckCircle, Truck, Handshake, Calculator, Gift } from 'lucide-react';
 
 export function Hero() {
-  const t = useTranslations('LandingPageHero');
-  const features = [t('hero_feature1'), t('hero_feature2'), t('hero_feature3')];
 
   return (
-    <section className="relative py-20 lg:py-32 overflow-hidden">
-      <div className="absolute inset-0 z-0">
-        <Image 
-          src="https://picsum.photos/seed/hero/1920/1080" 
-          alt="Fresh produce background"
-          fill
-          quality={80}
-          className="object-cover"
-          data-ai-hint="fresh produce background"
-        />
-        <div className="absolute inset-0 bg-gray-900/70"></div>
-      </div>
-      <div className="container mx-auto px-4 relative z-10 text-center text-white">
-        <h1
-          className="text-4xl lg:text-6xl font-extrabold font-headline leading-tight"
-          dangerouslySetInnerHTML={{ __html: t.raw('hero_title_html') }}
-        />
-        <p
-          className="mt-6 max-w-3xl mx-auto text-lg lg:text-xl text-gray-200"
-          dangerouslySetInnerHTML={{ __html: t.raw('hero_subtitle_html') }}
-        />
-        <div className="mt-8 flex flex-col sm:flex-row justify-center items-center gap-4">
-          <Button size="lg" className="bg-primary hover:bg-primary/90 w-full sm:w-auto">
-            {t('hero_cta_quote')}
-          </Button>
-          <Button size="lg" variant="outline" className="bg-transparent border-yellow-300 text-yellow-300 hover:bg-yellow-300 hover:text-gray-900 w-full sm:w-auto">
-            {t('hero_cta_sample')}
-          </Button>
-        </div>
-        <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
-          {features.map((feature, index) => (
-            <div key={index} className="flex items-center justify-center gap-2 text-sm">
-              <CheckCircle className="h-5 w-5 text-green-400" />
-              <span>{feature}</span>
+    <section className="bg-gradient-to-br from-green-500 via-green-600 to-green-700 text-white py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center">
+                <h1 className="text-5xl md:text-6xl font-bold mb-6" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.3)'}}>
+                    Calidad y Frescura para tu 
+                    <span className="text-yellow-300"> Negocio Latino</span>
+                </h1>
+                <p className="text-xl md:text-2xl mb-8" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.3)'}}>
+                    El Sabor Auténtico que tu Negocio en Chicago Exige<br/>
+                    <span className="text-yellow-200">Delivered with Reliability • Entregado con Confiabilidad</span>
+                </p>
+                <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-6 mb-12">
+                    <div className="flex items-center space-x-2">
+                        <CheckCircle className="text-yellow-300" size={20} />
+                        <span className="text-lg">Productos Frescos de Calidad</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Truck className="text-yellow-300" size={20}/>
+                        <span className="text-lg">Entregas Puntuales</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Handshake className="text-yellow-300" size={20}/>
+                        <span className="text-lg">Somos tu Parcero</span>
+                    </div>
+                </div>
+                <div className="space-y-4 md:space-y-0 md:space-x-4 md:flex justify-center">
+                    <Button asChild size="lg" className="bg-accent text-white px-8 py-4 text-lg font-bold hover:bg-orange-600 transition animate-pulse">
+                      <a href="#cotizacion">
+                          <Calculator className="mr-2" />Pide una Cotización GRATIS
+                      </a>
+                    </Button>
+                    <Button asChild size="lg" className="bg-yellow-400 text-gray-900 px-8 py-4 text-lg font-bold hover:bg-yellow-300 transition">
+                      <a href="#muestra">
+                          <Gift className="mr-2" />Solicita Caja de Muestra
+                      </a>
+                    </Button>
+                </div>
             </div>
-          ))}
         </div>
-      </div>
     </section>
   );
 }
