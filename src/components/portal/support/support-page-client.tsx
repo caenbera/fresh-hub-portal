@@ -49,9 +49,9 @@ export function SupportPageClient() {
   };
   
   const faqs = [
-      { q: t('faq1_q'), a: t('faq1_a')},
-      { q: t('faq2_q'), a: t('faq2_a')},
-      { q: t('faq3_q'), a: t('faq3_a')},
+      { q: 'faq1_q', a: 'faq1_a'},
+      { q: 'faq2_q', a: 'faq2_a'},
+      { q: 'faq3_q', a: 'faq3_a'},
   ]
 
   return (
@@ -141,9 +141,13 @@ export function SupportPageClient() {
              <Accordion type="single" collapsible className="w-full space-y-2">
                 {faqs.map((faq, i) => (
                     <AccordionItem key={i} value={`item-${i+1}`} className="bg-card rounded-xl border shadow-sm">
-                        <AccordionTrigger className="p-4 text-sm text-left">{faq.q}</AccordionTrigger>
+                        <AccordionTrigger className="p-4 text-sm text-left">{t(faq.q)}</AccordionTrigger>
                         <AccordionContent className="px-4 pb-4">
-                           <div dangerouslySetInnerHTML={{ __html: faq.a }} />
+                           <p className="text-sm text-muted-foreground">
+                                {t.rich(faq.a as any, {
+                                  strong: (chunks) => <strong className="font-semibold text-foreground">{chunks}</strong>,
+                                })}
+                            </p>
                         </AccordionContent>
                     </AccordionItem>
                 ))}
