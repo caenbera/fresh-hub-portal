@@ -2,7 +2,7 @@
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarSeparator } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/auth-context';
-import { LayoutGrid, ShoppingCart, Package, Users, History, Home, ClipboardList, Leaf, Truck, ShoppingBag } from 'lucide-react';
+import { LayoutGrid, ShoppingCart, Package, Users, History, Home, ClipboardList, Leaf, Truck, ShoppingBag, Boxes } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -20,10 +20,12 @@ export interface NavDefinition {
     client: NavItem[];
     admin: NavItem[];
     superadmin: NavItem[];
+    picker: NavItem[];
   };
   mobile: {
     client: NavItem[];
     admin: NavItem[];
+    picker: NavItem[];
   }
 }
 
@@ -64,6 +66,9 @@ export function AppSidebar() {
       superadmin: [
         { href: '/admin/users', label: t('manageUsers'), icon: Users },
       ],
+      picker: [
+        { href: '/admin/picking', label: t('picking'), icon: Boxes },
+      ]
     },
     mobile: {
       client: [
@@ -79,6 +84,9 @@ export function AppSidebar() {
         { href: '/admin/purchasing', label: t('purchasing'), icon: ShoppingBag },
         { href: '/admin/suppliers', label: t('suppliers'), icon: Truck },
       ],
+      picker: [
+        { href: '/admin/picking', label: t('picking'), icon: Boxes },
+      ]
     }
   };
   
@@ -148,7 +156,18 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarGroup>
         }
-        { (role === 'superadmin') && <SidebarSeparator /> }
+
+        { (role === 'superadmin' || role === 'picker') &&
+          <SidebarGroup>
+              <SidebarGroupLabel>{t('warehouseOps')}</SidebarGroupLabel>
+              <SidebarMenu>
+                  {renderNavItems(navConfig.desktop.picker)}
+              </SidebarMenu>
+          </SidebarGroup>
+        }
+
+        { (role === 'superadmin' || role === 'admin' || role === 'picker') && <SidebarSeparator /> }
+
         { (role === 'client' || role === 'superadmin') &&
             <SidebarGroup>
                 <SidebarGroupLabel>{t('clientPortal')}</SidebarGroupLabel>

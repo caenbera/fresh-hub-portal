@@ -16,5 +16,7 @@
   "more": "More",
   "settings": "Settings",
   "support": "Support",
-  "logout": "Logout"
+  "logout": "Logout",
+  "picking": "Picking & Packing",
+  "warehouseOps": "Warehouse Ops"
 }

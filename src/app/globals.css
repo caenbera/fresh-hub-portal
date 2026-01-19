@@ -166,4 +166,11 @@
       display: none !important;
     }
   }
+
+  .slide-out {
+    opacity: 0;
+    transform: translateX(100%);
+    margin-bottom: -80px; /* Adjust based on card height */
+    transition: all 0.4s ease-in-out;
+  }
 }
