@@ -142,6 +142,17 @@
   .status-cancel {
       @apply bg-[#ffebee] text-[#c62828] hover:bg-[#ffebee]/80;
   }
+  
+  /* Client History Statuses */
+  .status-delivered { 
+    @apply bg-green-100 text-green-800 border-green-200;
+  }
+  .status-pending { 
+    @apply bg-orange-100 text-orange-800 border-orange-200;
+  }
+  .status-cancelled { 
+    @apply bg-red-100 text-red-800 border-red-200;
+  }
 
   @media print {
     body.is-printing {

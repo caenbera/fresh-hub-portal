@@ -28,6 +28,7 @@ async function getMessages(locale: string) {
     const ordersPageMessages = (await import(`./messages/${locale}/OrdersPage.json`)).default;
     const pickingPageMessages = (await import(`./messages/${locale}/PickingPage.json`)).default;
     const clientDashboardPageMessages = (await import(`./messages/${locale}/ClientDashboardPage.json`)).default;
+    const clientHistoryPageMessages = (await import(`./messages/${locale}/ClientHistoryPage.json`)).default;
 
     return {
       Auth: authMessages,
@@ -52,6 +53,7 @@ async function getMessages(locale: string) {
       OrdersPage: ordersPageMessages,
       PickingPage: pickingPageMessages,
       ClientDashboardPage: clientDashboardPageMessages,
+      ClientHistoryPage: clientHistoryPageMessages,
     };
   } catch (error) {
     notFound();

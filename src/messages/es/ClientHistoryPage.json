@@ -1,0 +1,13 @@
+{
+    "title": "Historial de Pedidos",
+    "description": "Aquí puedes encontrar todos tus pedidos anteriores y sus detalles.",
+    "product_summary": "Resumen de Productos",
+    "reorder_button": "Volver a Pedir",
+    "reorder_toast_title": "¡Productos Agregados!",
+    "reorder_toast_description": "Los productos de este pedido han sido agregados a tu carrito actual.",
+    "status_delivered": "Entregado",
+    "status_pending": "Pendiente",
+    "status_processing": "Procesando",
+    "status_shipped": "En Ruta",
+    "status_cancelled": "Cancelado"
+}

@@ -1,0 +1,13 @@
+{
+    "title": "Order History",
+    "description": "Here you can find all your previous orders and their details.",
+    "product_summary": "Product Summary",
+    "reorder_button": "Order Again",
+    "reorder_toast_title": "Products Added!",
+    "reorder_toast_description": "The items from this order have been added to your current cart.",
+    "status_delivered": "Delivered",
+    "status_pending": "Pending",
+    "status_processing": "Processing",
+    "status_shipped": "Shipped",
+    "status_cancelled": "Cancelled"
+}
