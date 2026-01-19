@@ -1,4 +1,4 @@
-import type { Supplier, SupplierProduct } from '@/types';
+import type { Supplier, SupplierProduct, Client, ClientNote } from '@/types';
 
 export const suppliers: Supplier[] = [
     {
@@ -123,4 +123,83 @@ export const supplierProducts: SupplierProduct[] = [
         previousCost: null,
         stockStatus: 'limited',
     }
+];
+
+export const clients: Client[] = [
+    {
+        id: "C-001",
+        name: "Tacos El Rey USA",
+        tier: "gold",
+        contact: "Carlos Gomez",
+        email: "carlos@tacoselrey.com",
+        creditLimit: 5000,
+        creditUsed: 1250,
+        totalSales: 15400,
+        status: "active",
+        color: "#e67e22",
+        address: "450 Brickell Ave,\nMiami, FL 33131",
+        gateCode: "#4490",
+        paymentTerms: "Net 30",
+        priceList: "VIP Gold",
+        memberSince: 2023,
+    },
+    {
+        id: "C-002",
+        name: "Hotel Miami Beach",
+        tier: "gold",
+        contact: "Sarah Miller",
+        email: "purchasing@hotelmiami.com",
+        creditLimit: 10000,
+        creditUsed: 8900,
+        totalSales: 42000,
+        status: "active",
+        color: "#2980b9",
+        address: "1 Ocean Drive,\nMiami Beach, FL 33139",
+        paymentTerms: "Net 15",
+        priceList: "VIP Gold",
+        memberSince: 2022,
+    },
+    {
+        id: "C-003",
+        name: "Burger Shack",
+        tier: "silver",
+        contact: "Mike Ross",
+        email: "mike@burgershack.com",
+        creditLimit: 2000,
+        creditUsed: 100,
+        totalSales: 3200,
+        status: "active",
+        color: "#e74c3c",
+        address: "123 Wynwood Walls,\nMiami, FL 33127",
+        paymentTerms: "Net 7",
+        priceList: "Standard",
+        memberSince: 2024,
+    },
+    {
+        id: "C-004",
+        name: "Cantina La 20",
+        tier: "bronze",
+        contact: "Pedro Infante",
+        email: "admin@la20.com",
+        creditLimit: 1500,
+        creditUsed: 1600,
+        totalSales: 800,
+        status: "blocked",
+        color: "#8e44ad",
+        address: "801 S Miami Ave,\nMiami, FL 33130",
+        paymentTerms: "Net 7",
+        priceList: "Standard",
+        memberSince: 2024,
+    }
+];
+
+export const clientOrders = [
+    { id: '#ORD-8852', date: 'Hoy, 10:30 AM', items: 15, total: 450.00, status: 'Nuevo' },
+    { id: '#ORD-8820', date: '10 Ene 2024', items: 42, total: 1200.00, status: 'Entregado' },
+    { id: '#ORD-8790', date: '02 Ene 2024', items: 10, total: 320.50, status: 'Entregado' },
+]
+
+export const clientNotes: ClientNote[] = [
+    { author: 'Admin', date: '15 Ene 2024', text: 'Cliente solicitó cambio de horario. Solo entregar entre 8 AM y 11 AM por restricción de zona de carga.', color: '#f1c40f' },
+    { author: 'Ventas', date: '10 Dic 2023', text: 'Se le aprobó aumento de cupo a $5,000 por buena conducta de pago.', color: '#2ecc71'},
 ];

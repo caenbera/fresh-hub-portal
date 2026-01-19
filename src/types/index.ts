@@ -78,3 +78,28 @@ export interface SupplierProduct {
   previousCost: number | null;
   stockStatus: 'available' | 'limited' | 'unavailable';
 }
+
+export interface Client {
+  id: string;
+  name: string;
+  tier: 'gold' | 'silver' | 'bronze';
+  contact: string;
+  email: string;
+  creditLimit: number;
+  creditUsed: number;
+  totalSales: number;
+  status: 'active' | 'inactive' | 'blocked';
+  color: string;
+  address: string;
+  gateCode?: string;
+  paymentTerms: string;
+  priceList: string;
+  memberSince: number;
+}
+
+export interface ClientNote {
+  author: string;
+  date: string;
+  text: string;
+  color: string;
+}
