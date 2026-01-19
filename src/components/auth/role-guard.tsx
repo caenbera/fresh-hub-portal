@@ -16,25 +16,22 @@ export function RoleGuard({ allowedRoles, children }: RoleGuardProps) {
   const router = useRouter();
 
   useEffect(() => {
+    // Wait until the authentication state is fully resolved
     if (loading) return;
 
+    // If there's no role or the role is not in the allowed list, redirect to login.
     if (!role || !allowedRoles.includes(role)) {
-      // Redirect to a safe default page if the role is not allowed
-      // This could be the login page or a generic "access denied" page
       router.push('/login'); 
     }
   }, [role, loading, allowedRoles, router]);
 
-
-  if (loading) {
-    return <div>Loading...</div>; // Or a spinner
-  }
-
-  // If the role is not allowed, render nothing to prevent content flashing
-  if (!role || !allowedRoles.includes(role)) {
+  // While loading, or if the role is invalid, render nothing.
+  // The MainLayout handles the main loading skeleton, and returning null here
+  // prevents any content from flashing before a potential redirect.
+  if (loading || !role || !allowedRoles.includes(role)) {
     return null;
   }
 
-  // If the role is allowed, render the children components
+  // If authentication is loaded and the role is valid, render the children.
   return <>{children}</>;
 }
