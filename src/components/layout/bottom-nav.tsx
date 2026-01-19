@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Link, usePathname, useRouter } from '@/navigation';
 import { useTranslations } from 'next-intl';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from '../landing/language-switcher';
 import { useAuth } from '@/context/auth-context';
@@ -104,8 +104,8 @@ function MoreMenuSheetContent({ onClose, navConfig }: { onClose: () => void, nav
                         <AvatarFallback>{userProfile ? getInitials(userProfile.businessName) : 'U'}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
-                      <span className="font-semibold text-sm">{userProfile?.businessName}</span>
-                      <span className="text-xs text-muted-foreground capitalize">{role}</span>
+                      <SheetTitle className="font-semibold text-sm text-left">{userProfile?.businessName}</SheetTitle>
+                      <SheetDescription className="text-xs text-muted-foreground capitalize text-left">{role}</SheetDescription>
                     </div>
                 </div>
                  <LanguageSwitcher />
