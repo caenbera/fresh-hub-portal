@@ -34,6 +34,14 @@ export function OrdersTable({ orders, onViewDetails }: OrdersTableProps) {
   const { toast } = useToast();
   const t = useTranslations('OrdersPage');
 
+  const statusTranslationMap: Record<OrderStatus, string> = {
+    pending: 'status_new',
+    processing: 'status_preparing',
+    shipped: 'status_in_route',
+    delivered: 'status_delivered',
+    cancelled: 'status_cancelled',
+  };
+
   const getStatusBadge = (status: OrderStatus) => {
     switch(status) {
       case 'pending': return <Badge className="badge-status status-new"><Bell className="h-3 w-3" />{t('status_new')}</Badge>;
@@ -128,7 +136,7 @@ export function OrdersTable({ orders, onViewDetails }: OrdersTableProps) {
                           onSelect={() => handleStatusChange(order.id, status)}
                           className="capitalize"
                         >
-                          {t('actions_set_to', { status: t(`status_${status.replace('-', '_')}` as any) || status })}
+                          {t('actions_set_to', { status: t(statusTranslationMap[status] as any) || status })}
                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuContent>
