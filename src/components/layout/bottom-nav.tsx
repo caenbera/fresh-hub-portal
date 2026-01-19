@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Link, usePathname, useRouter } from '@/navigation';
 import { useTranslations } from 'next-intl';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { LanguageSwitcher } from '../landing/language-switcher';
 import { useAuth } from '@/context/auth-context';
@@ -11,7 +11,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, UserCircle, MoreHorizontal, ChevronRight, Users, LayoutGrid, Tag, Trophy } from 'lucide-react';
+import { LogOut, UserCircle, MoreHorizontal, ChevronRight, Users, LayoutGrid, Tag, Trophy, Headset } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import type { NavDefinition } from './app-sidebar';
 
@@ -97,20 +97,29 @@ function MoreMenuSheetContent({ onClose, navConfig }: { onClose: () => void, nav
 
     return (
         <div className="flex flex-col p-4 max-h-[80vh] overflow-y-auto">
-             <div className="flex items-center justify-between pb-2">
-                <div className="flex items-center gap-3">
-                    <Avatar>
-                        <AvatarImage src="/placeholder-user.jpg" alt={userProfile?.businessName} />
-                        <AvatarFallback>{userProfile ? getInitials(userProfile.businessName) : 'U'}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                      <SheetTitle className="font-semibold text-sm text-left">{userProfile?.businessName}</SheetTitle>
-                      <SheetDescription className="text-xs text-muted-foreground capitalize text-left">{role}</SheetDescription>
+            <SheetHeader className="text-left pb-2">
+                <SheetTitle className="text-sm">
+                    <div className="flex items-center gap-3">
+                        <Avatar>
+                            <AvatarImage src="/placeholder-user.jpg" alt={userProfile?.businessName} />
+                            <AvatarFallback>{userProfile ? getInitials(userProfile.businessName) : 'U'}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                            <span className="font-semibold text-sm text-left">{userProfile?.businessName}</span>
+                            <span className="text-xs text-muted-foreground capitalize text-left">{role}</span>
+                        </div>
                     </div>
-                </div>
-                 <LanguageSwitcher />
+                </SheetTitle>
+                <SheetDescription className="hidden">
+                    User account and navigation menu.
+                </SheetDescription>
+            </SheetHeader>
+            <div className="ml-auto -mt-10">
+                <LanguageSwitcher />
             </div>
+
             <Separator className="my-2" />
+
              {role === 'superadmin' && (
                 <>
                 <p className="px-2 pt-2 pb-1 text-xs font-semibold text-muted-foreground uppercase">{t('adminPanel')}</p>
@@ -161,9 +170,9 @@ function MoreMenuSheetContent({ onClose, navConfig }: { onClose: () => void, nav
                 </div>
                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
             </Link>
-            <Link href="#" onClick={onClose} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted text-sm font-medium">
+            <Link href="/client/support" onClick={onClose} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted text-sm font-medium">
                 <div className="flex items-center gap-3">
-                    <Users className="w-5 h-5 text-muted-foreground" />
+                    <Headset className="w-5 h-5 text-muted-foreground" />
                     <span>{t('support')}</span>
                 </div>
                  <ChevronRight className="w-4 h-4 text-muted-foreground" />

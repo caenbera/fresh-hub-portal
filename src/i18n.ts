@@ -32,6 +32,7 @@ async function getMessages(locale: string) {
     const clientAccountPageMessages = (await import(`./messages/${locale}/ClientAccountPage.json`)).default;
     const clientOffersPageMessages = (await import(`./messages/${locale}/ClientOffersPage.json`)).default;
     const clientRewardsPageMessages = (await import(`./messages/${locale}/ClientRewardsPage.json`)).default;
+    const supportPageMessages = (await import(`./messages/${locale}/SupportPage.json`)).default;
 
     return {
       Auth: authMessages,
@@ -60,6 +61,7 @@ async function getMessages(locale: string) {
       ClientAccountPage: clientAccountPageMessages,
       ClientOffersPage: clientOffersPageMessages,
       ClientRewardsPage: clientRewardsPageMessages,
+      SupportPage: supportPageMessages,
     };
   } catch (error) {
     notFound();
