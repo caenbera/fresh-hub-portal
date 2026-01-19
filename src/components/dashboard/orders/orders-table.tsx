@@ -1,3 +1,4 @@
+"use client";
 
 import {
   Table,
@@ -10,7 +11,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import type { Order, OrderStatus } from '@/types';
 import { format } from 'date-fns';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -20,7 +21,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 import { updateOrder } from '@/lib/firestore/orders';
+import { useTranslations } from 'next-intl';
 
 interface OrdersTableProps {
   orders: Order[];
@@ -28,13 +31,27 @@ interface OrdersTableProps {
 }
 
 export function OrdersTable({ orders, onViewDetails }: OrdersTableProps) {
+  const { toast } = useToast();
+  const t = useTranslations('Dashboard');
+
+  const getStatusBadge = (status: OrderStatus) => {
+    switch(status) {
+      case 'pending': return <Badge className="badge-status status-new">{t('status_new')}</Badge>;
+      case 'processing': return <Badge className="badge-status status-prep">{t('status_preparing')}</Badge>;
+      case 'shipped': return <Badge className="badge-status status-route">{t('status_in_route')}</Badge>;
+      case 'delivered': return <Badge className="badge-status status-done">{t('status_delivered')}</Badge>;
+      case 'cancelled': return <Badge className="badge-status status-cancel">{t('status_cancelled')}</Badge>;
+      default: return <Badge variant="secondary">{status}</Badge>;
+    }
+  };
+
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     try {
       await updateOrder(orderId, { status: newStatus });
-      // Optional: Show a success toast
+      toast({ title: "Success", description: `Order #${orderId.substring(0,4)} status updated to ${newStatus}.`});
     } catch (error) {
       console.error("Failed to update order status:", error);
-      // Optional: Show an error toast
+      toast({ variant: "destructive", title: "Error", description: "Failed to update order status."});
     }
   };
   
@@ -47,18 +64,7 @@ export function OrdersTable({ orders, onViewDetails }: OrdersTableProps) {
 
   const formatDate = (timestamp: any) => {
     const date = timestamp?.toDate ? timestamp.toDate() : new Date(timestamp);
-    return format(date, 'MMM dd, yyyy');
-  };
-
-  const getStatusVariant = (status: OrderStatus) => {
-    switch (status) {
-      case 'pending': return 'default';
-      case 'processing': return 'secondary';
-      case 'shipped': return 'secondary';
-      case 'delivered': return 'default';
-      case 'cancelled': return 'destructive';
-      default: return 'outline';
-    }
+    return format(date, 'MMM dd, yyyy, hh:mm a');
   };
   
   const availableStatuses: OrderStatus[] = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
@@ -67,60 +73,72 @@ export function OrdersTable({ orders, onViewDetails }: OrdersTableProps) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Customer</TableHead>
-          <TableHead>Order Date</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead className="text-right">Total</TableHead>
-           <TableHead>
-            <span className="sr-only">Actions</span>
-          </TableHead>
+          <TableHead>{t('table_header_id')}</TableHead>
+          <TableHead>{t('table_header_client')}</TableHead>
+          <TableHead>{t('table_header_date')}</TableHead>
+          <TableHead className="text-right">{t('table_header_total')}</TableHead>
+          <TableHead>{t('table_header_status')}</TableHead>
+          <TableHead className="text-right">{t('table_header_actions')}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {orders.length > 0 ? (
           orders.map((order) => (
             <TableRow key={order.id}>
-              <TableCell className="font-medium">{order.businessName}</TableCell>
-              <TableCell>{formatDate(order.createdAt)}</TableCell>
+              <TableCell className="font-bold">#{order.id.substring(0, 7).toUpperCase()}</TableCell>
               <TableCell>
-                 <Badge variant={getStatusVariant(order.status)} className="capitalize">
-                    {order.status}
-                </Badge>
+                <div className="font-semibold">{order.businessName}</div>
+                <small className="text-muted-foreground">Cliente Recurrente</small>
               </TableCell>
-              <TableCell className="text-right">{formatCurrency(order.total)}</TableCell>
+              <TableCell className="text-muted-foreground text-sm">{formatDate(order.createdAt)}</TableCell>
+              <TableCell className="text-right font-bold">{formatCurrency(order.total)}</TableCell>
+              <TableCell>
+                {getStatusBadge(order.status)}
+              </TableCell>
               <TableCell className="text-right">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button aria-haspopup="true" size="icon" variant="ghost">
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">Toggle menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                    <DropdownMenuItem onSelect={() => onViewDetails(order)}>
-                      View Details
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                    {availableStatuses.map(status => (
-                       <DropdownMenuItem 
+                <div className="flex justify-end items-center gap-2">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onViewDetails(order)}>
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button aria-haspopup="true" size="icon" variant="ghost" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Toggle menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuItem onSelect={() => onViewDetails(order)}>
+                        View Details
+                      </DropdownMenuItem>
+                       <DropdownMenuItem onSelect={() => {
+                         onViewDetails(order);
+                         setTimeout(() => window.print(), 200);
+                       }}>
+                        Print
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel>Change Status</DropdownMenuLabel>
+                      {availableStatuses.map(status => (
+                        <DropdownMenuItem 
                           key={status}
                           disabled={order.status === status}
                           onSelect={() => handleStatusChange(order.id, status)}
                           className="capitalize"
                         >
-                          {status}
-                       </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                          Set to {t(`status_${status.replace('-', '_')}` as any) || status}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </TableCell>
             </TableRow>
           ))
         ) : (
           <TableRow>
-            <TableCell colSpan={5} className="h-24 text-center">
+            <TableCell colSpan={6} className="h-24 text-center">
               No orders found.
             </TableCell>
           </TableRow>
