@@ -1,0 +1,20 @@
+{
+  "welcome_back": "Bienvenido de nuevo,",
+  "expenses_this_month": "Gastos este Mes",
+  "budget_message": "Estás dentro de tu presupuesto mensual.",
+  "saved_ytd": "Ahorrado (YTD)",
+  "vs_2023": "vs 2023",
+  "pending_balance": "Saldo Pendiente",
+  "due": "Vence",
+  "my_expenses_chart_title": "Mis Gastos (Últimos 6 meses)",
+  "period_semi_annual": "Semestral",
+  "period_annual": "Anual",
+  "what_you_buy_most_title": "Lo Que Más Compras",
+  "units_purchased": "{count, plural, one {# unidad comprada} other {# unidades compradas}}",
+  "buy_again_button": "Comprar de nuevo",
+  "expense_by_category_title": "Gasto por Categoría",
+  "category_vegetables": "Verduras",
+  "category_fruits": "Frutas",
+  "category_groceries": "Abarrotes",
+  "category_others": "Otros"
+}
