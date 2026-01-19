@@ -2,7 +2,7 @@
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarSeparator } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/auth-context';
-import { LayoutGrid, ShoppingCart, Package, Users, History, Home, ClipboardList, Leaf, Truck } from 'lucide-react';
+import { LayoutGrid, ShoppingCart, Package, Users, History, Home, ClipboardList, Leaf, Truck, ShoppingBag } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -57,6 +57,7 @@ export function AppSidebar() {
         { href: '/admin/dashboard', label: t('dashboard'), icon: LayoutGrid },
         { href: '/admin/orders', label: t('manageOrders'), icon: ShoppingCart },
         { href: '/admin/products', label: t('manageProducts'), icon: Package },
+        { href: '/admin/purchasing', label: t('purchasing'), icon: ShoppingBag },
         { href: '/admin/suppliers', label: t('suppliers'), icon: Truck },
       ],
       superadmin: [
@@ -73,6 +74,7 @@ export function AppSidebar() {
         { href: '/admin/dashboard', label: t('dashboard'), icon: LayoutGrid },
         { href: '/admin/orders', label: t('manageOrders'), icon: ShoppingCart },
         { href: '/admin/products', label: t('manageProducts'), icon: Package },
+        { href: '/admin/purchasing', label: t('purchasing'), icon: ShoppingBag },
         { href: '/admin/suppliers', label: t('suppliers'), icon: Truck },
       ],
     }

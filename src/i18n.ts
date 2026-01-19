@@ -23,6 +23,7 @@ async function getMessages(locale: string) {
     const navigationBarMessages = (await import(`./messages/${locale}/NavigationBar.json`)).default;
     const clientNewOrderPageMessages = (await import(`./messages/${locale}/ClientNewOrderPage.json`)).default;
     const suppliersPageMessages = (await import(`./messages/${locale}/SuppliersPage.json`)).default;
+    const purchasingPageMessages = (await import(`./messages/${locale}/PurchasingPage.json`)).default;
 
     return {
       Auth: authMessages,
@@ -42,6 +43,7 @@ async function getMessages(locale: string) {
       NavigationBar: navigationBarMessages,
       ClientNewOrderPage: clientNewOrderPageMessages,
       SuppliersPage: suppliersPageMessages,
+      PurchasingPage: purchasingPageMessages,
     };
   } catch (error) {
     notFound();
