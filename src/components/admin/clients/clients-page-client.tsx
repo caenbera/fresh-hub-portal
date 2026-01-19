@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -88,7 +89,7 @@ export function ClientsPageClient() {
                     </TableHeader>
                     <TableBody>
                         {clients.map(client => {
-                            const creditUsage = (client.creditUsed / client.creditLimit) * 100;
+                            const creditUsage = Math.round((client.creditUsed / client.creditLimit) * 100);
                             let creditColor = "bg-green-500";
                             if (creditUsage > 85) creditColor = "bg-red-500";
                             else if (creditUsage > 50) creditColor = "bg-yellow-500";

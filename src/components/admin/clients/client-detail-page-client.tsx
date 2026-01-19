@@ -40,7 +40,7 @@ interface ClientDetailPageClientProps {
 export function ClientDetailPageClient({ client }: ClientDetailPageClientProps) {
   const t = useTranslations('ClientsPage');
 
-  const creditUsage = Math.min((client.creditUsed / client.creditLimit) * 100, 100);
+  const creditUsage = Math.min(Math.round((client.creditUsed / client.creditLimit) * 100), 100);
   let creditHealthColor = "bg-green-500";
   if (creditUsage > 50) creditHealthColor = "bg-yellow-500";
   if (creditUsage > 85) creditHealthColor = "bg-red-500";
