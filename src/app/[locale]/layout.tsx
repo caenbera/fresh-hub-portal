@@ -1,7 +1,7 @@
 
 import type { ReactNode } from 'react';
 import { NextIntlClientProvider, useMessages } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { getMessages, unstable_setRequestLocale } from 'next-intl/server';
 import '../globals.css';
 import { AuthProvider } from '@/context/auth-context';
 import { Toaster } from '@/components/ui/toaster';
@@ -13,6 +13,7 @@ export default async function RootLayout({
   children: ReactNode;
   params: { locale: string };
 }>) {
+  unstable_setRequestLocale(locale);
   const messages = await getMessages();
 
   return (
