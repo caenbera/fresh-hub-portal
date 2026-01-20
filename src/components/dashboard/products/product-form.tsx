@@ -14,7 +14,6 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { addProduct, updateProduct } from '@/lib/firestore/products';
 import type { Product } from '@/types';
-import { suppliers } from '@/lib/placeholder-data';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Camera, Plus, Check, Undo2, Pencil, Trash2, Percent } from 'lucide-react'; 
 import { cn } from '@/lib/utils';
@@ -72,14 +71,17 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const salePriceValue = form.watch('salePrice');
 
   useEffect(() => {
+    const defaultValues: ProductFormValues = {
+      name: '', sku: '', category: 'Verduras', unit: 'Caja 20lb',
+      supplierId: defaultSupplierId || '',
+      cost: 0, salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '',
+    };
+
     if (product) {
-      form.reset(product);
+      form.reset({ ...product, supplierId: product.supplierId || defaultSupplierId });
       setImgUrlInputValue(product.photoUrl || '');
     } else {
-      form.reset({
-         name: '', sku: '', category: 'Verduras', unit: 'Caja 20lb', supplierId: defaultSupplierId || '',
-         cost: 0, salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '',
-      });
+      form.reset(defaultValues);
       setImgUrlInputValue('');
     }
   }, [product, form, defaultSupplierId]);
