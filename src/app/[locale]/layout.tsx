@@ -9,11 +9,12 @@ import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 export default async function RootLayout({
   children,
-  params: { locale },
+  params,
 }: Readonly<{
   children: ReactNode;
   params: { locale: string };
 }>) {
+  const { locale } = params;
   unstable_setRequestLocale(locale);
   const messages = await getMessages();
 

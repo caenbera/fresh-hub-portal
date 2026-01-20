@@ -5,7 +5,8 @@ import { notFound } from 'next/navigation';
 import type { Product } from '@/types';
 
 export default async function SupplierDetailPage({ params }: { params: { supplierId: string } }) {
-  const supplier = await getSupplier(params.supplierId);
+  const { supplierId } = params;
+  const supplier = await getSupplier(supplierId);
   
   if (!supplier) {
     notFound();
