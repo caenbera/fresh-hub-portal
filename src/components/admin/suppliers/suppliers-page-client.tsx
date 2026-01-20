@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Handshake, PlusCircle, Truck } from 'lucide-react';
 import { suppliers } from '@/lib/placeholder-data';
 import { SupplierCard } from './supplier-card';
 import { AddSupplierDialog } from './add-supplier-dialog';
+import type { Supplier } from '@/types';
+import { Card, CardContent } from "@/components/ui/card";
 
 const KpiCard = ({ title, value, icon: Icon, iconBg, iconColor }: any) => (
   <Card className="shadow-sm">
@@ -27,27 +28,41 @@ export function SuppliersPageClient() {
   const t = useTranslations('SuppliersPage');
   const [activeFilter, setActiveFilter] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
 
   const totalPayable = suppliers.reduce((acc, s) => acc + s.finance.pendingBalance, 0);
 
   const filters = [
     { id: 'all', label: t('all') },
-    { id: 'fruits', label: t('fruits_vegetables') },
-    { id: 'packaging', label: t('packaging') },
-    { id: 'groceries', label: t('groceries') },
-    { id: 'logistics', label: t('logistics') },
+    { id: 'Frutas y Verduras', label: t('fruits_vegetables') },
+    { id: 'Empaques y Desechables', label: t('packaging') },
+    { id: 'Secos y Abarrotes', label: t('groceries') },
+    { id: 'Logística', label: t('logistics') },
   ];
+
+  const handleAddSupplier = () => {
+    setSelectedSupplier(null);
+    setIsDialogOpen(true);
+  };
+  
+  const handleDeleteSupplier = (supplierId: string) => {
+      console.log("Deleting supplier...", supplierId);
+      // In a real app, you would call a Firestore function here
+      alert(`Supplier ${supplierId} deleted!`);
+  };
+
+  const filteredSuppliers = suppliers.filter(s => activeFilter === 'all' || s.category === activeFilter);
 
   return (
     <>
-      <AddSupplierDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      <AddSupplierDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} supplier={selectedSupplier} />
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold font-headline">{t('title')}</h1>
             <p className="text-muted-foreground">{t('subtitle')}</p>
           </div>
-          <Button onClick={() => setIsDialogOpen(true)}>
+          <Button onClick={handleAddSupplier}>
             <PlusCircle className="mr-2 h-4 w-4" />
             {t('add_supplier_button')}
           </Button>
@@ -95,8 +110,8 @@ export function SuppliersPageClient() {
 
         {/* Suppliers Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {suppliers.map(supplier => (
-            <SupplierCard key={supplier.id} supplier={supplier} />
+          {filteredSuppliers.map(supplier => (
+            <SupplierCard key={supplier.id} supplier={supplier} onDelete={handleDeleteSupplier} />
           ))}
         </div>
       </div>

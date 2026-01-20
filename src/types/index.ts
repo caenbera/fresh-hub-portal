@@ -50,16 +50,21 @@ export interface Order {
 }
 
 // NEW TYPES
+export interface SupplierContact {
+  id: string;
+  department: string;
+  name: string;
+  phone: string;
+  isWhatsapp: boolean;
+}
+
 export interface Supplier {
   id: string;
   name: string;
   category: string;
-  logo: string;
-  contact: {
-    name: string;
-    phone: string;
-    email: string;
-  };
+  email: string;
+  address: string;
+  contacts: SupplierContact[];
   rating: number;
   deliveryDays: string;
   paymentTerms: string; 

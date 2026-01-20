@@ -3,37 +3,36 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { suppliers, supplierProducts } from '@/lib/placeholder-data';
-import type { Supplier, SupplierProduct } from '@/types';
+import { supplierProducts } from '@/lib/placeholder-data';
+import type { Supplier } from '@/types';
 import { Link } from '@/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   ArrowLeft,
   Star,
   FileText,
   Send,
-  UserCircle,
   Phone,
   Mail,
   Truck,
   CreditCard,
   Info,
-  Percent,
-  ThumbsUp,
-  Boxes,
-  TrendingUp,
   Search,
   Plus,
   ArrowUp,
   ArrowDown,
   LineChart,
-  Pencil
+  Pencil,
+  BotMessageSquare,
 } from 'lucide-react';
 import { ProductDialog } from '@/components/dashboard/products/product-dialog';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 interface SupplierDetailPageClientProps {
     supplier: Supplier;
@@ -43,23 +42,55 @@ const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 };
 
-const Rating = ({ rating, count }: { rating: number, count?: string }) => (
-  <div className="flex items-center gap-1">
-    <div className="flex items-center gap-0.5">
-        {[...Array(5)].map((_, i) => (
-        <Star
-            key={i}
-            className={`h-4 w-4 ${i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
-        />
-        ))}
+const InteractiveRating = ({ initialRating, onRate }: { initialRating: number, onRate: (rating: number) => void }) => {
+  const [hoverRating, setHoverRating] = useState(0);
+  const [currentRating, setCurrentRating] = useState(initialRating);
+
+  const handleRate = (rating: number) => {
+    setCurrentRating(rating);
+    onRate(rating);
+  };
+  
+  return (
+    <div className="flex items-center gap-1">
+      <div 
+        className="flex items-center gap-0.5"
+        onMouseLeave={() => setHoverRating(0)}
+      >
+        {[...Array(5)].map((_, i) => {
+          const ratingValue = i + 1;
+          return (
+            <Star
+              key={i}
+              className={cn(
+                "h-5 w-5 cursor-pointer transition-colors",
+                ratingValue <= (hoverRating || currentRating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+              )}
+              onMouseEnter={() => setHoverRating(ratingValue)}
+              onClick={() => handleRate(ratingValue)}
+            />
+          );
+        })}
+      </div>
+      <span className="text-xs text-muted-foreground">({currentRating.toFixed(1)})</span>
     </div>
-    {count && <span className="text-xs text-muted-foreground">{count}</span>}
-  </div>
-);
+  );
+};
 
 export function SupplierDetailPageClient({ supplier }: SupplierDetailPageClientProps) {
   const t = useTranslations('SuppliersPage');
+  const { toast } = useToast();
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [currentSupplier, setCurrentSupplier] = useState(supplier);
+
+  const handleRatingChange = (newRating: number) => {
+      // In a real app, this would be an async call to update the DB
+      setCurrentSupplier(prev => ({...prev, rating: newRating}));
+      toast({
+          title: t('rating_updated_title'),
+          description: t('rating_updated_desc', { supplierName: supplier.name, rating: newRating }),
+      });
+  };
 
   return (
     <>
@@ -83,18 +114,14 @@ export function SupplierDetailPageClient({ supplier }: SupplierDetailPageClientP
       <Card className="p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">
-            <Image
-              src={supplier.logo}
-              alt={`${supplier.name} logo`}
-              width={80}
-              height={80}
-              className="rounded-2xl border p-1 hidden sm:block"
-            />
+            <Avatar className="h-16 w-16 text-2xl font-bold">
+                <AvatarFallback>{supplier.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+            </Avatar>
             <div>
               <h2 className="text-2xl font-bold font-headline">{supplier.name}</h2>
               <div className="flex items-center gap-3 mt-1">
                 {supplier.verified && <Badge className="bg-green-100 text-green-700 hover:bg-green-100">{t('verified')}</Badge>}
-                <Rating rating={supplier.rating} count={`(${supplier.rating}.0)`} />
+                <InteractiveRating initialRating={currentSupplier.rating} onRate={handleRatingChange} />
               </div>
             </div>
           </div>
@@ -112,12 +139,25 @@ export function SupplierDetailPageClient({ supplier }: SupplierDetailPageClientP
             <CardTitle className="text-base">{t('contact_payments')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
-            <div className="flex items-start gap-3"><UserCircle className="h-5 w-5 text-primary mt-0.5" /> <div>{supplier.contact.name}</div></div>
-            <div className="flex items-start gap-3"><Phone className="h-5 w-5 text-primary mt-0.5" /> <div>{supplier.contact.phone}</div></div>
-            <div className="flex items-start gap-3"><Mail className="h-5 w-5 text-primary mt-0.5" /> <a href={`mailto:${supplier.contact.email}`} className="text-primary underline">{supplier.contact.email}</a></div>
-            <hr />
+            <div className="flex items-start gap-3"><Mail className="h-5 w-5 text-primary mt-0.5" /> <a href={`mailto:${supplier.email}`} className="text-primary underline">{supplier.email}</a></div>
             <div className="flex items-start gap-3"><Truck className="h-5 w-5 text-primary mt-0.5" /> <div>{t('delivery_days')}: {supplier.deliveryDays}</div></div>
             <div className="flex items-start gap-3"><CreditCard className="h-5 w-5 text-primary mt-0.5" /> <div>{t('payment_terms')}: {supplier.paymentTerms}</div></div>
+            <hr />
+            <h4 className="font-bold">{t('contacts_section_title')}</h4>
+            {supplier.contacts.map(contact => (
+                 <div key={contact.id} className="flex justify-between items-start text-xs border-b pb-2 last:border-0">
+                    <div>
+                        <div className="font-semibold text-sm">{contact.name}</div>
+                        <div className="text-muted-foreground">{contact.department}</div>
+                        <div className="flex items-center gap-1 mt-1">
+                            <Phone className="h-3 w-3" />
+                            <span>{contact.phone}</span>
+                            {contact.isWhatsapp && <BotMessageSquare className="h-3 w-3 text-green-500" />}
+                        </div>
+                    </div>
+                     <Button variant="ghost" size="icon" className="h-7 w-7"><Pencil className="h-3 w-3"/></Button>
+                 </div>
+            ))}
           </CardContent>
         </Card>
 
@@ -236,4 +276,3 @@ export function SupplierDetailPageClient({ supplier }: SupplierDetailPageClientP
     </>
   );
 }
-    
