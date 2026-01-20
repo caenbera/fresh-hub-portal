@@ -15,7 +15,7 @@ service cloud.firestore {
 
     // Helper function to check for admin roles
     function isAdmin() {
-      return isAuthed() && (getUserRole(request.auth.uid) == 'admin' || getUserRole(request.auth.uid) == 'superadmin');
+      return isAuthed() && getUserRole(request.auth.uid) in ['admin', 'superadmin'];
     }
     
     function isSuperAdmin() {
