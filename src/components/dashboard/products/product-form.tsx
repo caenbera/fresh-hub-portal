@@ -18,6 +18,7 @@ import { suppliers } from '@/lib/placeholder-data';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Camera, Plus, Check, Undo2, Pencil, Trash2, Percent } from 'lucide-react'; 
 import { cn } from '@/lib/utils';
+import { useSuppliers } from '@/hooks/use-suppliers';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -47,6 +48,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const t = useTranslations('ProductsPage');
+  const { suppliers, loading: suppliersLoading } = useSuppliers();
   
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
   const [imgUrlInputValue, setImgUrlInputValue] = useState('');
