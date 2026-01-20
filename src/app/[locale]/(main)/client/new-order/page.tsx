@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
@@ -14,37 +14,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import type { Product as ProductType, OrderItem } from '@/types';
-import { CalendarIcon, Search, Star, MessageSquarePlus, Pencil, Minus, Plus, ShoppingBasket } from 'lucide-react';
+import { CalendarIcon, Search, MessageSquarePlus, Pencil, Minus, Plus, ShoppingBasket } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useProducts } from '@/hooks/use-products';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// ✅ URLs limpias (sin espacios al final)
-const products: (Omit<ProductType, 'id'> & { id: number; isFavorite: boolean })[] = [
-  { id: 1, name: "Tomate Chonto Maduro", price: 20, stock: 100, category: "verduras", isFavorite: true, photoUrl: "https://i.postimg.cc/TY6YMwmY/tomate_chonto.png", description: 'Tomate maduro de alta calidad', createdAt: new Date() as any },
-  { id: 2, name: "Cebolla Cabezona Blanca", price: 29, stock: 100, category: "verduras", isFavorite: true, photoUrl: "https://i.postimg.cc/TPwHKV88/cebolla_blanca.png", description: 'Cebolla blanca fresca', createdAt: new Date() as any },
-  { id: 3, name: "Papa Pastusa Lavada", price: 30.50, stock: 100, category: "verduras", isFavorite: false, photoUrl: "https://i.postimg.cc/ncJcbz7t/papa_pastusa.png", description: 'Papa pastusa lavada y lista', createdAt: new Date() as any },
-  { id: 4, name: "Limón Tahití", price: 40, stock: 100, category: "frutas", isFavorite: true, photoUrl: "https://i.postimg.cc/43dFY6CX/limon.png", description: 'Limón Tahití jugoso', createdAt: new Date() as any },
-  { id: 5, name: "Aguacate Hass", price: 25, stock: 100, category: "frutas", isFavorite: false, photoUrl: "https://i.postimg.cc/BZDQVDjB/aguacate_hass.png", description: 'Aguacate Hass en su punto', createdAt: new Date() as any },
-  { id: 6, name: "Cilantro Fresco", price: 17, stock: 100, category: "hierbas", isFavorite: true, photoUrl: "https://i.postimg.cc/s2X0MYFs/cilantro.png", description: 'Manojo de cilantro fresco', createdAt: new Date() as any },
-  { id: 7, name: "Fresas Seleccionadas", price: 40, stock: 100, category: "frutas", isFavorite: false, photoUrl: "https://i.postimg.cc/Qx3xGt7P/fresas.png", description: 'Caja de fresas seleccionadas', createdAt: new Date() as any },
-  { id: 8, name: "Papa Francesa Cong.", price: 60, stock: 100, category: "congelados", isFavorite: false, photoUrl: "https://i.postimg.cc/HsgsDx5D/papa_francesa.png", description: 'Papas a la francesa pre-cortadas', createdAt: new Date() as any },
-  { id: 9, name: "Aceite Vegetal 20L", price: 100, stock: 100, category: "abarrotes", isFavorite: true, photoUrl: "https://i.postimg.cc/7L6Q53vy/aceite20.png", description: 'Bidón de aceite vegetal', createdAt: new Date() as any },
-  { id: 10, name: "Zanahoria", price: 17, stock: 100, category: "verduras", isFavorite: true, photoUrl: "https://i.postimg.cc/5NS9xVqJ/zanahoria.png", description: 'Zanahoria fresca', createdAt: new Date() as any },
-];
-
-const categories = [
-  { id: 'habituales', name: 'Habituales', icon: Star },
-  { id: 'verduras', name: 'Verduras' },
-  { id: 'frutas', name: 'Frutas' },
-  { id: 'hierbas', name: 'Hierbas' },
-  { id: 'congelados', name: 'Congelados' },
-  { id: 'abarrotes', name: 'Abarrotes' },
-];
-
-interface Cart { [productId: number]: number };
-interface Notes { [productId: number]: string };
+interface Cart { [productId: string]: number };
+interface Notes { [productId: string]: string };
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
@@ -67,9 +46,9 @@ const CheckoutContent = ({ orderItems, notes, total, deliveryDate, isSubmitting,
             <div className="flex-grow min-w-0">
               <p className="font-medium text-sm truncate">{item.productName}</p>
               <p className="text-xs text-muted-foreground">{item.quantity} x {formatCurrency(item.price)}</p>
-              {notes[Number(item.productId)] && (
+              {notes[item.productId] && (
                 <p className="text-xs text-blue-600 bg-blue-50 p-1 rounded mt-1">
-                  <b className="font-bold">Nota:</b> {notes[Number(item.productId)]}
+                  <b className="font-bold">Nota:</b> {notes[item.productId]}
                 </p>
               )}
             </div>
@@ -99,10 +78,11 @@ export default function NewOrderPage() {
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { products, loading: productsLoading } = useProducts();
 
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(addDays(new Date(), 1));
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeCategory, setActiveCategory] = useState('habituales');
+  const [activeCategory, setActiveCategory] = useState('');
   const [cart, setCart] = useState<Cart>({});
   const [notes, setNotes] = useState<Notes>({});
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -111,13 +91,29 @@ export default function NewOrderPage() {
   const [currentNote, setCurrentNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const categories = useMemo(() => {
+    if (productsLoading) return [];
+    const uniqueCategories = [...new Set(products.map(p => p.category))];
+    return uniqueCategories.map(c => ({
+      id: c,
+      name: t(c as any) || (c.charAt(0).toUpperCase() + c.slice(1))
+    }));
+  }, [products, productsLoading, t]);
+  
+  useEffect(() => {
+      if (categories.length > 0 && !activeCategory) {
+        setActiveCategory(categories[0].id);
+    }
+  }, [categories, activeCategory]);
+
   const filteredProducts = useMemo(() => {
+    if (productsLoading) return [];
     return products.filter(p => {
-      const matchesCategory = activeCategory === 'habituales' ? p.isFavorite : p.category === activeCategory;
+      const matchesCategory = p.category === activeCategory;
       const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesCategory && matchesSearch;
     });
-  }, [activeCategory, searchTerm]);
+  }, [activeCategory, searchTerm, products, productsLoading]);
 
   const { orderItems, total, totalItems } = useMemo(() => {
     const orderItems: (OrderItem & { photoUrl: string })[] = [];
@@ -125,11 +121,11 @@ export default function NewOrderPage() {
     let totalItems = 0;
 
     for (const productId in cart) {
-      const product = products.find(p => p.id === Number(productId));
+      const product = products.find(p => p.id === productId);
       const quantity = cart[productId];
       if (product && quantity > 0) {
         orderItems.push({
-          productId: String(product.id),
+          productId: product.id,
           productName: product.name,
           quantity,
           price: product.price,
@@ -140,9 +136,9 @@ export default function NewOrderPage() {
       }
     }
     return { orderItems, total, totalItems };
-  }, [cart]);
+  }, [cart, products]);
 
-  const handleQuantityChange = (productId: number, change: number) => {
+  const handleQuantityChange = (productId: string, change: number) => {
     setCart(prev => {
       const newCart = { ...prev };
       const currentQty = newCart[productId] || 0;
@@ -158,7 +154,7 @@ export default function NewOrderPage() {
 
   const handleOpenNoteModal = (product: ProductType) => {
     setCurrentProductForNote(product);
-    setCurrentNote(notes[Number(product.id)] || '');
+    setCurrentNote(notes[product.id] || '');
     setIsNoteModalOpen(true);
   };
 
@@ -167,9 +163,9 @@ export default function NewOrderPage() {
       setNotes(prev => {
         const newNotes = { ...prev };
         if (currentNote.trim()) {
-          newNotes[Number(currentProductForNote.id)] = currentNote;
+          newNotes[currentProductForNote.id] = currentNote;
         } else {
-          delete newNotes[Number(currentProductForNote.id)];
+          delete newNotes[currentProductForNote.id];
         }
         return newNotes;
       });
@@ -255,7 +251,6 @@ export default function NewOrderPage() {
           </div>
         </div>
 
-        {/* ✅ SLIDER DE CATEGORÍAS — CON position: absolute */}
         <div className="relative h-9 overflow-x-auto hide-scrollbar">
           <div className="absolute left-0 top-0 flex items-center gap-1.5 px-3 min-w-full">
             {categories.map(cat => (
@@ -266,13 +261,7 @@ export default function NewOrderPage() {
                 className="rounded-full h-7 px-2.5 text-xs flex-shrink-0 whitespace-nowrap"
                 onClick={() => setActiveCategory(cat.id)}
               >
-                {cat.icon && (
-  <cat.icon
-    className={cn("mr-1 h-3 w-3", activeCategory === cat.id ? 'text-yellow-400' : 'text-muted-foreground')}
-    fill={activeCategory === cat.id ? 'currentColor' : 'none'}
-  />
-)}
-                {t(cat.id)}
+                {cat.name}
               </Button>
             ))}
           </div>
@@ -281,7 +270,20 @@ export default function NewOrderPage() {
 
       {/* Product List */}
       <div className="flex-grow overflow-y-auto pb-32">
-        {filteredProducts.length > 0 ? (
+        {productsLoading ? (
+             <div className="p-2 space-y-px">
+                {[...Array(5)].map((_, i) => (
+                    <div key={i} className="bg-background border-b p-2 flex items-center gap-2">
+                        <Skeleton className="h-[50px] w-[50px] rounded-lg shrink-0" />
+                        <div className="flex-grow min-w-0 space-y-2">
+                           <Skeleton className="h-4 w-3/4" />
+                           <Skeleton className="h-3 w-1/2" />
+                        </div>
+                        <Skeleton className="h-8 w-24 rounded-full shrink-0" />
+                    </div>
+                ))}
+            </div>
+        ) : filteredProducts.length > 0 ? (
           filteredProducts.map(p => {
             const quantity = cart[p.id] || 0;
             const hasNote = !!notes[p.id];
@@ -302,7 +304,7 @@ export default function NewOrderPage() {
                       variant="ghost"
                       size="sm"
                       className={cn("h-auto px-1 py-0 ml-1 text-xs", hasNote && "text-primary hover:text-primary")}
-                      onClick={() => handleOpenNoteModal(p as any)}
+                      onClick={() => handleOpenNoteModal(p)}
                     >
                       {hasNote ? <Pencil className="h-3 w-3 mr-0.5" /> : <MessageSquarePlus className="h-3 w-3 mr-0.5" />}
                       {t('note')}
