@@ -5,6 +5,8 @@ import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestor
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/context/auth-context';
 import type { Order } from '@/types';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export function useOrders() {
   const { user } = useAuth();
@@ -18,8 +20,9 @@ export function useOrders() {
       return;
     }
 
+    const ordersCollection = collection(db, 'orders');
     const q = query(
-      collection(db, 'orders'),
+      ordersCollection,
       where('userId', '==', user.uid),
       orderBy('createdAt', 'desc')
     );
@@ -34,9 +37,13 @@ export function useOrders() {
         setOrders(ordersData);
         setLoading(false);
       },
-      (err) => {
-        console.error('Error fetching orders:', err);
-        setError(err);
+      (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: ordersCollection.path,
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setError(serverError);
         setLoading(false);
       }
     );

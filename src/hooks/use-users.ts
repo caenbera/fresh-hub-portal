@@ -5,6 +5,8 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import type { UserProfile } from '@/types';
 import { useAuth } from '@/context/auth-context';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export function useUsers() {
   const { user } = useAuth();
@@ -19,7 +21,8 @@ export function useUsers() {
         return;
     }
 
-    const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+    const usersCollection = collection(db, 'users');
+    const q = query(usersCollection, orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(
       q,
@@ -34,9 +37,13 @@ export function useUsers() {
         setUsers(usersData);
         setLoading(false);
       },
-      (err) => {
-        console.error('Error fetching users:', err);
-        setError(err);
+      (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: usersCollection.path,
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setError(serverError);
         setLoading(false);
       }
     );

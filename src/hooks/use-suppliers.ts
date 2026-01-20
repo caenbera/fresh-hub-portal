@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import type { Supplier } from '@/types';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export function useSuppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -11,7 +13,8 @@ export function useSuppliers() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, 'suppliers'), orderBy('name', 'asc'));
+    const suppliersCollection = collection(db, 'suppliers');
+    const q = query(suppliersCollection, orderBy('name', 'asc'));
 
     const unsubscribe = onSnapshot(
       q,
@@ -23,9 +26,13 @@ export function useSuppliers() {
         setSuppliers(suppliersData);
         setLoading(false);
       },
-      (err) => {
-        console.error('Error fetching suppliers:', err);
-        setError(err);
+      (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: suppliersCollection.path,
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setError(serverError);
         setLoading(false);
       }
     );

@@ -5,6 +5,8 @@ import { collection, onSnapshot, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/context/auth-context';
 import type { Branch } from '@/types';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export function useBranches() {
   const { user } = useAuth();
@@ -18,7 +20,8 @@ export function useBranches() {
       return;
     }
 
-    const q = query(collection(db, 'users', user.uid, 'branches'));
+    const branchesCollection = collection(db, 'users', user.uid, 'branches');
+    const q = query(branchesCollection);
 
     const unsubscribe = onSnapshot(
       q,
@@ -30,9 +33,13 @@ export function useBranches() {
         setBranches(branchesData);
         setLoading(false);
       },
-      (err) => {
-        console.error('Error fetching branches:', err);
-        setError(err);
+      (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: branchesCollection.path,
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setError(serverError);
         setLoading(false);
       }
     );

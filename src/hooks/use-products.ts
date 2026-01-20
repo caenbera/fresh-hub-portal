@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import type { Product } from '@/types';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -11,7 +13,8 @@ export function useProducts() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
+    const productsCollection = collection(db, 'products');
+    const q = query(productsCollection, orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(
       q,
@@ -23,9 +26,13 @@ export function useProducts() {
         setProducts(productsData);
         setLoading(false);
       },
-      (err) => {
-        console.error('Error fetching products:', err);
-        setError(err);
+      (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: productsCollection.path,
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setError(serverError);
         setLoading(false);
       }
     );

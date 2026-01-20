@@ -5,6 +5,8 @@ import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import type { Order } from '@/types';
 import { useAuth } from '@/context/auth-context';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 // This hook fetches all orders for admin view
 export function useAllOrders() {
@@ -20,8 +22,9 @@ export function useAllOrders() {
       return;
     }
 
+    const ordersCollection = collection(db, 'orders');
     const q = query(
-      collection(db, 'orders'),
+      ordersCollection,
       orderBy('createdAt', 'desc')
     );
 
@@ -35,9 +38,13 @@ export function useAllOrders() {
         setOrders(ordersData);
         setLoading(false);
       },
-      (err) => {
-        console.error('Error fetching all orders:', err);
-        setError(err);
+      (serverError) => {
+        const permissionError = new FirestorePermissionError({
+          path: ordersCollection.path,
+          operation: 'list',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        setError(serverError);
         setLoading(false);
       }
     );
