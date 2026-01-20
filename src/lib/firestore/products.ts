@@ -60,13 +60,22 @@ export const deleteProduct = (id: string) => {
 };
 
 export const getProducts = async (): Promise<Product[]> => {
-  const q = query(collection(db, "products"), orderBy("name", "asc"));
-  // The custom FirestorePermissionError is for client-side components.
-  // For server-rendered pages, we let the error bubble up to Next.js.
-  const querySnapshot = await getDocs(q);
-  const products: Product[] = [];
-  querySnapshot.forEach((doc) => {
-    products.push({ id: doc.id, ...doc.data() } as Product);
-  });
-  return products;
+  const productsCollectionRef = collection(db, "products");
+  const q = query(productsCollectionRef, orderBy("name", "asc"));
+  
+  try {
+    const querySnapshot = await getDocs(q);
+    const products: Product[] = [];
+    querySnapshot.forEach((doc) => {
+      products.push({ id: doc.id, ...doc.data() } as Product);
+    });
+    return products;
+  } catch (e: any) {
+     const permissionError = new FirestorePermissionError({
+        path: productsCollectionRef.path,
+        operation: 'list',
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      throw e;
+  }
 };

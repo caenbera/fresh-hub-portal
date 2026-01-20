@@ -65,8 +65,9 @@ export default function SupplierDetailPage() {
         setProducts(supplierProducts);
 
       } catch (error) {
-        console.error("Error fetching supplier details:", error);
-        // Let the error boundary or FirebaseErrorListener handle UI
+        // Errors are now emitted from getSupplier/getProducts and thrown by FirebaseErrorListener.
+        // This catch block allows the 'finally' block to run and update the loading state.
+        // The dev overlay will show the detailed error from the listener.
       } finally {
         setLoading(false);
       }
@@ -80,8 +81,8 @@ export default function SupplierDetailPage() {
   }
   
   if (!supplier) {
-    // This case is mostly handled by notFound(), but as a fallback.
-    return <div className="p-8">Supplier could not be loaded.</div>;
+    // This case is hit if getSupplier returns null (not found) or if a permission error occurs.
+    return <div className="p-8 font-semibold text-center">Supplier could not be loaded. This might be a permission issue or the supplier does not exist.</div>;
   }
 
   return (

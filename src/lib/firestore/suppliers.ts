@@ -78,14 +78,20 @@ export const deleteSupplier = (id: string) => {
 
 export const getSupplier = async (id: string): Promise<Supplier | null> => {
   const supplierDocRef = doc(db, 'suppliers', id);
-  // The custom FirestorePermissionError is for client-side components.
-  // For server-rendered pages, we let the error bubble up to Next.js,
-  // which will display it in the dev overlay.
-  const docSnap = await getDoc(supplierDocRef);
+  try {
+    const docSnap = await getDoc(supplierDocRef);
 
-  if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() } as Supplier;
-  } else {
-    return null;
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as Supplier;
+    } else {
+      return null;
+    }
+  } catch (e: any) {
+     const permissionError = new FirestorePermissionError({
+        path: supplierDocRef.path,
+        operation: 'get',
+      });
+      errorEmitter.emit('permission-error', permissionError);
+      throw e;
   }
 };
