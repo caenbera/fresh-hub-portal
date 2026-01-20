@@ -8,6 +8,8 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import type { Supplier } from '@/types';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 // The form data is a subset of the Supplier type
 type SupplierFormData = Omit<Supplier, 'id' | 'rating' | 'status' | 'verified' | 'finance'>;
@@ -29,31 +31,67 @@ export const addSupplier = (supplierData: SupplierFormData) => {
     },
   };
   
-  return addDoc(suppliersCollection, newSupplierData);
+  addDoc(suppliersCollection, newSupplierData).catch(async (serverError) => {
+    const permissionError = new FirestorePermissionError({
+      path: suppliersCollection.path,
+      operation: 'create',
+      requestResourceData: newSupplierData,
+    });
+    errorEmitter.emit('permission-error', permissionError);
+  });
 };
 
 export const updateSupplier = (id: string, supplierData: Partial<Supplier>) => {
   const supplierDoc = doc(db, 'suppliers', id);
-  return updateDoc(supplierDoc, supplierData);
+  updateDoc(supplierDoc, supplierData).catch(async (serverError) => {
+    const permissionError = new FirestorePermissionError({
+      path: supplierDoc.path,
+      operation: 'update',
+      requestResourceData: supplierData,
+    });
+    errorEmitter.emit('permission-error', permissionError);
+  });
 };
 
 export const updateSupplierRating = (id: string, newRating: number) => {
     const supplierDoc = doc(db, 'suppliers', id);
-    return updateDoc(supplierDoc, { rating: newRating });
+    updateDoc(supplierDoc, { rating: newRating }).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: supplierDoc.path,
+            operation: 'update',
+            requestResourceData: { rating: newRating },
+        });
+        errorEmitter.emit('permission-error', permissionError);
+    });
 }
 
 export const deleteSupplier = (id: string) => {
   const supplierDoc = doc(db, 'suppliers', id);
-  return deleteDoc(supplierDoc);
+  deleteDoc(supplierDoc).catch(async (serverError) => {
+    const permissionError = new FirestorePermissionError({
+      path: supplierDoc.path,
+      operation: 'delete',
+    });
+    errorEmitter.emit('permission-error', permissionError);
+  });
 };
 
 export const getSupplier = async (id: string): Promise<Supplier | null> => {
   const supplierDocRef = doc(db, 'suppliers', id);
-  const docSnap = await getDoc(supplierDocRef);
+  try {
+    const docSnap = await getDoc(supplierDocRef);
 
-  if (docSnap.exists()) {
-    return { id: docSnap.id, ...docSnap.data() } as Supplier;
-  } else {
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as Supplier;
+    } else {
+      return null;
+    }
+  } catch(serverError) {
+    const permissionError = new FirestorePermissionError({
+      path: supplierDocRef.path,
+      operation: 'get',
+    });
+    errorEmitter.emit('permission-error', permissionError);
     return null;
   }
 };

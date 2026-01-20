@@ -5,6 +5,7 @@ import { getMessages, unstable_setRequestLocale } from 'next-intl/server';
 import '../globals.css';
 import { AuthProvider } from '@/context/auth-context';
 import { Toaster } from '@/components/ui/toaster';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 export default async function RootLayout({
   children,
@@ -43,6 +44,7 @@ export default async function RootLayout({
       <body className="font-body antialiased" suppressHydrationWarning>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
+            <FirebaseErrorListener />
             {children}
             <Toaster />
           </AuthProvider>
