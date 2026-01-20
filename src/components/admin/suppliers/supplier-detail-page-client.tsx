@@ -31,6 +31,7 @@ import {
   BotMessageSquare,
 } from 'lucide-react';
 import { ProductDialog } from '@/components/dashboard/products/product-dialog';
+import { AddSupplierDialog } from './add-supplier-dialog';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
@@ -81,6 +82,7 @@ export function SupplierDetailPageClient({ supplier }: SupplierDetailPageClientP
   const t = useTranslations('SuppliersPage');
   const { toast } = useToast();
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
   const [currentSupplier, setCurrentSupplier] = useState(supplier);
 
   const handleRatingChange = (newRating: number) => {
@@ -99,6 +101,11 @@ export function SupplierDetailPageClient({ supplier }: SupplierDetailPageClientP
       onOpenChange={setIsProductDialogOpen} 
       product={null} 
       defaultSupplierId={supplier.id}
+    />
+    <AddSupplierDialog 
+        open={isSupplierDialogOpen}
+        onOpenChange={setIsSupplierDialogOpen}
+        supplier={currentSupplier}
     />
     <div className="flex flex-col gap-6">
       <div className="mb-4">
@@ -135,8 +142,9 @@ export function SupplierDetailPageClient({ supplier }: SupplierDetailPageClientP
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Contact Info */}
         <Card className="shadow-sm">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">{t('contact_payments')}</CardTitle>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsSupplierDialogOpen(true)}><Pencil className="h-4 w-4" /></Button>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             <div className="flex items-start gap-3"><Mail className="h-5 w-5 text-primary mt-0.5" /> <a href={`mailto:${supplier.email}`} className="text-primary underline">{supplier.email}</a></div>
@@ -155,7 +163,6 @@ export function SupplierDetailPageClient({ supplier }: SupplierDetailPageClientP
                             {contact.isWhatsapp && <BotMessageSquare className="h-3 w-3 text-green-500" />}
                         </div>
                     </div>
-                     <Button variant="ghost" size="icon" className="h-7 w-7"><Pencil className="h-3 w-3"/></Button>
                  </div>
             ))}
           </CardContent>

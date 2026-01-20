@@ -74,5 +74,11 @@
     "delete": "Eliminar",
     "phone_label": "Teléfono",
     "rating_updated_title": "Calificación Actualizada",
-    "rating_updated_desc": "Has calificado a {supplierName} con {rating} estrellas."
+    "rating_updated_desc": "Has calificado a {supplierName} con {rating} estrellas.",
+    "toast_category_added": "Categoría creada",
+    "toast_category_updated": "Categoría renombrada",
+    "toast_category_deleted": "Categoría eliminada",
+    "confirm_delete_category": "¿Seguro deseas eliminar la categoría '{category}'?",
+    "add_supplier_success_title": "Proveedor Creado",
+    "edit_supplier_success_title": "Proveedor Actualizado"
 }

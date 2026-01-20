@@ -40,8 +40,8 @@ export function SuppliersPageClient() {
     { id: 'Logística', label: t('logistics') },
   ];
 
-  const handleAddSupplier = () => {
-    setSelectedSupplier(null);
+  const handleOpenDialog = (supplier: Supplier | null) => {
+    setSelectedSupplier(supplier);
     setIsDialogOpen(true);
   };
   
@@ -62,7 +62,7 @@ export function SuppliersPageClient() {
             <h1 className="text-2xl font-bold font-headline">{t('title')}</h1>
             <p className="text-muted-foreground">{t('subtitle')}</p>
           </div>
-          <Button onClick={handleAddSupplier}>
+          <Button onClick={() => handleOpenDialog(null)}>
             <PlusCircle className="mr-2 h-4 w-4" />
             {t('add_supplier_button')}
           </Button>
@@ -111,7 +111,12 @@ export function SuppliersPageClient() {
         {/* Suppliers Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredSuppliers.map(supplier => (
-            <SupplierCard key={supplier.id} supplier={supplier} onDelete={handleDeleteSupplier} />
+            <SupplierCard 
+                key={supplier.id} 
+                supplier={supplier} 
+                onEdit={() => handleOpenDialog(supplier)}
+                onDelete={handleDeleteSupplier} 
+            />
           ))}
         </div>
       </div>

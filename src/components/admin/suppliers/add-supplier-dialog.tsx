@@ -9,15 +9,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2, Phone } from 'lucide-react';
-import { BotMessageSquare } from 'lucide-react';
+import { Plus, Trash2, Check, Undo2, Pencil, BotMessageSquare } from 'lucide-react';
 import type { Supplier } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
-// In a real app, this would come from the DB
+// In a real app, this would come from the DB or a config file
 const initialCategories = ["Frutas y Verduras", "Empaques y Desechables", "Lácteos y Huevos", "Secos y Abarrotes", "Logística"];
 
 const contactSchema = z.object({
@@ -48,19 +48,18 @@ interface AddSupplierDialogProps {
 
 export function AddSupplierDialog({ open, onOpenChange, supplier }: AddSupplierDialogProps) {
   const t = useTranslations('SuppliersPage');
+  const { toast } = useToast();
   
-  const [categories] = useState(initialCategories);
-
+  const [categories, setCategories] = useState(initialCategories);
+  const [isInputMode, setIsInputMode] = useState(false);
+  const [editModeTarget, setEditModeTarget] = useState<string | null>(null);
+  const categoryInputRef = useRef<HTMLInputElement>(null);
+  
   const form = useForm<FormValues>({
     resolver: zodResolver(supplierSchema),
     defaultValues: {
-        name: '',
-        category: '',
-        email: '',
-        address: '',
-        deliveryDays: '',
-        paymentTerms: 'Net 15',
-        notes: '',
+        name: '', category: '', email: '', address: '', deliveryDays: '',
+        paymentTerms: 'Net 15', notes: '',
         contacts: [{ department: 'Ventas', name: '', phone: '', isWhatsapp: true }]
     },
   });
@@ -73,33 +72,81 @@ export function AddSupplierDialog({ open, onOpenChange, supplier }: AddSupplierD
   useEffect(() => {
     if (open && supplier) {
       form.reset({
-        name: supplier.name,
-        category: supplier.category,
-        email: supplier.email,
-        address: supplier.address,
-        deliveryDays: supplier.deliveryDays,
-        paymentTerms: supplier.paymentTerms,
+        ...supplier,
         notes: supplier.notes || '',
-        contacts: supplier.contacts.map(c => ({...c, id: c.id || Math.random().toString()})) as any,
+        // The form array needs a default `id` which it uses internally.
+        contacts: supplier.contacts.map(c => ({...c}))
       });
     } else if (open) {
       form.reset({
-        name: '',
-        category: '',
-        email: '',
-        address: '',
-        deliveryDays: '',
-        paymentTerms: 'Net 15',
-        notes: '',
+        name: '', category: '', email: '', address: '', deliveryDays: '',
+        paymentTerms: 'Net 15', notes: '',
         contacts: [{ department: 'Ventas', name: '', phone: '', isWhatsapp: true }]
       });
     }
   }, [open, supplier, form]);
 
+  const currentCategory = form.watch('category');
+
+  // --- CATEGORY MANAGEMENT ---
+  const startCreatingCategory = () => {
+    setEditModeTarget(null);
+    setIsInputMode(true);
+    if (categoryInputRef.current) categoryInputRef.current.value = "";
+    setTimeout(() => categoryInputRef.current?.focus(), 100);
+  };
+
+  const startEditingCategory = () => {
+    if (!currentCategory) return;
+    setEditModeTarget(currentCategory);
+    setIsInputMode(true);
+    setTimeout(() => {
+        if(categoryInputRef.current) {
+            categoryInputRef.current.value = currentCategory;
+            categoryInputRef.current.focus();
+        }
+    }, 100);
+  };
+
+  const handleSaveCategory = () => {
+    const inputValue = categoryInputRef.current?.value.trim();
+    if (!inputValue) {
+        setIsInputMode(false); return;
+    }
+    if (editModeTarget) { // Editing existing
+        setCategories(prev => prev.map(c => c === editModeTarget ? inputValue : c));
+        if (currentCategory === editModeTarget) form.setValue('category', inputValue);
+        toast({ title: t('toast_category_updated'), description: inputValue });
+    } else { // Creating new
+        if (!categories.includes(inputValue)) {
+            setCategories(prev => [...prev, inputValue]);
+            form.setValue('category', inputValue);
+            toast({ title: t('toast_category_added'), description: inputValue });
+        }
+    }
+    setIsInputMode(false);
+    setEditModeTarget(null);
+  };
+
+  const handleDeleteCategory = () => {
+    if (!currentCategory || !confirm(t('confirm_delete_category', { category: currentCategory }))) return;
+    setCategories(prev => prev.filter(c => c !== currentCategory));
+    form.setValue('category', '');
+    toast({ title: t('toast_category_deleted') });
+  };
+  
+  const cancelCategoryInput = () => {
+    setIsInputMode(false);
+    setEditModeTarget(null);
+  };
+
   const onSubmit = (values: FormValues) => {
+    // In a real app, this would call Firestore functions
     console.log("Saving supplier:", values);
-    // TODO: Add Firestore logic here
-    alert("Supplier saved! (Check console for data)");
+    toast({
+        title: supplier ? t('edit_supplier_success_title') : t('add_supplier_success_title'),
+        description: values.name,
+    });
     onOpenChange(false);
   };
 
@@ -124,18 +171,39 @@ export function AddSupplierDialog({ open, onOpenChange, supplier }: AddSupplierD
                   )}/>
                 </div>
                 
-                <FormField control={form.control} name="category" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('category')}</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder={t('category_placeholder')} /></SelectTrigger></FormControl>
-                      <SelectContent>
-                        {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}/>
+                <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>{t('category')}</FormLabel>
+                        <div className="flex items-center gap-2">
+                            {isInputMode ? (
+                            <>
+                                <Input ref={categoryInputRef} onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); handleSaveCategory(); }}} />
+                                <Button type="button" size="icon" onClick={handleSaveCategory}><Check className="h-4 w-4" /></Button>
+                                <Button type="button" size="icon" variant="ghost" onClick={cancelCategoryInput}><Undo2 className="h-4 w-4" /></Button>
+                            </>
+                            ) : (
+                            <>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl><SelectTrigger><SelectValue placeholder={t('category_placeholder')} /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                </SelectContent>
+                                </Select>
+                                <div className="flex gap-1 shrink-0 bg-gray-50 p-1 rounded-md border">
+                                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8" disabled={!currentCategory} onClick={startEditingCategory}><Pencil className="h-3.5 w-3.5" /></Button>
+                                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8" disabled={!currentCategory} onClick={handleDeleteCategory}><Trash2 className="h-3.5 w-3.5" /></Button>
+                                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={startCreatingCategory}><Plus className="h-4 w-4" /></Button>
+                                </div>
+                            </>
+                            )}
+                        </div>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                    <FormField control={form.control} name="deliveryDays" render={({ field }) => (
@@ -158,7 +226,7 @@ export function AddSupplierDialog({ open, onOpenChange, supplier }: AddSupplierD
                 </div>
                 
                 <hr className="my-4"/>
-                <Label className="font-bold">{t('contacts_section_title')}</Label>
+                <FormLabel className="font-bold">{t('contacts_section_title')}</FormLabel>
                 <div className="space-y-3">
                   {fields.map((field, index) => (
                     <div key={field.id} className="grid grid-cols-[1fr,1fr,1fr,auto,auto] gap-2 items-end p-2 border rounded-lg bg-muted/30">
@@ -173,7 +241,7 @@ export function AddSupplierDialog({ open, onOpenChange, supplier }: AddSupplierD
                         )}/>
                         <FormField control={form.control} name={`contacts.${index}.isWhatsapp`} render={({ field }) => (
                             <FormItem className="flex flex-col items-center">
-                               <FormLabel className="text-xs">WhatsApp</FormLabel>
+                               <FormLabel className="text-xs flex items-center gap-1"><BotMessageSquare className="h-3 w-3"/> WhatsApp</FormLabel>
                                <FormControl>
                                 <Switch checked={field.value} onCheckedChange={field.onChange} />
                                </FormControl>

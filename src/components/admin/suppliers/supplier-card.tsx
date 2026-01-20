@@ -3,7 +3,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { Supplier } from '@/types';
-import { Eye, History, Trash2, Phone, Plus, Star, Truck, User } from 'lucide-react';
+import { Eye, History, Trash2, Phone, Plus, Star, Truck, User, Pencil } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/navigation';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -21,6 +21,7 @@ import {
 
 interface SupplierCardProps {
   supplier: Supplier;
+  onEdit: (supplier: Supplier) => void;
   onDelete: (supplierId: string) => void;
 }
 
@@ -35,7 +36,7 @@ const Rating = ({ rating }: { rating: number }) => (
   </div>
 );
 
-export function SupplierCard({ supplier, onDelete }: SupplierCardProps) {
+export function SupplierCard({ supplier, onEdit, onDelete }: SupplierCardProps) {
   const t = useTranslations('SuppliersPage');
 
   const formatCurrency = (amount: number) => {
@@ -67,8 +68,12 @@ export function SupplierCard({ supplier, onDelete }: SupplierCardProps) {
               </AlertDialogContent>
          </AlertDialog>
         
+          <Button variant="ghost" size="icon" onClick={() => onEdit(supplier)} className="h-8 w-8 bg-background/50 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-muted">
+            <Pencil className="h-4 w-4" />
+          </Button>
+
          <Link href={`/admin/suppliers/${supplier.id}`}>
-           <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/50 backdrop-blur-sm hover:bg-muted">
+           <Button variant="ghost" size="icon" className="h-8 w-8 bg-background/50 backdrop-blur-sm hover:bg-primary/10 hover:text-primary">
               <Eye className="h-4 w-4" />
            </Button>
          </Link>

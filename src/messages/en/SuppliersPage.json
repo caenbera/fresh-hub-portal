@@ -74,5 +74,11 @@
     "delete": "Delete",
     "phone_label": "Phone",
     "rating_updated_title": "Rating Updated",
-    "rating_updated_desc": "You have rated {supplierName} with {rating} stars."
+    "rating_updated_desc": "You have rated {supplierName} with {rating} stars.",
+    "toast_category_added": "Category created",
+    "toast_category_updated": "Category renamed",
+    "toast_category_deleted": "Category deleted",
+    "confirm_delete_category": "Are you sure you want to delete the category '{category}'?",
+    "add_supplier_success_title": "Supplier Created",
+    "edit_supplier_success_title": "Supplier Updated"
 }
