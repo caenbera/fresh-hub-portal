@@ -4,6 +4,7 @@ import {
   updateDoc,
   deleteDoc,
   doc,
+  getDoc,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import type { Supplier } from '@/types';
@@ -44,4 +45,15 @@ export const updateSupplierRating = (id: string, newRating: number) => {
 export const deleteSupplier = (id: string) => {
   const supplierDoc = doc(db, 'suppliers', id);
   return deleteDoc(supplierDoc);
+};
+
+export const getSupplier = async (id: string): Promise<Supplier | null> => {
+  const supplierDocRef = doc(db, 'suppliers', id);
+  const docSnap = await getDoc(supplierDocRef);
+
+  if (docSnap.exists()) {
+    return { id: docSnap.id, ...docSnap.data() } as Supplier;
+  } else {
+    return null;
+  }
 };

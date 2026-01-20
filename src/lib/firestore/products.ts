@@ -5,7 +5,10 @@ import {
   deleteDoc,
   doc,
   serverTimestamp,
-  type WithFieldValue
+  type WithFieldValue,
+  getDocs,
+  query,
+  orderBy,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import type { Product } from '@/types';
@@ -32,4 +35,14 @@ export const updateProduct = (id: string, productData: ProductUpdateInput) => {
 export const deleteProduct = (id: string) => {
   const productDoc = doc(db, 'products', id);
   return deleteDoc(productDoc);
+};
+
+export const getProducts = async (): Promise<Product[]> => {
+  const q = query(collection(db, "products"), orderBy("name", "asc"));
+  const querySnapshot = await getDocs(q);
+  const products: Product[] = [];
+  querySnapshot.forEach((doc) => {
+    products.push({ id: doc.id, ...doc.data() } as Product);
+  });
+  return products;
 };

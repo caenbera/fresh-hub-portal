@@ -35,12 +35,12 @@ import { DeleteProductAlert } from '@/components/dashboard/products/delete-produ
 import { AddSupplierDialog } from './add-supplier-dialog';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { useProducts } from '@/hooks/use-products';
 import { Skeleton } from '@/components/ui/skeleton';
 
 
 interface SupplierDetailPageClientProps {
     supplier: Supplier;
+    products: Product[];
 }
 
 const formatCurrency = (amount: number) => {
@@ -82,11 +82,9 @@ const InteractiveRating = ({ initialRating, onRate }: { initialRating: number, o
   );
 };
 
-export function SupplierDetailPageClient({ supplier }: SupplierDetailPageClientProps) {
+export function SupplierDetailPageClient({ supplier, products: supplierCatalog }: SupplierDetailPageClientProps) {
   const t = useTranslations('SuppliersPage');
   const { toast } = useToast();
-  
-  const { products, loading: productsLoading } = useProducts();
   
   const [isSupplierDialogOpen, setIsSupplierDialogOpen] = useState(false);
   const [currentSupplier, setCurrentSupplier] = useState(supplier);
@@ -95,8 +93,6 @@ export function SupplierDetailPageClient({ supplier }: SupplierDetailPageClientP
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [isAlertOpen, setAlertOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
-  const supplierCatalog = products.filter(p => p.supplierId === supplier.id);
 
   const handleRatingChange = (newRating: number) => {
       // In a real app, this would be an async call to update the DB
@@ -265,9 +261,7 @@ export function SupplierDetailPageClient({ supplier }: SupplierDetailPageClientP
                       </TableRow>
                   </TableHeader>
                   <TableBody>
-                      {productsLoading ? (
-                        <TableRow><TableCell colSpan={6} className="text-center"><Skeleton className="h-8 w-1/2 mx-auto" /></TableCell></TableRow>
-                      ) : supplierCatalog.length > 0 ? (
+                      {supplierCatalog.length > 0 ? (
                         supplierCatalog.map(product => {
                           const costChange = product.cost > 0 ? (product.cost - (product.cost * 0.95)) : 0; // Mocking previous cost
                           return (
