@@ -4,35 +4,34 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isAuthed() {
+      return request.auth != null;
+    }
+
     // Helper function to get the role from the user's profile document
-    function getUserRole() {
-      // Ensure the user is authenticated before trying to read their profile
-      if (request.auth == null) {
-        return 'guest';
-      }
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    function getUserRole(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data.role;
     }
 
     // Helper function to check for admin roles
     function isAdmin() {
-      let userRole = getUserRole();
-      return userRole == 'admin' || userRole == 'superadmin';
+      return isAuthed() && (getUserRole(request.auth.uid) == 'admin' || getUserRole(request.auth.uid) == 'superadmin');
     }
     
     function isSuperAdmin() {
-      return getUserRole() == 'superadmin';
+      return isAuthed() && getUserRole(request.auth.uid) == 'superadmin';
     }
 
     // USERS Collection
     match /users/{userId} {
       // Any authenticated user can create their own user profile document
-      allow create: if request.auth != null && request.auth.uid == userId;
+      allow create: if isAuthed() && request.auth.uid == userId;
       
-      // Users can only read their own data
-      allow read: if request.auth.uid == userId || isSuperAdmin();
+      // Users can only read their own data, superadmins can read anyone's
+      allow read: if isAuthed() && (request.auth.uid == userId || isSuperAdmin());
       
       // Users can only update their own data, but superadmins can update anyone's role
-      allow update: if request.auth.uid == userId || (isSuperAdmin() && 'role' in request.resource.data);
+      allow update: if isAuthed() && (request.auth.uid == userId || (isSuperAdmin() && 'role' in request.resource.data));
       
       // Only superadmins can delete users
       allow delete: if isSuperAdmin();
@@ -41,7 +40,7 @@ service cloud.firestore {
     // PRODUCTS Collection
     match /products/{productId} {
       // Any authenticated user (client) can read products
-      allow read: if request.auth != null;
+      allow read: if isAuthed();
       
       // Only admins and superadmins can create, update, or delete products
       allow write: if isAdmin();
@@ -50,10 +49,10 @@ service cloud.firestore {
     // ORDERS Collection
     match /orders/{orderId} {
       // Users can create their own orders
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow create: if isAuthed() && request.resource.data.userId == request.auth.uid;
       
       // Users can read their own orders. Admins can read all orders.
-      allow read: if (request.auth != null && resource.data.userId == request.auth.uid) || isAdmin();
+      allow read: if isAuthed() && ((resource.data.userId == request.auth.uid) || isAdmin());
       
       // Admins can update orders (e.g., change status)
       allow update: if isAdmin();
@@ -61,7 +60,7 @@ service cloud.firestore {
       // Only admins can delete orders
       allow delete: if isAdmin();
     }
-
+    
     // SUPPLIERS Collection
     match /suppliers/{supplierId} {
       // Admins and superadmins can read, create, update, and delete suppliers.
