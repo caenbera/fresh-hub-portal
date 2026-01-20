@@ -9,6 +9,8 @@ import { SupplierCard } from './supplier-card';
 import { AddSupplierDialog } from './add-supplier-dialog';
 import type { Supplier } from '@/types';
 import { Card, CardContent } from "@/components/ui/card";
+import { deleteSupplier } from '@/lib/firestore/suppliers';
+import { useToast } from '@/hooks/use-toast';
 
 const KpiCard = ({ title, value, icon: Icon, iconBg, iconColor }: any) => (
   <Card className="shadow-sm">
@@ -29,6 +31,7 @@ export function SuppliersPageClient() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const { toast } = useToast();
 
   const totalPayable = suppliers.reduce((acc, s) => acc + s.finance.pendingBalance, 0);
 
@@ -45,10 +48,20 @@ export function SuppliersPageClient() {
     setIsDialogOpen(true);
   };
   
-  const handleDeleteSupplier = (supplierId: string) => {
-      console.log("Deleting supplier...", supplierId);
-      // In a real app, you would call a Firestore function here
-      alert(`Supplier ${supplierId} deleted!`);
+  const handleDeleteSupplier = async (supplierId: string) => {
+      try {
+        await deleteSupplier(supplierId);
+        toast({
+            title: "Supplier Deleted",
+            description: "The supplier has been successfully removed.",
+        });
+      } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not delete the supplier.",
+        });
+      }
   };
 
   const filteredSuppliers = suppliers.filter(s => activeFilter === 'all' || s.category === activeFilter);

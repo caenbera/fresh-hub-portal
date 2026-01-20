@@ -16,11 +16,13 @@ import { Plus, Trash2, Check, Undo2, Pencil, BotMessageSquare } from 'lucide-rea
 import type { Supplier } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { addSupplier, updateSupplier } from '@/lib/firestore/suppliers';
 
 // In a real app, this would come from the DB or a config file
 const initialCategories = ["Frutas y Verduras", "Empaques y Desechables", "Lácteos y Huevos", "Secos y Abarrotes", "Logística"];
 
 const contactSchema = z.object({
+  id: z.string().optional(),
   department: z.string().min(1, 'Required'),
   name: z.string().min(2, 'Required'),
   phone: z.string().min(7, 'Required'),
@@ -49,6 +51,7 @@ interface AddSupplierDialogProps {
 export function AddSupplierDialog({ open, onOpenChange, supplier }: AddSupplierDialogProps) {
   const t = useTranslations('SuppliersPage');
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
   
   const [categories, setCategories] = useState(initialCategories);
   const [isInputMode, setIsInputMode] = useState(false);
@@ -74,7 +77,6 @@ export function AddSupplierDialog({ open, onOpenChange, supplier }: AddSupplierD
       form.reset({
         ...supplier,
         notes: supplier.notes || '',
-        // The form array needs a default `id` which it uses internally.
         contacts: supplier.contacts.map(c => ({...c}))
       });
     } else if (open) {
@@ -140,14 +142,32 @@ export function AddSupplierDialog({ open, onOpenChange, supplier }: AddSupplierD
     setEditModeTarget(null);
   };
 
-  const onSubmit = (values: FormValues) => {
-    // In a real app, this would call Firestore functions
-    console.log("Saving supplier:", values);
-    toast({
-        title: supplier ? t('edit_supplier_success_title') : t('add_supplier_success_title'),
-        description: values.name,
-    });
-    onOpenChange(false);
+  const onSubmit = async (values: FormValues) => {
+    setIsLoading(true);
+    try {
+      if (supplier) {
+        await updateSupplier(supplier.id, values);
+        toast({
+            title: t('edit_supplier_success_title'),
+            description: values.name,
+        });
+      } else {
+        await addSupplier(values as any); // The values from form match the required data
+        toast({
+            title: t('add_supplier_success_title'),
+            description: values.name,
+        });
+      }
+      onOpenChange(false);
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: error.message || "Could not save supplier.",
+        });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -258,8 +278,8 @@ export function AddSupplierDialog({ open, onOpenChange, supplier }: AddSupplierD
                     <FormItem><FormLabel>{t('internal_note')}</FormLabel><FormControl><Textarea placeholder={t('internal_note_placeholder')} {...field} /></FormControl><FormMessage /></FormItem>
                 )}/>
                 <DialogFooter className="pt-4">
-                  <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>{t('cancel')}</Button>
-                  <Button type="submit">{t('save')}</Button>
+                  <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>{t('cancel')}</Button>
+                  <Button type="submit" disabled={isLoading}>{isLoading ? "Saving..." : t('save')}</Button>
                 </DialogFooter>
             </form>
         </Form>

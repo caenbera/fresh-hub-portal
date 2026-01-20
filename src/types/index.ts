@@ -51,7 +51,7 @@ export interface Order {
 
 // NEW TYPES
 export interface SupplierContact {
-  id: string;
+  id?: string;
   department: string;
   name: string;
   phone: string;
