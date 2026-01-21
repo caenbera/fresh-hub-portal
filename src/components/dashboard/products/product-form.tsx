@@ -83,6 +83,8 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const t = useTranslations('ProductsPage');
   const { suppliers: allSuppliers, loading: suppliersLoading } = useSuppliers();
   const pathname = usePathname();
+
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
   const [imgUrlInputValue, setImgUrlInputValue] = useState('');
@@ -115,7 +117,33 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   });
   
   const watchedSuppliers = form.watch('suppliers');
+  const watchedSalePrice = form.watch('salePrice');
+  const primarySupplierCost = form.watch('suppliers')?.find(s => s.isPrimary)?.cost || 0;
 
+
+  useEffect(() => {
+    // This effect runs when the primary supplier's cost or the sale price changes.
+    // It recalculates the margin accordingly.
+    if (primarySupplierCost > 0 && watchedSalePrice > primarySupplierCost) {
+      const calculatedMargin = ((watchedSalePrice - primarySupplierCost) / watchedSalePrice) * 100;
+      // Update margin state without triggering a new price calculation
+      setMargin(calculatedMargin.toFixed(1).replace('.0', ''));
+    } else {
+      setMargin('');
+    }
+  }, [primarySupplierCost, watchedSalePrice]);
+
+  const updatePriceFromMargin = (marginInput: string) => {
+    setMargin(marginInput);
+    const marginValue = parseFloat(marginInput);
+    const cost = form.getValues('suppliers')?.find(s => s.isPrimary)?.cost || 0;
+    
+    if (cost > 0 && !isNaN(marginValue) && marginValue < 100) {
+        const newSalePrice = cost / (1 - (marginValue / 100));
+        form.setValue('salePrice', parseFloat(newSalePrice.toFixed(2)), { shouldValidate: true });
+    }
+  };
+  
   const getInitialFormData = (): ProductFormValues => {
     if (product) {
        // This is an existing product, handle both old and new data structures
@@ -138,40 +166,11 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     };
   };
   
-  const updateMarginAndPrice = (source: 'margin' | 'price', value: number) => {
-    const suppliers = form.getValues('suppliers');
-    const primary = suppliers.find(s => s.isPrimary);
-    const cost = primary ? primary.cost : (suppliers.length > 0 ? suppliers[0].cost : 0);
-
-    if (cost <= 0) {
-        if(source === 'margin') setMargin(isNaN(value) ? '' : value.toString());
-        return;
-    };
-
-    if (source === 'margin') {
-        setMargin(isNaN(value) ? '' : value.toString());
-        if (!isNaN(value) && value < 100) {
-            const newSalePrice = cost / (1 - (value / 100));
-            form.setValue('salePrice', parseFloat(newSalePrice.toFixed(2)), { shouldValidate: true });
-        }
-    }
-
-    if (source === 'price') {
-        form.setValue('salePrice', isNaN(value) ? 0 : value, { shouldValidate: true });
-        if (!isNaN(value) && value > cost) {
-            const newMargin = ((value - cost) / value) * 100;
-            setMargin(newMargin.toFixed(1).replace('.0', ''));
-        } else {
-            setMargin('');
-        }
-    }
-  };
-
-
   useEffect(() => {
     if (suppliersLoading) return;
     const initialData = getInitialFormData();
     form.reset(initialData);
+    setEditingProduct(product);
     setImgUrlInputValue(initialData.photoUrl || '');
     // When resetting, we also need to recalculate the initial margin
     const primaryCost = initialData.suppliers.find(s => s.isPrimary)?.cost || initialData.suppliers[0]?.cost || 0;
@@ -187,45 +186,32 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
 
   const handleSkuBlur = async () => {
     const sku = form.getValues('sku');
-    if (!sku || product) return;
+    if (!sku) return;
 
     setIsSkuLoading(true);
     try {
       const existingProduct = await getProductBySku(sku);
       if (existingProduct) {
         toast({ title: "Producto Existente Encontrado", description: "Datos del producto han sido cargados." });
+        setEditingProduct(existingProduct);
         
-        const existingSuppliers = existingProduct.suppliers && existingProduct.suppliers.length > 0
-          ? existingProduct.suppliers
-          : ('supplierId' in existingProduct && (existingProduct as any).supplierId)
-            ? [{ supplierId: (existingProduct as any).supplierId, cost: (existingProduct as any).cost || 0, isPrimary: true }]
-            : [];
-        
+        const existingSuppliers = existingProduct.suppliers || [];
         const supplierContextId = pathname.includes('/suppliers/') ? pathname.split('/suppliers/')[1].split('/')[0] : defaultSupplierId;
-
-        let suppliersForForm = [...existingSuppliers];
         
-        if (supplierContextId && !suppliersForForm.some(s => s.supplierId === supplierContextId)) {
-          suppliersForForm.push({ supplierId: supplierContextId, cost: 0, isPrimary: suppliersForForm.length === 0 });
+        let finalSuppliers = [...existingSuppliers];
+        if (supplierContextId && !finalSuppliers.some(s => s.supplierId === supplierContextId)) {
+          finalSuppliers.push({ supplierId: supplierContextId, cost: 0, isPrimary: finalSuppliers.length === 0 });
         }
         
-        if (suppliersForForm.length === 0 && supplierContextId) {
-             suppliersForForm.push({ supplierId: supplierContextId, cost: 0, isPrimary: true });
-        }
-
-
-        form.reset({
-          ...existingProduct,
-          photoUrl: existingProduct.photoUrl || '',
-          suppliers: suppliersForForm
-        });
+        form.reset({ ...existingProduct, suppliers: finalSuppliers, photoUrl: existingProduct.photoUrl || '' });
         setImgUrlInputValue(existingProduct.photoUrl || '');
       } else {
-          // SKU not found, but we might be in a supplier context
+          setEditingProduct(null);
+          // Keep form values except for suppliers, reset those based on context
+          const currentValues = form.getValues();
           const supplierContextId = pathname.includes('/suppliers/') ? pathname.split('/suppliers/')[1].split('/')[0] : defaultSupplierId;
-           if(supplierContextId) {
-               replace([{ supplierId: supplierContextId, cost: 0, isPrimary: true }]);
-           }
+          const newSuppliers = supplierContextId ? [{ supplierId: supplierContextId, cost: 0, isPrimary: true }] : [];
+          replace(newSuppliers);
       }
     } catch (error) {
       console.error("Error in handleSkuBlur:", error);
@@ -279,8 +265,8 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     }
     
     try {
-      if (product) {
-        await updateProduct(product.id, finalValues);
+      if (editingProduct) {
+        await updateProduct(editingProduct.id, finalValues);
         toast({ title: t('toast_save_success_title'), description: t('toast_save_success_edit_desc') });
       } else {
         await addProduct(finalValues);
@@ -313,7 +299,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
                         <FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_sku')}</FormLabel>
                         <FormControl>
                             <div className="relative">
-                                <Input placeholder={t('form_placeholder_sku')} className="h-11 font-mono text-sm bg-gray-50/50 pr-10" {...field} onBlur={handleSkuBlur} disabled={!!product}/>
+                                <Input placeholder={t('form_placeholder_sku')} className="h-11 font-mono text-sm bg-gray-50/50 pr-10" {...field} onBlur={handleSkuBlur} disabled={!!editingProduct}/>
                                 {isSkuLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
                             </div>
                         </FormControl>
@@ -376,9 +362,20 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
             <div className="grid grid-cols-2 gap-4">
                  <FormItem>
                     <FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_margin')}</FormLabel>
-                    <FormControl><div className="relative"><Input type="number" value={margin} onChange={(e) => updateMarginAndPrice('margin', parseFloat(e.target.value))} className="pl-3 pr-8 h-10 text-right font-bold" placeholder={t('form_placeholder_margin')}/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span></div></FormControl>
+                    <FormControl>
+                        <div className="relative">
+                            <Input
+                                type="number"
+                                value={margin}
+                                onChange={(e) => updatePriceFromMargin(e.target.value)}
+                                className="pl-3 pr-8 h-10 text-right font-bold"
+                                placeholder={t('form_placeholder_margin')}
+                            />
+                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                        </div>
+                    </FormControl>
                 </FormItem>
-                <FormField control={form.control} name="salePrice" render={({ field }) => (<FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_price')}</FormLabel><FormControl><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 font-bold text-sm">$</span><Input type="number" className="pl-6 h-10 font-bold text-lg text-right bg-green-50" placeholder="0.00" step="0.01" {...field} onChange={e => { field.onChange(e); updateMarginAndPrice('price', parseFloat(e.target.value)); }} /></div></FormControl><FormMessage /></FormItem>)}/>
+                <FormField control={form.control} name="salePrice" render={({ field }) => (<FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_price')}</FormLabel><FormControl><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 font-bold text-sm">$</span><Input type="number" className="pl-6 h-10 font-bold text-lg text-right bg-green-50" placeholder="0.00" step="0.01" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} /></div></FormControl><FormMessage /></FormItem>)}/>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-end">
                 <FormField control={form.control} name="stock" render={({ field }) => (<FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_stock')}</FormLabel><FormControl><Input type="number" className="h-10" placeholder="0" {...field} /></FormControl><FormMessage /></FormItem>)}/>

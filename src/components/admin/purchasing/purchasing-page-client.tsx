@@ -245,6 +245,69 @@ export function PurchasingPageClient() {
       });
   };
 
+  const renderProductRow = (product: Product) => {
+    const primarySupplier = product.suppliers.find(s => s.isPrimary);
+    if (!primarySupplier) return null;
+
+    const bestSupplier = product.suppliers.reduce((best, current) => (current.cost < best.cost ? current : best));
+    const hasOpportunity = bestSupplier.supplierId !== primarySupplier.supplierId;
+    const unitText = (typeof product.unit === 'object' && product.unit?.[locale]) ? product.unit[locale] : (product.unit as any);
+    const savings = hasOpportunity ? ((1 - bestSupplier.cost / primarySupplier.cost) * 100) : 0;
+
+    return (
+      <TableRow key={product.id}>
+        <TableCell>
+            <div className="flex items-center gap-3">
+                <Image src={product.photoUrl || 'https://via.placeholder.com/40'} alt={product.name[locale]} width={40} height={40} className="rounded-md object-cover" />
+                <div>
+                    <div className="font-semibold">{product.name[locale]}</div>
+                    <div className="text-xs text-muted-foreground">SKU: {product.sku}</div>
+                </div>
+            </div>
+        </TableCell>
+        <TableCell>
+            {product.stock <= product.minStock
+                ? <Badge variant="destructive">{product.stock} {unitText}</Badge>
+                : <Badge variant="secondary" className="bg-green-100 text-green-700">{product.stock} {unitText}</Badge>
+            }
+        </TableCell>
+        <TableCell>
+            <div className="font-medium">{getSupplierName(primarySupplier.supplierId)}</div>
+            <div className="text-sm text-muted-foreground">${primarySupplier.cost.toFixed(2)}</div>
+        </TableCell>
+        <TableCell>
+            {hasOpportunity ? (
+                <div>
+                    <div className="flex items-center gap-1 font-bold text-primary">
+                        <ArrowDown className="h-4 w-4"/>
+                        ${bestSupplier.cost.toFixed(2)}
+                        <Badge className="ml-1 bg-primary/10 text-primary hover:bg-primary/20">
+                           {t('save_tag')} {savings.toFixed(0)}%
+                        </Badge>
+                    </div>
+                    <div className="text-sm text-muted-foreground">{getSupplierName(bestSupplier.supplierId)}</div>
+                </div>
+            ) : (
+                <div className="text-sm text-muted-foreground">{t('best_price_found')}</div>
+            )}
+        </TableCell>
+        <TableCell className="text-right">
+            {hasOpportunity ? (
+                <Button variant="outline" size="sm" onClick={() => handleOpenCompare(product, primarySupplier, bestSupplier)}>
+                    <ArrowRightLeft className="mr-2 h-4 w-4" />
+                    {t('compare_button')}
+                </Button>
+            ) : (
+                <Button size="sm" onClick={() => handleAddToCart(product.name[locale], primarySupplier.supplierId, primarySupplier.cost)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    {t('add_button')}
+                </Button>
+            )}
+        </TableCell>
+      </TableRow>
+    );
+  };
+
   return (
     <>
       {isClient && poToPrint && createPortal(
@@ -271,64 +334,7 @@ export function PurchasingPageClient() {
                         <TableHeader><TableRow><TableHead>{t('product_header')}</TableHead><TableHead>{t('stock_status_header')}</TableHead><TableHead>{t('current_supplier_header')}</TableHead><TableHead>{t('price_opportunity_header')}</TableHead><TableHead className="text-right">{t('action_header')}</TableHead></TableRow></TableHeader>
                         <TableBody>
                             {loading ? Array.from({length: 2}).map((_,i) => <TableRow key={i}><TableCell colSpan={5}><Skeleton className="h-10 w-full"/></TableCell></TableRow>)
-                            : lowStockSuggestions.map(product => {
-                                const primarySupplier = product.suppliers.find(s => s.isPrimary);
-                                if (!primarySupplier) return null;
-
-                                const bestSupplier = product.suppliers.reduce((best, current) => (current.cost < best.cost ? current : best));
-                                const hasOpportunity = bestSupplier.supplierId !== primarySupplier.supplierId;
-                                const unitText = (typeof product.unit === 'object' && product.unit?.[locale]) ? product.unit[locale] : (product.unit as any);
-
-
-                                return (
-                                <TableRow key={product.id}>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Image src={product.photoUrl || 'https://via.placeholder.com/40'} alt={product.name[locale]} width={40} height={40} className="rounded-md object-cover" />
-                                            <div>
-                                                <div className="font-semibold">{product.name[locale]}</div>
-                                                <div className="text-xs text-muted-foreground">SKU: {product.sku}</div>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                     <TableCell>
-                                        <Badge variant="destructive">{product.stock} {unitText}</Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="font-medium">{getSupplierName(primarySupplier.supplierId)}</div>
-                                        <div className="text-sm text-muted-foreground">${primarySupplier.cost.toFixed(2)}</div>
-                                    </TableCell>
-                                     <TableCell>
-                                        {hasOpportunity ? (
-                                            <div>
-                                                <div className="flex items-center gap-1 font-bold text-primary">
-                                                    <ArrowDown className="h-4 w-4"/>
-                                                    ${bestSupplier.cost.toFixed(2)}
-                                                    <Badge className="ml-1 bg-primary/10 text-primary hover:bg-primary/20">
-                                                       {t('save_tag')} {((1 - bestSupplier.cost / primarySupplier.cost) * 100).toFixed(0)}%
-                                                    </Badge>
-                                                </div>
-                                                <div className="text-sm text-muted-foreground">{getSupplierName(bestSupplier.supplierId)}</div>
-                                            </div>
-                                        ) : (
-                                            <div className="text-sm text-muted-foreground">{t('best_price_found')}</div>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {hasOpportunity ? (
-                                            <Button variant="outline" size="sm" onClick={() => handleOpenCompare(product, primarySupplier, bestSupplier)}>
-                                                <ArrowRightLeft className="mr-2 h-4 w-4" />
-                                                {t('compare_button')}
-                                            </Button>
-                                        ) : (
-                                            <Button size="sm" onClick={() => handleAddToCart(product.name[locale], primarySupplier.supplierId, primarySupplier.cost)}>
-                                                <Plus className="mr-2 h-4 w-4" />
-                                                {t('add_button')}
-                                            </Button>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            )})}
+                            : lowStockSuggestions.map(renderProductRow)}
                         </TableBody>
                     </Table>
                 </div>
@@ -351,61 +357,7 @@ export function PurchasingPageClient() {
                          <TableHeader><TableRow><TableHead>{t('product_header')}</TableHead><TableHead>{t('stock_status_header')}</TableHead><TableHead>{t('main_supplier_header')}</TableHead><TableHead>{t('price_opportunity_header')}</TableHead><TableHead className="text-right">{t('action_header')}</TableHead></TableRow></TableHeader>
                         <TableBody>
                             {loading ? Array.from({length: 3}).map((_,i) => <TableRow key={i}><TableCell colSpan={5}><Skeleton className="h-10 w-full"/></TableCell></TableRow>)
-                            : generalCatalog.map(product => {
-                                const primarySupplier = product.suppliers.find(s => s.isPrimary);
-                                if (!primarySupplier) return null;
-
-                                const bestSupplier = product.suppliers.reduce((best, current) => (current.cost < best.cost ? current : best));
-                                const hasOpportunity = bestSupplier.supplierId !== primarySupplier.supplierId;
-                                const unitText = typeof product.unit === 'object' && product.unit?.[locale] ? product.unit[locale] : (product.unit as any);
-                                return (
-                                <TableRow key={product.id}>
-                                    <TableCell>
-                                         <div className="flex items-center gap-3">
-                                            <Image src={product.photoUrl || 'https://via.placeholder.com/40'} alt={product.name[locale]} width={40} height={40} className="rounded-md object-cover opacity-70" />
-                                            <div>
-                                                <div className="font-semibold">{product.name[locale]}</div>
-                                                <div className="text-xs text-muted-foreground">SKU: {product.sku}</div>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="secondary" className="bg-green-100 text-green-700">
-                                            {product.stock} {unitText}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>{getSupplierName(primarySupplier.supplierId)}</TableCell>
-                                    <TableCell>
-                                        {hasOpportunity ? (
-                                            <div>
-                                                <div className="flex items-center gap-1 font-bold text-primary">
-                                                    <ArrowDown className="h-4 w-4"/>
-                                                    ${bestSupplier.cost.toFixed(2)}
-                                                    <Badge className="ml-1 bg-primary/10 text-primary hover:bg-primary/20">
-                                                       {t('save_tag')} {((1 - bestSupplier.cost / primarySupplier.cost) * 100).toFixed(0)}%
-                                                    </Badge>
-                                                </div>
-                                                <div className="text-sm text-muted-foreground">{getSupplierName(bestSupplier.supplierId)}</div>
-                                            </div>
-                                        ) : (
-                                            <div className="text-sm text-muted-foreground">{t('best_price_found')}</div>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                         {hasOpportunity ? (
-                                            <Button variant="outline" size="sm" onClick={() => handleOpenCompare(product, primarySupplier, bestSupplier)}>
-                                                <ArrowRightLeft className="mr-2 h-4 w-4" />
-                                                {t('compare_button')}
-                                            </Button>
-                                        ) : (
-                                            <Button size="sm" onClick={() => handleAddToCart(product.name[locale], primarySupplier.supplierId, primarySupplier.cost)}>
-                                                <ShoppingCart className="mr-2 h-4 w-4" />
-                                                {t('add_to_cart_button')}
-                                            </Button>
-                                        )}
-                                    </TableCell>
-                                </TableRow>
-                            )})}
+                            : generalCatalog.map(renderProductRow)}
                         </TableBody>
                     </Table>
                 </div>
