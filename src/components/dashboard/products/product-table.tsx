@@ -66,6 +66,10 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
         <TableBody>
             {products.length > 0 ? (
             products.map((product) => {
+                // Defensive coding for data migration
+                const productNameEs = typeof product.name === 'object' ? product.name.es : product.name;
+                const productNameEn = typeof product.name === 'object' ? product.name.en : '';
+
                 // Cálculos de lógica de negocio
                 const margin = product.salePrice > 0 ? ((product.salePrice - product.cost) / product.salePrice) * 100 : 0;
                 
@@ -87,7 +91,7 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                         <div className="flex items-center gap-4">
                             <div className="h-12 w-12 rounded-lg border border-gray-100 bg-white p-0.5 shrink-0 overflow-hidden">
                                 <Image
-                                    alt={product.name.es}
+                                    alt={productNameEs || 'Product Image'}
                                     className="h-full w-full object-cover rounded-md"
                                     height="48"
                                     src={product.photoUrl || 'https://picsum.photos/48'}
@@ -95,8 +99,8 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                                 />
                             </div>
                             <div>
-                                <div className="font-bold text-slate-800 text-sm leading-tight">{product.name.es}</div>
-                                <div className="text-xs text-slate-500">{product.name.en}</div>
+                                <div className="font-bold text-slate-800 text-sm leading-tight">{productNameEs}</div>
+                                <div className="text-xs text-slate-500">{productNameEn}</div>
                                 <span className="text-[10px] font-mono font-medium bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded border border-gray-200 mt-1 inline-block">
                                     {product.sku}
                                 </span>
@@ -107,7 +111,7 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                     {/* CATEGORÍA */}
                     <TableCell>
                         <span className="inline-flex items-center rounded-md border border-gray-200 bg-white px-2.5 py-0.5 text-xs font-semibold text-gray-600 uppercase tracking-wide shadow-sm">
-                            {product.category.es}
+                            {typeof product.category === 'object' ? product.category.es : product.category}
                         </span>
                     </TableCell>
 
