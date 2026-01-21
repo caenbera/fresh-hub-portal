@@ -14,12 +14,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import type { Product as ProductType, OrderItem } from '@/types';
-import { CalendarIcon, Search, MessageSquarePlus, Pencil, Minus, Plus, ShoppingBasket } from 'lucide-react';
+import { CalendarIcon, Search, MessageSquarePlus, Pencil, Minus, Plus, ShoppingBasket, Star } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useProducts } from '@/hooks/use-products';
+import { useOrders } from '@/hooks/use-orders';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Cart { [productId: string]: number };
@@ -79,6 +80,7 @@ export default function NewOrderPage() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { products, loading: productsLoading } = useProducts();
+  const { orders, loading: ordersLoading } = useOrders();
 
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(addDays(new Date(), 1));
   const [searchTerm, setSearchTerm] = useState('');
@@ -91,30 +93,60 @@ export default function NewOrderPage() {
   const [currentNote, setCurrentNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const categories = useMemo(() => {
-    if (productsLoading) return [];
-    const uniqueCategories = [...new Set(products.map(p => p.category))];
-    // Display raw category names directly. This avoids translation issues with custom categories.
-    return uniqueCategories.map(c => ({
-      id: c,
-      name: c,
-    }));
-  }, [products, productsLoading]);
+  const loading = productsLoading || ordersLoading;
+
+  const favoriteProductIds = useMemo(() => {
+    if (ordersLoading || !orders.length) return new Set<string>();
+
+    const productOrderCounts: Record<string, number> = {};
+
+    orders.forEach(order => {
+        // Use a Set to only count each product once per order
+        const productsInThisOrder = new Set<string>();
+        order.items.forEach(item => {
+            productsInThisOrder.add(item.productId);
+        });
+
+        productsInThisOrder.forEach(productId => {
+            productOrderCounts[productId] = (productOrderCounts[productId] || 0) + 1;
+        });
+    });
+    
+    const favIds = Object.keys(productOrderCounts).filter(productId => productOrderCounts[productId] >= 3);
+    
+    return new Set<string>(favIds);
+
+  }, [orders, ordersLoading]);
+
+  const allCategories = useMemo(() => {
+    if (loading) return [];
+    const productCategories = [...new Set(products.map(p => p.category))];
+    return [{ id: 'favorites', name: t('favorites') }, ...productCategories.map(c => ({ id: c, name: c }))];
+  }, [products, loading, t]);
   
   useEffect(() => {
-      if (categories.length > 0 && !activeCategory) {
-        setActiveCategory(categories[0].id);
+    if (allCategories.length > 0 && !activeCategory) {
+      setActiveCategory('favorites');
     }
-  }, [categories, activeCategory]);
+  }, [allCategories, activeCategory]);
 
   const filteredProducts = useMemo(() => {
-    if (productsLoading) return [];
-    return products.filter(p => {
-      const matchesCategory = p.category === activeCategory;
-      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [activeCategory, searchTerm, products, productsLoading]);
+    if (loading) return [];
+    
+    let productList = products;
+    
+    if (activeCategory === 'favorites') {
+      productList = products.filter(p => favoriteProductIds.has(p.id));
+    } else {
+      productList = products.filter(p => p.category === activeCategory);
+    }
+    
+    if (searchTerm) {
+      return productList.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
+    
+    return productList;
+  }, [activeCategory, searchTerm, products, loading, favoriteProductIds]);
 
   const { orderItems, total, totalItems } = useMemo(() => {
     const orderItems: (OrderItem & { photoUrl: string })[] = [];
@@ -254,7 +286,7 @@ export default function NewOrderPage() {
 
         <div className="relative h-9 overflow-x-auto hide-scrollbar">
           <div className="absolute left-0 top-0 flex items-center gap-1.5 px-3 min-w-full">
-            {categories.map(cat => (
+            {allCategories.map(cat => (
               <Button
                 key={cat.id}
                 variant={activeCategory === cat.id ? 'default' : 'outline'}
@@ -262,6 +294,7 @@ export default function NewOrderPage() {
                 className="rounded-full h-7 px-2.5 text-xs flex-shrink-0 whitespace-nowrap"
                 onClick={() => setActiveCategory(cat.id)}
               >
+                {cat.id === 'favorites' && <Star className="h-3.5 w-3.5 mr-1 text-yellow-400" />}
                 {cat.name}
               </Button>
             ))}
@@ -271,7 +304,7 @@ export default function NewOrderPage() {
 
       {/* Product List */}
       <div className="flex-grow overflow-y-auto pb-32">
-        {productsLoading ? (
+        {loading ? (
              <div className="p-2 space-y-px">
                 {[...Array(5)].map((_, i) => (
                     <div key={i} className="bg-background border-b p-2 flex items-center gap-2">
