@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -18,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { addProduct, updateProduct, getProductBySku } from '@/lib/firestore/products';
 import type { Product, ProductCategory, ProductSupplier } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Camera, Plus, Check, Undo2, Pencil, Trash2, Percent, Loader2 } from 'lucide-react'; 
+import { Camera, Plus, Check, Undo2, Pencil, Trash2, Loader2 } from 'lucide-react'; 
 import { cn } from '@/lib/utils';
 import { useSuppliers } from '@/hooks/use-suppliers';
 
@@ -29,7 +28,7 @@ const supplierSchema = z.object({
 });
 
 const formSchema = z.object({
-  sku: z.string().min(2, 'SKU must be at least 2 characters.'),
+  sku: z.string().min(1, 'SKU is required.'),
   name: z.object({
     es: z.string().min(2, 'El nombre en español es requerido.'),
     en: z.string().min(2, 'The name in English is required.'),
@@ -110,7 +109,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     },
   });
 
-  const { fields, append, remove, update, replace } = useFieldArray({
+  const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: "suppliers",
   });
@@ -120,7 +119,9 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
 
   const primarySupplierCost = useMemo(() => {
     const primary = watchedSuppliers.find(s => s.isPrimary);
-    return primary?.cost ?? 0;
+    if (primary) return primary.cost;
+    if (watchedSuppliers.length > 0) return watchedSuppliers[0].cost;
+    return 0;
   }, [watchedSuppliers]);
 
   useEffect(() => {
@@ -132,43 +133,29 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
         setMargin('');
     }
   }, [primarySupplierCost, salePriceValue, isMarginInputFocused]);
-
-  const getCleanProductData = (productData: Product | null): ProductFormValues => {
-    if (productData) {
+  
+  const getInitialFormData = (): ProductFormValues => {
+    if (product) {
       return {
-        sku: productData.sku,
-        name: productData.name,
-        category: productData.category,
-        unit: productData.unit,
-        suppliers: productData.suppliers || [],
-        salePrice: productData.salePrice,
-        stock: productData.stock,
-        minStock: productData.minStock,
-        active: productData.active,
-        photoUrl: productData.photoUrl || '',
+        ...product,
+        photoUrl: product.photoUrl || '',
+        suppliers: product.suppliers?.length > 0 ? product.suppliers : [{ supplierId: '', cost: 0, isPrimary: true }]
       };
     }
     const supplierContextId = pathname.includes('/suppliers/') ? pathname.split('/suppliers/')[1].split('/')[0] : defaultSupplierId;
     return {
-      sku: '',
-      name: { es: '', en: '' },
-      category: { es: '', en: '' },
-      unit: { es: '', en: '' },
-      suppliers: supplierContextId ? [{ supplierId: supplierContextId, cost: 0, isPrimary: true }] : [],
-      salePrice: 0,
-      stock: 0,
-      minStock: 10,
-      active: true,
-      photoUrl: '',
+      sku: '', name: { es: '', en: '' }, category: { es: '', en: '' }, unit: { es: '', en: '' },
+      suppliers: supplierContextId ? [{ supplierId: supplierContextId, cost: 0, isPrimary: true }] : [{ supplierId: '', cost: 0, isPrimary: true }],
+      salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '',
     };
   };
 
   useEffect(() => {
     if (suppliersLoading) return;
-    const initialData = getCleanProductData(product);
+    const initialData = getInitialFormData();
     form.reset(initialData);
     setImgUrlInputValue(initialData.photoUrl || '');
-  }, [product, defaultSupplierId, pathname, suppliersLoading, form]);
+  }, [product, defaultSupplierId, pathname, suppliersLoading]);
 
 
   const handleSkuBlur = async () => {
@@ -181,19 +168,21 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
       if (existingProduct) {
         toast({ title: "Producto Existente Encontrado", description: "Datos del producto han sido cargados." });
         
-        const baseData = getCleanProductData(existingProduct);
-        let suppliersForForm = [...(baseData.suppliers || [])];
+        const existingSuppliers = existingProduct.suppliers || [];
         const supplierContextId = pathname.includes('/suppliers/') ? pathname.split('/suppliers/')[1].split('/')[0] : defaultSupplierId;
+
+        let suppliersForForm = [...existingSuppliers];
         
         if (supplierContextId && !suppliersForForm.some(s => s.supplierId === supplierContextId)) {
           suppliersForForm.push({ supplierId: supplierContextId, cost: 0, isPrimary: suppliersForForm.length === 0 });
         }
-        
+
         form.reset({
-          ...baseData,
-          suppliers: suppliersForForm
+          ...existingProduct,
+          photoUrl: existingProduct.photoUrl || '',
+          suppliers: suppliersForForm.length > 0 ? suppliersForForm : [{ supplierId: '', cost: 0, isPrimary: true }]
         });
-        setImgUrlInputValue(baseData.photoUrl || '');
+        setImgUrlInputValue(existingProduct.photoUrl || '');
       }
     } catch (error) {
       console.error("Error in handleSkuBlur:", error);
@@ -222,15 +211,6 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     replace(newSuppliers);
   };
 
-  useEffect(() => {
-    const lastSupplier = watchedSuppliers[watchedSuppliers.length - 1];
-    if (lastSupplier && lastSupplier.supplierId) {
-      append({ supplierId: '', cost: 0, isPrimary: false }, { shouldFocus: false });
-    } else if (watchedSuppliers.length === 0) {
-       append({ supplierId: '', cost: 0, isPrimary: true }, { shouldFocus: false });
-    }
-  }, [watchedSuppliers, append]);
-
   const photoUrl = form.watch('photoUrl');
   const currentCategory = form.watch('category');
   const currentUnit = form.watch('unit');
@@ -245,13 +225,13 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   };
   
   const startCreatingCategory = () => { setEditCategoryTarget(null); setIsCategoryInputMode(true); setTimeout(() => esCategoryInputRef.current?.focus(), 100); };
-  const startEditingCategory = () => { if (!currentCategory) return; setEditCategoryTarget(currentCategory); setIsCategoryInputMode(true); setTimeout(() => { if (esCategoryInputRef.current) esCategoryInputRef.current.value = currentCategory.es; if (enCategoryInputRef.current) enCategoryInputRef.current.value = currentCategory.en; esCategoryInputRef.current?.focus(); }, 100); };
+  const startEditingCategory = () => { if (!currentCategory?.es) return; setEditCategoryTarget(currentCategory); setIsCategoryInputMode(true); setTimeout(() => { if (esCategoryInputRef.current) esCategoryInputRef.current.value = currentCategory.es; if (enCategoryInputRef.current) enCategoryInputRef.current.value = currentCategory.en; esCategoryInputRef.current?.focus(); }, 100); };
   const handleSaveCategory = () => { const esValue = esCategoryInputRef.current?.value.trim(); const enValue = enCategoryInputRef.current?.value.trim(); if (!esValue || !enValue) { toast({ variant: 'destructive', title: 'Both category names are required.' }); return; } const newCategory: ProductCategory = { es: esValue, en: enValue }; if (editCategoryTarget) { setCategories(prev => prev.map(c => c.es === editCategoryTarget.es ? newCategory : c)); if (currentCategory.es === editCategoryTarget.es) form.setValue('category', newCategory); toast({ title: t('toast_category_updated'), description: newCategory.es }); } else { if (!categories.some(c => c.es.toLowerCase() === newCategory.es.toLowerCase())) { setCategories(prev => [...prev, newCategory]); form.setValue('category', newCategory); toast({ title: t('toast_category_added'), description: newCategory.es }); } } setIsCategoryInputMode(false); setEditCategoryTarget(null); };
   const handleDeleteCategory = () => { if (!currentCategory?.es || !confirm(t('confirm_delete_category', { category: currentCategory.es }))) return; const newCategories = categories.filter(c => c.es !== currentCategory.es); setCategories(newCategories); form.setValue('category', newCategories.length > 0 ? newCategories[0] : { es: '', en: '' }); toast({ title: t('toast_category_deleted') }); };
   const cancelCategoryInput = () => { setIsCategoryInputMode(false); setEditCategoryTarget(null); };
 
   const startCreatingUnit = () => { setEditUnitTarget(null); setIsUnitInputMode(true); setTimeout(() => esUnitInputRef.current?.focus(), 100); };
-  const startEditingUnit = () => { if (!currentUnit) return; setEditUnitTarget(currentUnit); setIsUnitInputMode(true); setTimeout(() => { if (esUnitInputRef.current) esUnitInputRef.current.value = currentUnit.es; if (enUnitInputRef.current) enUnitInputRef.current.value = currentUnit.en; esUnitInputRef.current?.focus(); }, 100); };
+  const startEditingUnit = () => { if (!currentUnit?.es) return; setEditUnitTarget(currentUnit); setIsUnitInputMode(true); setTimeout(() => { if (esUnitInputRef.current) esUnitInputRef.current.value = currentUnit.es; if (enUnitInputRef.current) enUnitInputRef.current.value = currentUnit.en; esUnitInputRef.current?.focus(); }, 100); };
   const handleSaveUnit = () => { const esValue = esUnitInputRef.current?.value.trim(); const enValue = enUnitInputRef.current?.value.trim(); if (!esValue || !enValue) { toast({ variant: 'destructive', title: 'Both unit names are required.' }); return; } const newUnit = { es: esValue, en: enValue }; if (editUnitTarget) { setUnits(prev => prev.map(u => u.es === editUnitTarget.es ? newUnit : u)); if (currentUnit.es === editUnitTarget.es) form.setValue('unit', newUnit); } else { if (!units.some(u => u.es.toLowerCase() === newUnit.es.toLowerCase())) { setUnits(prev => [...prev, newUnit]); form.setValue('unit', newUnit); } } setIsUnitInputMode(false); setEditUnitTarget(null); };
   const handleDeleteUnit = () => { if (!currentUnit?.es || !confirm(`Are you sure you want to delete the unit '${currentUnit.es}'?`)) return; const newUnits = units.filter(u => u.es !== currentUnit.es); setUnits(newUnits); form.setValue('unit', newUnits.length > 0 ? newUnits[0] : { es: '', en: '' }); };
   const cancelUnitInput = () => { setIsUnitInputMode(false); setEditUnitTarget(null); };
@@ -322,34 +302,35 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
             <hr className="my-2 border-dashed border-gray-200" />
             
             <div className="space-y-2">
-                {fields.map((field, index) => {
-                    const isLastRow = index === fields.length - 1;
-                    return (
-                        <div key={field.id} className={cn("p-3 border rounded-lg", watchedSuppliers[index]?.isPrimary ? "bg-primary/5 border-primary" : "bg-muted/30")}>
-                            <div className="flex justify-between items-center mb-2">
-                                <FormLabel className="text-primary text-xs font-bold uppercase tracking-wider">{isLastRow ? t('add_supplier_label') : `Proveedor #${index + 1}`}</FormLabel>
-                                {(!isLastRow && fields.length > 2) && <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(index)}><Trash2 className="h-3 w-3" /></Button>}
+                <FormLabel className="text-slate-800 font-bold">{t('primary_supplier_label')}</FormLabel>
+                {fields.map((field, index) => (
+                    <div key={field.id} className={cn("p-3 border rounded-lg grid grid-cols-[2fr,1fr,auto] gap-4 items-center", watchedSuppliers[index]?.isPrimary ? "bg-primary/5 border-primary" : "bg-muted/30")}>
+                        <FormField control={form.control} name={`suppliers.${index}.supplierId`} render={({ field }) => (
+                            <FormItem><Select onValueChange={field.onChange} value={field.value} disabled={suppliersLoading}><FormControl><SelectTrigger className="h-10 bg-white"><SelectValue placeholder={t('form_placeholder_select_supplier')} /></SelectTrigger></FormControl><SelectContent>{allSuppliers.map(s => <SelectItem key={s.id} value={s.id} disabled={watchedSuppliers.some((ws, i) => i !== index && ws.supplierId === s.id)}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                        )}/>
+                        <FormField control={form.control} name={`suppliers.${index}.cost`} render={({ field }) => (
+                            <FormItem><FormControl><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span><Input type="number" className="pl-6 h-10 text-right bg-white" placeholder="0.00" step="0.01" {...field} /></div></FormControl><FormMessage /></FormItem>
+                        )}/>
+                        <div className="flex items-center gap-2">
+                             <div className="flex flex-col items-center">
+                                <FormLabel htmlFor={`isPrimary-${index}`} className="text-xs text-muted-foreground mb-1">{t('primary_button_label')}</FormLabel>
+                                <Switch
+                                  id={`isPrimary-${index}`}
+                                  checked={field.isPrimary}
+                                  onCheckedChange={(checked) => checked && handleSetPrimary(index)}
+                                  disabled={!watchedSuppliers[index]?.supplierId}
+                                />
                             </div>
-                            <div className="grid grid-cols-[2fr,1fr,auto] gap-4 items-center">
-                                <FormField control={form.control} name={`suppliers.${index}.supplierId`} render={({ field }) => (
-                                    <FormItem><Select onValueChange={field.onChange} value={field.value} disabled={suppliersLoading}><FormControl><SelectTrigger className="h-10 bg-white"><SelectValue placeholder={t('form_placeholder_select_supplier')} /></SelectTrigger></FormControl><SelectContent>{allSuppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
-                                )}/>
-                                <FormField control={form.control} name={`suppliers.${index}.cost`} render={({ field }) => (
-                                    <FormItem><FormControl><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span><Input type="number" className="pl-6 h-10 text-right bg-white" placeholder="0.00" step="0.01" {...field} /></div></FormControl><FormMessage /></FormItem>
-                                )}/>
-                                <div className="flex flex-col items-center">
-                                    <FormLabel htmlFor={`isPrimary-${index}`} className="text-xs text-muted-foreground mb-1">{t('primary_button_label')}</FormLabel>
-                                    <Switch
-                                      id={`isPrimary-${index}`}
-                                      checked={watchedSuppliers[index]?.isPrimary}
-                                      onCheckedChange={(checked) => checked && handleSetPrimary(index)}
-                                      disabled={!watchedSuppliers[index]?.supplierId}
-                                    />
-                                </div>
-                            </div>
+                            {fields.length > 1 &&
+                                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive self-end" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
+                            }
                         </div>
-                    )
-                })}
+                    </div>
+                ))}
+                 <Button type="button" variant="outline" size="sm" onClick={() => append({ supplierId: '', cost: 0, isPrimary: fields.length === 0 })}>
+                    <Plus className="mr-2 h-4 w-4"/>
+                    {t('add_supplier_label')}
+                 </Button>
                 <FormMessage>{form.formState.errors.suppliers?.root?.message}</FormMessage>
             </div>
 
@@ -380,4 +361,3 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     </>
   );
 }
-    

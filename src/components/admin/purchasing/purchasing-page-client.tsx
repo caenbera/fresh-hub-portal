@@ -277,7 +277,8 @@ export function PurchasingPageClient() {
 
                                 const bestSupplier = product.suppliers.reduce((best, current) => (current.cost < best.cost ? current : best));
                                 const hasOpportunity = bestSupplier.supplierId !== primarySupplier.supplierId;
-                                const unitText = product.unit[locale] || product.unit.es;
+                                const unitText = (typeof product.unit === 'object' && product.unit?.[locale]) ? product.unit[locale] : (product.unit as any);
+
 
                                 return (
                                 <TableRow key={product.id}>
@@ -353,7 +354,7 @@ export function PurchasingPageClient() {
                             : generalCatalog.map(product => {
                                 const primarySupplier = product.suppliers.find(s => s.isPrimary);
                                 if (!primarySupplier) return null;
-                                const unitText = product.unit[locale] || product.unit.es;
+                                const unitText = (typeof product.unit === 'object' && product.unit?.[locale]) ? product.unit[locale] : (product.unit as any);
                                 return (
                                 <TableRow key={product.id}>
                                     <TableCell>
