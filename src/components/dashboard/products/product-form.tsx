@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -82,6 +82,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const { toast } = useToast();
   const t = useTranslations('ProductsPage');
   const { suppliers: allSuppliers, loading: suppliersLoading } = useSuppliers();
+  const pathname = usePathname();
   
   const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
   const [imgUrlInputValue, setImgUrlInputValue] = useState('');
@@ -109,80 +110,66 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     },
   });
 
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, append, remove, update, replace } = useFieldArray({
     control: form.control,
     name: "suppliers",
   });
   
   const watchedSuppliers = form.watch('suppliers');
-  const primarySupplier = watchedSuppliers.find(s => s.isPrimary);
-  const costValue = primarySupplier?.cost ?? 0;
   const salePriceValue = form.watch('salePrice');
+
+  const primarySupplierCost = useMemo(() => {
+    const primary = watchedSuppliers.find(s => s.isPrimary);
+    return primary?.cost ?? 0;
+  }, [watchedSuppliers]);
+
+  useEffect(() => {
+    if (isMarginInputFocused) return;
+    if (primarySupplierCost > 0 && salePriceValue > primarySupplierCost) {
+        const calculatedMargin = ((salePriceValue - primarySupplierCost) / primarySupplierCost) * 100;
+        setMargin(calculatedMargin.toFixed(1).replace('.0', ''));
+    } else {
+        setMargin('');
+    }
+  }, [primarySupplierCost, salePriceValue, isMarginInputFocused]);
 
   const getCleanProductData = (productData: Product | null): ProductFormValues => {
     if (productData) {
-      const suppliersForForm: ProductSupplier[] = productData.suppliers?.length > 0
-        ? [...productData.suppliers]
-        : (defaultSupplierId ? [{ supplierId: defaultSupplierId, cost: 0, isPrimary: true }] : []);
-
       return {
         sku: productData.sku,
         name: productData.name,
         category: productData.category,
         unit: productData.unit,
-        suppliers: suppliersForForm,
+        suppliers: productData.suppliers || [],
         salePrice: productData.salePrice,
         stock: productData.stock,
         minStock: productData.minStock,
         active: productData.active,
         photoUrl: productData.photoUrl || '',
       };
-    } else {
-      const initialSuppliers = defaultSupplierId
-        ? [{ supplierId: defaultSupplierId, cost: 0, isPrimary: true }]
-        : [{ supplierId: '', cost: 0, isPrimary: true }];
-        
-      return {
-        sku: '',
-        name: { es: '', en: '' },
-        category: initialCategories[0],
-        unit: initialUnits[0],
-        suppliers: initialSuppliers,
-        salePrice: 0,
-        stock: 0,
-        minStock: 10,
-        active: true,
-        photoUrl: '',
-      };
     }
+    const supplierContextId = pathname.includes('/suppliers/') ? pathname.split('/suppliers/')[1].split('/')[0] : defaultSupplierId;
+    return {
+      sku: '',
+      name: { es: '', en: '' },
+      category: { es: '', en: '' },
+      unit: { es: '', en: '' },
+      suppliers: supplierContextId ? [{ supplierId: supplierContextId, cost: 0, isPrimary: true }] : [],
+      salePrice: 0,
+      stock: 0,
+      minStock: 10,
+      active: true,
+      photoUrl: '',
+    };
   };
-  
+
   useEffect(() => {
     if (suppliersLoading) return;
     const initialData = getCleanProductData(product);
     form.reset(initialData);
     setImgUrlInputValue(initialData.photoUrl || '');
-  }, [product, defaultSupplierId, suppliersLoading, form]);
-  
-  useEffect(() => {
-    if (isMarginInputFocused) return;
-    if (costValue > 0 && salePriceValue > costValue) {
-        const calculatedMargin = ((salePriceValue - costValue) / salePriceValue) * 100;
-        setMargin(calculatedMargin.toFixed(1).replace('.0', ''));
-    } else {
-        setMargin('');
-    }
-  }, [costValue, salePriceValue, isMarginInputFocused]);
+  }, [product, defaultSupplierId, pathname, suppliersLoading, form]);
 
-  const handleMarginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const marginValue = e.target.value;
-    setMargin(marginValue);
-    const marginNum = parseFloat(marginValue);
-    if (!isNaN(marginNum) && marginNum < 100 && costValue > 0) {
-        const newSalePrice = costValue / (1 - marginNum / 100);
-        form.setValue('salePrice', parseFloat(newSalePrice.toFixed(2)), { shouldValidate: true });
-    }
-  };
 
   const handleSkuBlur = async () => {
     const sku = form.getValues('sku');
@@ -193,30 +180,54 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
       const existingProduct = await getProductBySku(sku);
       if (existingProduct) {
         toast({ title: "Producto Existente Encontrado", description: "Datos del producto han sido cargados." });
-        const productDataForForm = getCleanProductData(existingProduct);
-        form.reset(productDataForForm);
-        setImgUrlInputValue(productDataForForm.photoUrl || '');
+        
+        const baseData = getCleanProductData(existingProduct);
+        let suppliersForForm = [...(baseData.suppliers || [])];
+        const supplierContextId = pathname.includes('/suppliers/') ? pathname.split('/suppliers/')[1].split('/')[0] : defaultSupplierId;
+        
+        if (supplierContextId && !suppliersForForm.some(s => s.supplierId === supplierContextId)) {
+          suppliersForForm.push({ supplierId: supplierContextId, cost: 0, isPrimary: suppliersForForm.length === 0 });
+        }
+        
+        form.reset({
+          ...baseData,
+          suppliers: suppliersForForm
+        });
+        setImgUrlInputValue(baseData.photoUrl || '');
       }
     } catch (error) {
       console.error("Error in handleSkuBlur:", error);
-      toast({ variant: "destructive", title: "Error", description: "Could not fetch product data." });
+      toast({ variant: "destructive", title: "Error", description: "Could not fetch product data by SKU." });
     } finally {
       setIsSkuLoading(false);
     }
   }
 
+  const handleMarginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const marginValue = e.target.value;
+    setMargin(marginValue);
+    const marginNum = parseFloat(marginValue);
+    if (!isNaN(marginNum) && primarySupplierCost > 0) {
+        const newSalePrice = primarySupplierCost * (1 + marginNum / 100);
+        form.setValue('salePrice', parseFloat(newSalePrice.toFixed(2)), { shouldValidate: true });
+    }
+  };
+
   const handleSetPrimary = (indexToSet: number) => {
-    watchedSuppliers.forEach((_, index) => {
-      if (form.getValues(`suppliers.${index}.isPrimary`) !== (index === indexToSet)) {
-        update(index, { ...watchedSuppliers[index], isPrimary: index === indexToSet });
-      }
-    });
+    const currentSuppliers = form.getValues('suppliers');
+    const newSuppliers = currentSuppliers.map((supplier, index) => ({
+      ...supplier,
+      isPrimary: index === indexToSet
+    }));
+    replace(newSuppliers);
   };
 
   useEffect(() => {
     const lastSupplier = watchedSuppliers[watchedSuppliers.length - 1];
     if (lastSupplier && lastSupplier.supplierId) {
       append({ supplierId: '', cost: 0, isPrimary: false }, { shouldFocus: false });
+    } else if (watchedSuppliers.length === 0) {
+       append({ supplierId: '', cost: 0, isPrimary: true }, { shouldFocus: false });
     }
   }, [watchedSuppliers, append]);
 
@@ -313,9 +324,6 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
             <div className="space-y-2">
                 {fields.map((field, index) => {
                     const isLastRow = index === fields.length - 1;
-                    if (isLastRow && field.supplierId) return null;
-                    if (!isLastRow && !field.supplierId) return null;
-
                     return (
                         <div key={field.id} className={cn("p-3 border rounded-lg", watchedSuppliers[index]?.isPrimary ? "bg-primary/5 border-primary" : "bg-muted/30")}>
                             <div className="flex justify-between items-center mb-2">
@@ -335,7 +343,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
                                       id={`isPrimary-${index}`}
                                       checked={watchedSuppliers[index]?.isPrimary}
                                       onCheckedChange={(checked) => checked && handleSetPrimary(index)}
-                                      disabled={!watchedSuppliers[index]?.supplierId || isLastRow}
+                                      disabled={!watchedSuppliers[index]?.supplierId}
                                     />
                                 </div>
                             </div>
@@ -372,5 +380,4 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     </>
   );
 }
-
     
