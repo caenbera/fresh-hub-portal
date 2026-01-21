@@ -48,8 +48,8 @@ export function ClientDetailPageClient({ client }: ClientDetailPageClientProps) 
   const creditUsage = creditLimit > 0 ? Math.min(Math.round((creditUsed / creditLimit) * 100), 100) : 0;
   
   let creditHealthColor = "bg-green-500";
-  if (creditUsage > 50) creditHealthColor = "bg-yellow-500";
   if (creditUsage > 85) creditHealthColor = "bg-red-500";
+  else if (creditUsage > 50) creditHealthColor = "bg-yellow-500";
 
   return (
     <>
@@ -110,7 +110,7 @@ export function ClientDetailPageClient({ client }: ClientDetailPageClientProps) 
                 <div className="bg-muted p-4 rounded-lg text-center">
                   <p className="text-xs text-muted-foreground">{t('current_debt_label')}</p>
                   <p className="text-2xl font-bold">{formatCurrency(creditUsed)}</p>
-                  <Progress value={creditUsage} className={`h-2 mt-2 ${creditHealthColor}`} />
+                  <Progress value={creditUsage} className="h-2 mt-2" indicatorClassName={creditHealthColor} />
                   <div className="flex justify-between text-xs text-muted-foreground mt-1">
                     <span>$0</span>
                     <span>{t('credit_limit_label')}: {formatCurrency(creditLimit)}</span>

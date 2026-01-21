@@ -31,6 +31,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile, deleteUser } from '@/lib/firestore/users';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
@@ -184,9 +185,12 @@ export function ClientsPageClient() {
                                 const creditLimit = client.creditLimit || 0;
                                 const creditUsed = 0; // TODO: Calculate this from orders/invoices
                                 const creditUsage = creditLimit > 0 ? Math.round((creditUsed / creditLimit) * 100) : 0;
-                                let creditColor = "bg-green-500";
-                                if (creditUsage > 85) creditColor = "bg-red-500";
-                                else if (creditUsage > 50) creditColor = "bg-yellow-500";
+                                let creditColorClass = 'bg-green-500';
+                                if (creditUsage > 85) {
+                                    creditColorClass = 'bg-red-500';
+                                } else if (creditUsage > 50) {
+                                    creditColorClass = 'bg-yellow-500';
+                                }
                                 
                                 return (
                                     <TableRow key={client.uid}>
@@ -225,7 +229,7 @@ export function ClientsPageClient() {
                                                     <span>{formatCurrency(creditUsed)}</span>
                                                     <span>{t('credit_limit')}: {formatCurrency(creditLimit)}</span>
                                                 </div>
-                                                <Progress value={creditUsage} className={`h-1.5 mt-1 ${creditColor}`} />
+                                                <Progress value={creditUsage} className="h-1.5 mt-1" indicatorClassName={creditColorClass} />
                                             </div>
                                         </TableCell>
                                         <TableCell>
