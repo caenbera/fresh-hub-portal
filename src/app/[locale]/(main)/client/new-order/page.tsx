@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -96,6 +97,11 @@ export default function NewOrderPage() {
 
   const loading = productsLoading || ordersLoading;
 
+  const uniqueProductsForClient = useMemo(() => {
+    if (loading) return [];
+    return Array.from(new Map(products.map(p => [p.sku, p])).values());
+  }, [products, loading]);
+
   const favoriteProductIds = useMemo(() => {
     if (ordersLoading || !orders.length) return new Set<string>();
 
@@ -113,12 +119,12 @@ export default function NewOrderPage() {
 
   const allCategories = useMemo(() => {
     if (loading) return [];
-    const uniqueCategories = Array.from(new Map(products.map(p => [p.category.es, p.category])).values());
+    const uniqueCategories = Array.from(new Map(uniqueProductsForClient.map(p => [p.category.es, p.category])).values());
     
     const favCategory: ProductCategory & { isFavorite?: boolean } = { es: t('favorites'), en: 'Favorites', isFavorite: true };
 
     return [favCategory, ...uniqueCategories];
-  }, [products, loading, t]);
+  }, [uniqueProductsForClient, loading, t]);
   
   useEffect(() => {
     if (allCategories.length > 0 && !activeCategory) {
@@ -130,17 +136,17 @@ export default function NewOrderPage() {
     if (loading) return [];
     
     if (activeCategory === t('favorites')) {
-      return products.filter(p => favoriteProductIds.has(p.id));
+      return uniqueProductsForClient.filter(p => favoriteProductIds.has(p.id));
     }
     
-    let productList = products.filter(p => p.category.es === activeCategory);
+    let productList = uniqueProductsForClient.filter(p => p.category.es === activeCategory);
     
     if (searchTerm) {
       return productList.filter(p => p.name[locale].toLowerCase().includes(searchTerm.toLowerCase()));
     }
     
     return productList;
-  }, [activeCategory, searchTerm, products, loading, favoriteProductIds, t, locale]);
+  }, [activeCategory, searchTerm, uniqueProductsForClient, loading, favoriteProductIds, t, locale]);
 
   const { orderItems, total, totalItems } = useMemo(() => {
     const orderItems: (OrderItem & { photoUrl: string })[] = [];
@@ -156,7 +162,7 @@ export default function NewOrderPage() {
           productName: product.name,
           quantity,
           price: product.salePrice,
-          photoUrl: product.photoUrl,
+          photoUrl: product.photoUrl || '',
         });
         total += product.salePrice * quantity;
         totalItems += quantity;
@@ -320,7 +326,7 @@ export default function NewOrderPage() {
             return (
               <div key={p.id} className="bg-background border-b p-2 flex items-center gap-2">
                 <Image
-                  src={p.photoUrl}
+                  src={p.photoUrl || '/placeholder.svg'}
                   alt={p.name[locale]}
                   width={50}
                   height={50}
@@ -427,3 +433,5 @@ export default function NewOrderPage() {
     </div>
   );
 }
+
+    

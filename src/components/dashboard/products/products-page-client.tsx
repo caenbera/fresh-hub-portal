@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Plus, Search, Filter } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,13 @@ export function ProductsPageClient() {
   const [alertOpen, setAlertOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const t = useTranslations('ProductsPage');
+
+  const uniqueProducts = useMemo(() => {
+    if (loading) return [];
+    // This will ensure only one product per SKU is shown.
+    return Array.from(new Map(products.map(p => [p.sku, p])).values());
+  }, [products, loading]);
+
 
   const handleAdd = () => {
     setSelectedProduct(null);
@@ -117,9 +125,11 @@ export function ProductsPageClient() {
         </div>
       ) : (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <ProductTable products={products} onEdit={handleEdit} onDelete={handleDelete} />
+            <ProductTable products={uniqueProducts} onEdit={handleEdit} onDelete={handleDelete} />
         </div>
       )}
     </div>
   );
 }
+
+    
