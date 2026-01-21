@@ -58,6 +58,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const categoryInputRef = useRef<HTMLInputElement>(null);
 
   const [margin, setMargin] = useState<string>('');
+  const [isMarginInputFocused, setIsMarginInputFocused] = useState(false);
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
@@ -82,7 +83,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   
     if (product) {
       // Edit mode
-      form.reset({ ...product });
+      form.reset({ ...product, supplierId: product.supplierId || defaultSupplierId || '' });
       setImgUrlInputValue(product.photoUrl || '');
     } else {
       // Add mode
@@ -92,13 +93,15 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   }, [product, defaultSupplierId, form, suppliersLoading]);
 
   useEffect(() => {
+    if (isMarginInputFocused) return;
+    
     if (costValue > 0 && salePriceValue > costValue) {
         const calculatedMargin = ((salePriceValue - costValue) / salePriceValue) * 100;
         setMargin(calculatedMargin.toFixed(2).replace('.00', ''));
     } else {
         setMargin('');
     }
-  }, [costValue, salePriceValue]);
+  }, [costValue, salePriceValue, isMarginInputFocused]);
 
   const handleMarginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const marginValue = e.target.value;
@@ -409,7 +412,15 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
                     <FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_margin')}</FormLabel>
                     <FormControl>
                         <div className="relative">
-                           <Input type="number" value={margin} onChange={handleMarginChange} className="pl-3 pr-8 h-10 text-right font-bold" placeholder={t('form_placeholder_margin')} />
+                           <Input 
+                            type="number" 
+                            value={margin} 
+                            onChange={handleMarginChange} 
+                            className="pl-3 pr-8 h-10 text-right font-bold" 
+                            placeholder={t('form_placeholder_margin')}
+                            onFocus={() => setIsMarginInputFocused(true)}
+                            onBlur={() => setIsMarginInputFocused(false)}
+                           />
                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
                         </div>
                     </FormControl>
