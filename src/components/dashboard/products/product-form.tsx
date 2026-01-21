@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -75,9 +76,13 @@ const initialUnits: { es: string, en: string }[] = [
 
 function getSupplierLabel(index: number, t: any) {
     if (index === 0) return t('primary_supplier_label');
-    if (index === 1) return t('secondary_supplier_label');
+    const lastSupplier = index === 1;
+    if (lastSupplier) {
+        return t('secondary_supplier_label');
+    }
     return t('tertiary_supplier_label', {index: index + 1});
 }
+
 
 export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFormProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -123,6 +128,8 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const salePriceValue = form.watch('salePrice');
 
   useEffect(() => {
+    if (suppliersLoading) return;
+  
     const defaultValues: ProductFormValues = {
         sku: '',
         name: { es: '', en: '' },
@@ -133,9 +140,18 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     };
   
     if (product) {
+      const suppliers = product.suppliers || [];
       form.reset({
-        ...product,
-        suppliers: product.suppliers.length > 0 ? product.suppliers : [{ supplierId: '', cost: 0, isPrimary: true }]
+          sku: product.sku,
+          name: product.name,
+          category: product.category,
+          unit: product.unit,
+          suppliers: suppliers.length > 0 ? [...suppliers, { supplierId: '', cost: 0, isPrimary: false }] : [{ supplierId: defaultSupplierId || '', cost: 0, isPrimary: true }],
+          salePrice: product.salePrice,
+          stock: product.stock,
+          minStock: product.minStock,
+          active: product.active,
+          photoUrl: product.photoUrl,
       });
       setImgUrlInputValue(product.photoUrl || '');
     } else {
@@ -147,8 +163,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   // Handle auto-add of new supplier row
   useEffect(() => {
     const lastSupplier = watchedSuppliers[watchedSuppliers.length - 1];
-    if (lastSupplier && lastSupplier.supplierId && lastSupplier.cost >= 0) {
-      // Add a new empty supplier field if the last one is filled
+    if (lastSupplier && lastSupplier.supplierId) {
       append({ supplierId: '', cost: 0, isPrimary: false }, { shouldFocus: false });
     }
   }, [watchedSuppliers, append]);
@@ -176,18 +191,36 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
 
   const handleSkuBlur = async () => {
     const sku = form.getValues('sku');
-    if (!sku || product) return; // Don't lookup if editing or SKU is empty
+    if (!sku || product) return;
 
     setIsSkuLoading(true);
-    const existingProduct = await getProductBySku(sku);
-    if (existingProduct) {
-        toast({ title: "Producto Existente Encontrado", description: "Datos del producto han sido cargados."});
+    try {
+      const existingProduct = await getProductBySku(sku);
+      if (existingProduct) {
+        toast({ title: "Producto Existente Encontrado", description: "Datos del producto han sido cargados." });
+        
+        const suppliers = existingProduct.suppliers || [];
+
         form.reset({
-            ...existingProduct,
-            suppliers: [...existingProduct.suppliers, { supplierId: '', cost: 0, isPrimary: false }]
+          sku: existingProduct.sku,
+          name: existingProduct.name,
+          category: existingProduct.category,
+          unit: existingProduct.unit,
+          suppliers: [...suppliers, { supplierId: '', cost: 0, isPrimary: false }],
+          salePrice: existingProduct.salePrice,
+          stock: existingProduct.stock,
+          minStock: existingProduct.minStock,
+          active: existingProduct.active,
+          photoUrl: existingProduct.photoUrl,
         });
+        setImgUrlInputValue(existingProduct.photoUrl || '');
+      }
+    } catch (error) {
+      console.error("Error in handleSkuBlur:", error);
+      toast({ variant: "destructive", title: "Error", description: "Could not fetch product data." });
+    } finally {
+      setIsSkuLoading(false);
     }
-    setIsSkuLoading(false);
   }
 
   const handleSetPrimary = (indexToSet: number) => {
@@ -291,12 +324,12 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
             <hr className="my-2 border-dashed border-gray-200" />
             
             {/* Suppliers Section */}
-            <div className="space-y-4">
+            <div className="space-y-2">
                 {fields.map((field, index) => (
                     <div key={field.id} className={cn("p-3 border rounded-lg", watchedSuppliers[index]?.isPrimary ? "bg-primary/5 border-primary" : "bg-muted/30")}>
                         <div className="flex justify-between items-center mb-2">
                              <FormLabel className="text-primary text-xs font-bold uppercase tracking-wider">{getSupplierLabel(index, t)}</FormLabel>
-                             {index > 0 && watchedSuppliers[index]?.supplierId && <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(index)}><Trash2 className="h-3 w-3" /></Button>}
+                             {index > 0 && (watchedSuppliers[index]?.supplierId || watchedSuppliers.length > index + 1) && <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(index)}><Trash2 className="h-3 w-3" /></Button>}
                         </div>
                         <div className="grid grid-cols-[2fr,1fr,auto] gap-4 items-end">
                             <FormField control={form.control} name={`suppliers.${index}.supplierId`} render={({ field }) => (
@@ -343,3 +376,4 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     </>
   );
 }
+
