@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '@/context/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { addOrder } from '@/lib/firestore/orders';
@@ -13,10 +13,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
-import type { Product as ProductType, OrderItem } from '@/types';
+import type { Product as ProductType, OrderItem, ProductCategory } from '@/types';
 import { CalendarIcon, Search, MessageSquarePlus, Pencil, Minus, Plus, ShoppingBasket, Star } from 'lucide-react';
 import { format, addDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { es, enUS } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useProducts } from '@/hooks/use-products';
@@ -28,7 +28,7 @@ interface Notes { [productId: string]: string };
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
-const CheckoutContent = ({ orderItems, notes, total, deliveryDate, isSubmitting, handleSubmitOrder, t }: any) => (
+const CheckoutContent = ({ orderItems, notes, total, deliveryDate, isSubmitting, handleSubmitOrder, t, locale }: any) => (
   <div className="flex flex-col h-full">
     <SheetHeader className="p-3 text-left border-b">
       <SheetTitle className="text-base">{t('confirmOrder')}</SheetTitle>
@@ -37,7 +37,7 @@ const CheckoutContent = ({ orderItems, notes, total, deliveryDate, isSubmitting,
       <div className="flex items-center gap-2 p-2 mb-3 bg-gray-100 rounded-md text-sm">
         <CalendarIcon className="h-4 w-4 text-primary" />
         <span className="text-muted-foreground">{t('delivery')}:</span>
-        <span className="font-semibold">{deliveryDate ? format(deliveryDate, 'PPP', { locale: es }) : 'N/A'}</span>
+        <span className="font-semibold">{deliveryDate ? format(deliveryDate, 'PPP', { locale: locale === 'es' ? es : enUS }) : 'N/A'}</span>
       </div>
       <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">{t('selectedItems')}</h3>
       <div className="space-y-2">
@@ -76,6 +76,7 @@ const CheckoutContent = ({ orderItems, notes, total, deliveryDate, isSubmitting,
 
 export default function NewOrderPage() {
   const t = useTranslations('ClientNewOrderPage');
+  const locale = useLocale() as 'es' | 'en';
   const { user, userProfile } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -99,54 +100,47 @@ export default function NewOrderPage() {
     if (ordersLoading || !orders.length) return new Set<string>();
 
     const productOrderCounts: Record<string, number> = {};
-
     orders.forEach(order => {
-        // Use a Set to only count each product once per order
         const productsInThisOrder = new Set<string>();
-        order.items.forEach(item => {
-            productsInThisOrder.add(item.productId);
-        });
-
+        order.items.forEach(item => productsInThisOrder.add(item.productId));
         productsInThisOrder.forEach(productId => {
             productOrderCounts[productId] = (productOrderCounts[productId] || 0) + 1;
         });
     });
     
-    const favIds = Object.keys(productOrderCounts).filter(productId => productOrderCounts[productId] >= 3);
-    
-    return new Set<string>(favIds);
-
+    return new Set<string>(Object.keys(productOrderCounts).filter(id => productOrderCounts[id] >= 3));
   }, [orders, ordersLoading]);
 
   const allCategories = useMemo(() => {
     if (loading) return [];
-    const productCategories = [...new Set(products.map(p => p.category))];
-    return [{ id: 'favorites', name: t('favorites') }, ...productCategories.map(c => ({ id: c, name: c }))];
+    const uniqueCategories = Array.from(new Map(products.map(p => [p.category.es, p.category])).values());
+    
+    const favCategory: ProductCategory & { isFavorite?: boolean } = { es: t('favorites'), en: 'Favorites', isFavorite: true };
+
+    return [favCategory, ...uniqueCategories];
   }, [products, loading, t]);
   
   useEffect(() => {
     if (allCategories.length > 0 && !activeCategory) {
-      setActiveCategory('favorites');
+      setActiveCategory(allCategories[0].es);
     }
   }, [allCategories, activeCategory]);
 
   const filteredProducts = useMemo(() => {
     if (loading) return [];
     
-    let productList = products;
-    
-    if (activeCategory === 'favorites') {
-      productList = products.filter(p => favoriteProductIds.has(p.id));
-    } else {
-      productList = products.filter(p => p.category === activeCategory);
+    if (activeCategory === t('favorites')) {
+      return products.filter(p => favoriteProductIds.has(p.id));
     }
+    
+    let productList = products.filter(p => p.category.es === activeCategory);
     
     if (searchTerm) {
       return productList.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }
     
     return productList;
-  }, [activeCategory, searchTerm, products, loading, favoriteProductIds]);
+  }, [activeCategory, searchTerm, products, loading, favoriteProductIds, t]);
 
   const { orderItems, total, totalItems } = useMemo(() => {
     const orderItems: (OrderItem & { photoUrl: string })[] = [];
@@ -255,6 +249,7 @@ export default function NewOrderPage() {
     isSubmitting,
     handleSubmitOrder,
     t,
+    locale,
   };
 
   return (
@@ -266,7 +261,7 @@ export default function NewOrderPage() {
             <PopoverTrigger asChild>
               <Button variant="outline" className={cn("flex-1 justify-start text-left font-normal text-sm h-9", !deliveryDate && "text-muted-foreground")}>
                 <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                {deliveryDate ? format(deliveryDate, "PPP", { locale: es }) : <span>{t('pickDate')}</span>}
+                {deliveryDate ? format(deliveryDate, "PPP", { locale: locale === 'es' ? es : enUS }) : <span>{t('pickDate')}</span>}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
@@ -286,16 +281,16 @@ export default function NewOrderPage() {
 
         <div className="relative h-9 overflow-x-auto hide-scrollbar">
           <div className="absolute left-0 top-0 flex items-center gap-1.5 px-3 min-w-full">
-            {allCategories.map(cat => (
+            {allCategories.map((cat: any) => (
               <Button
-                key={cat.id}
-                variant={activeCategory === cat.id ? 'default' : 'outline'}
+                key={cat.es}
+                variant={activeCategory === cat.es ? 'default' : 'outline'}
                 size="sm"
                 className="rounded-full h-7 px-2.5 text-xs flex-shrink-0 whitespace-nowrap"
-                onClick={() => setActiveCategory(cat.id)}
+                onClick={() => setActiveCategory(cat.es)}
               >
-                {cat.id === 'favorites' && <Star className="h-3.5 w-3.5 mr-1 text-yellow-400" />}
-                {cat.name}
+                {cat.isFavorite && <Star className="h-3.5 w-3.5 mr-1 text-yellow-400" />}
+                {cat[locale]}
               </Button>
             ))}
           </div>

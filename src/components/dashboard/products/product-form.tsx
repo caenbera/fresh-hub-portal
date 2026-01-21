@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useTranslations } from 'next-intl';
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { addProduct, updateProduct } from '@/lib/firestore/products';
-import type { Product } from '@/types';
+import type { Product, ProductCategory } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Camera, Plus, Check, Undo2, Pencil, Trash2, Percent } from 'lucide-react'; 
 import { cn } from '@/lib/utils';
@@ -22,7 +22,10 @@ import { useSuppliers } from '@/hooks/use-suppliers';
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   sku: z.string().min(2, 'SKU must be at least 2 characters.'),
-  category: z.string().min(1, 'Category is required.'),
+  category: z.object({
+    es: z.string().min(1, 'La categoría en español es requerida.'),
+    en: z.string().min(1, 'The category in English is required.'),
+  }),
   unit: z.string().min(1, 'Unit is required.'),
   supplierId: z.string().min(1, 'Supplier is required.'),
   cost: z.coerce.number().min(0),
@@ -41,7 +44,13 @@ interface ProductFormProps {
   defaultSupplierId?: string;
 }
 
-const initialCategories = ["Verduras", "Frutas", "Hierbas", "Abarrotes", "Congelados"];
+const initialCategories: ProductCategory[] = [
+  { es: "Verduras", en: "Vegetables" },
+  { es: "Frutas", en: "Fruits" },
+  { es: "Hierbas", en: "Herbs" },
+  { es: "Abarrotes", en: "Groceries" },
+  { es: "Congelados", en: "Frozen" },
+];
 
 export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFormProps) {
   const [isLoading, setIsLoading] = useState(false);
@@ -54,8 +63,9 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   
   const [categories, setCategories] = useState(initialCategories);
   const [isInputMode, setIsInputMode] = useState(false);
-  const [editModeTarget, setEditModeTarget] = useState<string | null>(null);
-  const categoryInputRef = useRef<HTMLInputElement>(null);
+  const [editModeTarget, setEditModeTarget] = useState<ProductCategory | null>(null);
+  const esCategoryInputRef = useRef<HTMLInputElement>(null);
+  const enCategoryInputRef = useRef<HTMLInputElement>(null);
 
   const [margin, setMargin] = useState<string>('');
   const [isMarginInputFocused, setIsMarginInputFocused] = useState(false);
@@ -63,7 +73,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '', sku: '', category: 'Verduras', unit: 'Caja 20lb', supplierId: '',
+      name: '', sku: '', category: initialCategories[0], unit: 'Caja 20lb', supplierId: '',
       cost: 0, salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '',
     },
   });
@@ -72,29 +82,25 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const salePriceValue = form.watch('salePrice');
 
   useEffect(() => {
-    // Wait until suppliers are loaded to prevent race conditions with form reset.
     if (suppliersLoading) return;
-  
+
     const defaultValues: ProductFormValues = {
-      name: '', sku: '', category: 'Verduras', unit: 'Caja 20lb',
+      name: '', sku: '', category: initialCategories[0], unit: 'Caja 20lb',
       supplierId: defaultSupplierId || '',
       cost: 0, salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '',
     };
   
     if (product) {
-      // Edit mode
       form.reset({ ...product, supplierId: product.supplierId || defaultSupplierId || '' });
       setImgUrlInputValue(product.photoUrl || '');
     } else {
-      // Add mode
       form.reset(defaultValues);
       setImgUrlInputValue('');
     }
   }, [product, defaultSupplierId, form, suppliersLoading]);
-
+  
   useEffect(() => {
     if (isMarginInputFocused) return;
-    
     if (costValue > 0 && salePriceValue > costValue) {
         const calculatedMargin = ((salePriceValue - costValue) / salePriceValue) * 100;
         setMargin(calculatedMargin.toFixed(2).replace('.00', ''));
@@ -106,10 +112,8 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const handleMarginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const marginValue = e.target.value;
     setMargin(marginValue);
-    
     const marginNum = parseFloat(marginValue);
     const currentCost = form.getValues('cost');
-
     if (!isNaN(marginNum) && marginNum < 100 && currentCost > 0) {
         const newSalePrice = currentCost / (1 - marginNum / 100);
         form.setValue('salePrice', parseFloat(newSalePrice.toFixed(2)), { shouldValidate: true });
@@ -132,8 +136,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const startCreatingCategory = () => {
     setEditModeTarget(null);
     setIsInputMode(true);
-    if (categoryInputRef.current) categoryInputRef.current.value = "";
-    setTimeout(() => categoryInputRef.current?.focus(), 100);
+    setTimeout(() => esCategoryInputRef.current?.focus(), 100);
   };
 
   const startEditingCategory = () => {
@@ -141,44 +144,45 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     setEditModeTarget(currentCategory);
     setIsInputMode(true);
     setTimeout(() => {
-        if(categoryInputRef.current) {
-            categoryInputRef.current.value = currentCategory;
-            categoryInputRef.current.focus();
-        }
+      if (esCategoryInputRef.current) esCategoryInputRef.current.value = currentCategory.es;
+      if (enCategoryInputRef.current) enCategoryInputRef.current.value = currentCategory.en;
+      esCategoryInputRef.current?.focus();
     }, 100);
   };
 
   const handleSaveCategory = () => {
-    const inputValue = categoryInputRef.current?.value.trim();
-    if (!inputValue) {
-        setIsInputMode(false);
-        return;
+    const esValue = esCategoryInputRef.current?.value.trim();
+    const enValue = enCategoryInputRef.current?.value.trim();
+
+    if (!esValue || !enValue) {
+      toast({ variant: 'destructive', title: 'Both category names are required.' });
+      return;
     }
 
+    const newCategory: ProductCategory = { es: esValue, en: enValue };
+
     if (editModeTarget) {
-        setCategories(prev => prev.map(c => c === editModeTarget ? inputValue : c));
-        if (currentCategory === editModeTarget) {
-            form.setValue('category', inputValue);
-        }
-        toast({ title: t('toast_category_updated'), description: inputValue });
+      setCategories(prev => prev.map(c => c.es === editModeTarget.es ? newCategory : c));
+      if (currentCategory.es === editModeTarget.es) {
+        form.setValue('category', newCategory);
+      }
+      toast({ title: t('toast_category_updated'), description: newCategory.es });
     } else {
-        if (!categories.includes(inputValue)) {
-            setCategories(prev => [...prev, inputValue]);
-            form.setValue('category', inputValue);
-            toast({ title: t('toast_category_added'), description: inputValue });
-        }
+      if (!categories.some(c => c.es.toLowerCase() === newCategory.es.toLowerCase())) {
+        setCategories(prev => [...prev, newCategory]);
+        form.setValue('category', newCategory);
+        toast({ title: t('toast_category_added'), description: newCategory.es });
+      }
     }
     setIsInputMode(false);
     setEditModeTarget(null);
   };
 
   const handleDeleteCategory = () => {
-    if (!currentCategory) return;
-    if (confirm(t('confirm_delete_category', { category: currentCategory }))) {
-        setCategories(prev => prev.filter(c => c !== currentCategory));
-        form.setValue('category', '');
-        toast({ title: t('toast_category_deleted') });
-    }
+    if (!currentCategory || !confirm(t('confirm_delete_category', { category: currentCategory.es }))) return;
+    setCategories(prev => prev.filter(c => c.es !== currentCategory.es));
+    form.setValue('category', initialCategories[0]);
+    toast({ title: t('toast_category_deleted') });
   };
 
   const cancelCategoryInput = () => {
@@ -259,9 +263,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
               </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            
-            <FormField
+          <FormField
               control={form.control}
               name="category"
               render={({ field }) => (
@@ -269,68 +271,41 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
                   <FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_category')}</FormLabel>
                   <div className="flex items-center gap-2">
                     {isInputMode ? (
-                      <>
-                        <Input 
-                          ref={categoryInputRef} 
-                          placeholder={editModeTarget ? t('form_placeholder_edit_category') : t('form_placeholder_new_category')} 
-                          className="h-10 animate-in fade-in zoom-in-95 duration-200 border-primary/50 ring-2 ring-primary/10"
-                          onKeyDown={(e) => { if(e.key === 'Enter') { e.preventDefault(); handleSaveCategory(); }}}
-                        />
-                        <Button 
-                          type="button" size="icon" variant="default" 
-                          className="shrink-0 bg-green-600 hover:bg-green-700 h-10 w-10"
-                          onClick={handleSaveCategory} title={t('save')}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          type="button" size="icon" variant="ghost" 
-                          className="shrink-0 h-10 w-10 text-muted-foreground"
-                          onClick={cancelCategoryInput} title={t('cancel')}
-                        >
-                          <Undo2 className="h-4 w-4" />
-                        </Button>
-                      </>
+                      <div className="flex-grow grid grid-cols-2 gap-2 animate-in fade-in zoom-in-95 duration-200">
+                        <Input ref={esCategoryInputRef} placeholder="Nombre en Español" className="border-primary/50 ring-2 ring-primary/10" />
+                        <Input ref={enCategoryInputRef} placeholder="Name in English" className="border-primary/50 ring-2 ring-primary/10" />
+                        <Button type="button" size="icon" className="bg-green-600 hover:bg-green-700 h-10 w-10" onClick={handleSaveCategory} title={t('save')}><Check className="h-4 w-4" /></Button>
+                        <Button type="button" size="icon" variant="ghost" className="text-muted-foreground h-10 w-10" onClick={cancelCategoryInput} title={t('cancel')}><Undo2 className="h-4 w-4" /></Button>
+                      </div>
                     ) : (
                       <>
-                        <div className="flex-grow">
-                            <Select onValueChange={field.onChange} value={field.value}>
+                        <Select
+                          onValueChange={(value) => {
+                              try {
+                                  const parsedValue = JSON.parse(value);
+                                  field.onChange(parsedValue);
+                              } catch (e) {
+                                  console.error("Failed to parse category value", e);
+                              }
+                          }}
+                          value={field.value ? JSON.stringify(field.value) : ""}
+                        >
                             <FormControl>
-                                <SelectTrigger className="h-10 bg-white">
-                                <SelectValue placeholder={t('form_placeholder_select_category')} />
+                                <SelectTrigger className="h-10 bg-white flex-grow">
+                                    <SelectValue placeholder={t('form_placeholder_select_category')}>
+                                        {field.value?.es || t('form_placeholder_select_category')}
+                                    </SelectValue>
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                {categories.map(c => <SelectItem key={c.es} value={JSON.stringify(c)}>{c.es}</SelectItem>)}
                             </SelectContent>
-                            </Select>
-                        </div>
+                        </Select>
                         
                         <div className="flex gap-1 shrink-0 bg-gray-50 p-1 rounded-md border border-gray-200">
-                            <Button 
-                                type="button" variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-100 hover:text-blue-600"
-                                disabled={!currentCategory} 
-                                onClick={startEditingCategory}
-                                title={t('edit_category')}
-                            >
-                                <Pencil className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button 
-                                type="button" variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-100 hover:text-red-600"
-                                disabled={!currentCategory} 
-                                onClick={handleDeleteCategory}
-                                title={t('delete_category')}
-                            >
-                                <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                            <div className="w-px bg-gray-200 mx-0.5 h-5 self-center"></div>
-                            <Button 
-                                type="button" variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-100 hover:text-green-600"
-                                onClick={startCreatingCategory}
-                                title={t('new_category')}
-                            >
-                                <Plus className="h-4 w-4" />
-                            </Button>
+                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" disabled={!currentCategory} onClick={startEditingCategory}><Pencil className="h-3.5 w-3.5" /></Button>
+                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled={!currentCategory} onClick={handleDeleteCategory}><Trash2 className="h-3.5 w-3.5" /></Button>
+                            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={startCreatingCategory}><Plus className="h-4 w-4" /></Button>
                         </div>
                       </>
                     )}
@@ -346,7 +321,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
               render={({ field }) => (
                   <FormItem>
                   <FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_unit')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                           <SelectTrigger className="h-10 bg-white">
                               <SelectValue />
@@ -366,7 +341,6 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
                   </FormItem>
               )}
             />
-          </div>
 
           <hr className="my-2 border-dashed border-gray-200" />
           

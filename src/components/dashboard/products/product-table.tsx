@@ -106,7 +106,7 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                     {/* CATEGORÍA */}
                     <TableCell>
                         <span className="inline-flex items-center rounded-md border border-gray-200 bg-white px-2.5 py-0.5 text-xs font-semibold text-gray-600 uppercase tracking-wide shadow-sm">
-                            {product.category}
+                            {product.category.es}
                         </span>
                     </TableCell>
 

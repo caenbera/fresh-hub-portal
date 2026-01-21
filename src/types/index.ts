@@ -12,13 +12,18 @@ export interface UserProfile {
   createdAt: Timestamp;
 }
 
+export interface ProductCategory {
+  es: string;
+  en: string;
+}
+
 export interface Product {
   id: string;
   name: string;
   sku: string;
   description: string;
   photoUrl: string;
-  category: string;
+  category: ProductCategory;
   unit: string;
   supplierId: string;
   cost: number;
