@@ -94,11 +94,12 @@ export default function NewOrderPage() {
   const categories = useMemo(() => {
     if (productsLoading) return [];
     const uniqueCategories = [...new Set(products.map(p => p.category))];
+    // Display raw category names directly. This avoids translation issues with custom categories.
     return uniqueCategories.map(c => ({
       id: c,
-      name: t(c as any) || (c.charAt(0).toUpperCase() + c.slice(1))
+      name: c,
     }));
-  }, [products, productsLoading, t]);
+  }, [products, productsLoading]);
   
   useEffect(() => {
       if (categories.length > 0 && !activeCategory) {
