@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile, deleteUser } from '@/lib/firestore/users';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
@@ -198,8 +199,17 @@ export function ClientsPageClient() {
                                                     <Link href={`/admin/clients/${client.uid}`}>
                                                       <span className="font-bold hover:underline cursor-pointer">{client.businessName}</span>
                                                     </Link>
-                                                    <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                                      ID: {client.uid.substring(0,6)}
+                                                    <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                                      <TooltipProvider>
+                                                        <Tooltip>
+                                                          <TooltipTrigger asChild>
+                                                            <span className="cursor-pointer underline decoration-dotted">ID</span>
+                                                          </TooltipTrigger>
+                                                          <TooltipContent>
+                                                            <p>{client.uid}</p>
+                                                          </TooltipContent>
+                                                        </Tooltip>
+                                                      </TooltipProvider>
                                                       {getTierIcon(client.tier)}
                                                     </div>
                                                 </div>
