@@ -1,4 +1,4 @@
-import type { Supplier, SupplierProduct, ClientNote } from '@/types';
+import type { Supplier, SupplierProduct } from '@/types';
 
 export const suppliers: Supplier[] = [
     {
@@ -120,9 +120,4 @@ export const supplierProducts: SupplierProduct[] = [
         previousCost: null,
         stockStatus: 'limited',
     }
-];
-
-export const clientNotes: ClientNote[] = [
-    { author: 'Admin', date: '15 Ene 2024', text: 'Cliente solicitó cambio de horario. Solo entregar entre 8 AM y 11 AM por restricción de zona de carga.', color: '#f1c40f' },
-    { author: 'Ventas', date: '10 Dic 2023', text: 'Se le aprobó aumento de cupo a $5,000 por buena conducta de pago.', color: '#2ecc71'},
 ];

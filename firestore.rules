@@ -33,11 +33,18 @@ service cloud.firestore {
       // An admin can update a client's data (but not their role).
       // Only a superadmin can change a user's role.
       allow update: if isAuthed() && (
-                    ((request.auth.uid == userId || (hasAdminRole() && resource.data.role == 'client')) && !('role' in request.resource.data.diff(resource.data).affectedKeys())) ||
+                    (request.auth.uid == userId && !('role' in request.resource.data.diff(resource.data).affectedKeys())) ||
+                    (hasAdminRole() && resource.data.role == 'client' && !('role' in request.resource.data.diff(resource.data).affectedKeys())) ||
                     (isSuperAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']))
                   );
       
       allow delete: if isSuperAdmin();
+
+       // NOTES sub-collection inside USERS
+      match /notes/{noteId} {
+        // Admins and superadmins can manage notes for any user.
+        allow read, write: if hasAdminRole();
+      }
     }
 
     // PRODUCTS Collection

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from 'react';
-import type { UserProfile, Order, ClientTier } from '@/types';
+import type { UserProfile, Order, ClientTier, ClientNote } from '@/types';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/navigation';
 import { Button } from '@/components/ui/button';
@@ -13,9 +13,18 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
-import { clientNotes } from '@/lib/placeholder-data';
 import { ClientFormDialog } from './new-client-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   ArrowLeft,
   Crown,
@@ -30,9 +39,16 @@ import {
   User,
   Star,
   Shield,
-  Award
+  Award,
+  Trash2
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { useAuth } from '@/context/auth-context';
+import { useClientNotes } from '@/hooks/use-notes';
+import { addClientNote, deleteClientNote } from '@/lib/firestore/notes';
+import { useToast } from '@/hooks/use-toast';
+
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
@@ -61,6 +77,14 @@ interface ClientDetailPageClientProps {
 export function ClientDetailPageClient({ client, orders }: ClientDetailPageClientProps) {
   const t = useTranslations('ClientsPage');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { userProfile: adminProfile } = useAuth();
+  const { toast } = useToast();
+
+  const { notes, loading: notesLoading } = useClientNotes(client.uid);
+  const [newNote, setNewNote] = useState('');
+  const [isSubmittingNote, setIsSubmittingNote] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<ClientNote | null>(null);
+
   
   const creditLimit = client.creditLimit || 0;
   const creditUsed = 0; // TODO: Calculate from orders/invoices
@@ -69,6 +93,43 @@ export function ClientDetailPageClient({ client, orders }: ClientDetailPageClien
   let creditHealthColor = "bg-green-500";
   if (creditUsage > 85) creditHealthColor = "bg-red-500";
   else if (creditUsage > 50) creditHealthColor = "bg-yellow-500";
+
+  const handleAddNote = async () => {
+    if (!newNote.trim() || !adminProfile) return;
+    setIsSubmittingNote(true);
+    try {
+      await addClientNote(client.uid, {
+        text: newNote,
+        authorId: adminProfile.uid,
+        authorName: adminProfile.contactPerson || adminProfile.businessName,
+      });
+      setNewNote('');
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not add note.",
+      });
+    } finally {
+      setIsSubmittingNote(false);
+    }
+  };
+  
+  const handleDeleteConfirmed = async () => {
+    if (!noteToDelete) return;
+    try {
+      await deleteClientNote(client.uid, noteToDelete.id);
+      toast({ title: "Note deleted" });
+      setNoteToDelete(null);
+    } catch (error) {
+       toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not delete note.",
+      });
+    }
+  };
+
 
   const getStatusBadge = (status: string) => {
     switch(status) {
@@ -83,6 +144,23 @@ export function ClientDetailPageClient({ client, orders }: ClientDetailPageClien
   return (
     <>
       <ClientFormDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} client={client} />
+       <AlertDialog open={!!noteToDelete} onOpenChange={(open) => !open && setNoteToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the note. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirmed} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex flex-col gap-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -216,25 +294,46 @@ export function ClientDetailPageClient({ client, orders }: ClientDetailPageClien
                           </TabsContent>
                            <TabsContent value="notes">
                               <div className="flex gap-2 mb-4">
-                                  <Input placeholder={t('add_note_placeholder')} />
-                                  <Button><Send className="h-4 w-4"/></Button>
+                                  <Input 
+                                    placeholder={t('add_note_placeholder')} 
+                                    value={newNote}
+                                    onChange={(e) => setNewNote(e.target.value)}
+                                    disabled={isSubmittingNote}
+                                  />
+                                  <Button onClick={handleAddNote} disabled={isSubmittingNote || !newNote.trim()}>
+                                    <Send className="h-4 w-4"/>
+                                  </Button>
                               </div>
                               <div className="space-y-3">
-                                  {clientNotes.map((note, i) => (
-                                  <div key={i} className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                                      <Avatar className="h-8 w-8" style={{backgroundColor: note.color}}>
-                                          <AvatarFallback className="text-white bg-transparent text-xs">{note.author.substring(0,1)}</AvatarFallback>
-                                      </Avatar>
-                                      <div>
-                                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                              <span className="font-semibold">{note.author}</span>
-                                              <span>&bull;</span>
-                                              <span>{note.date}</span>
-                                          </div>
-                                          <p className="text-sm">{note.text}</p>
-                                      </div>
-                                  </div>
-                                  ))}
+                                  {notesLoading ? (
+                                    <p className="text-center text-muted-foreground py-4">Loading notes...</p>
+                                  ) : notes.length > 0 ? (
+                                    notes.map((note) => (
+                                    <div key={note.id} className="group flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                                        <Avatar className="h-8 w-8 text-xs">
+                                            <AvatarFallback className="bg-primary text-primary-foreground">{note.authorName?.substring(0,2)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-grow">
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <span className="font-semibold text-foreground">{note.authorName}</span>
+                                                <span>&bull;</span>
+                                                <span>{formatDistanceToNow(note.createdAt.toDate(), { addSuffix: true, locale: es })}</span>
+                                            </div>
+                                            <p className="text-sm">{note.text}</p>
+                                        </div>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-7 w-7 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
+                                            onClick={() => setNoteToDelete(note)}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-center text-muted-foreground py-4">No notes for this client yet.</p>
+                                  )}
                               </div>
                           </TabsContent>
                       </CardContent>

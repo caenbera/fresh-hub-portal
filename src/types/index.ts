@@ -120,10 +120,11 @@ export interface SupplierProduct {
 }
 
 export interface ClientNote {
-  author: string;
-  date: string;
+  id: string;
+  authorId: string;
+  authorName: string;
   text: string;
-  color: string;
+  createdAt: Timestamp;
 }
 
 export interface Branch {
