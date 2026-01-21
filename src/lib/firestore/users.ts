@@ -1,5 +1,5 @@
 
-import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
@@ -10,13 +10,14 @@ export const updateUserProfile = (uid: string, data: Partial<UserProfile>) => {
   // Ensure we don't try to write undefined values
   const cleanData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
 
-  updateDoc(userDoc, cleanData).catch(async (serverError) => {
+  return updateDoc(userDoc, cleanData).catch(async (serverError) => {
     const permissionError = new FirestorePermissionError({
       path: userDoc.path,
       operation: 'update',
       requestResourceData: cleanData,
     });
     errorEmitter.emit('permission-error', permissionError);
+    throw serverError; // Re-throw to allow component-level error handling
   });
 };
 
@@ -37,6 +38,20 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
         throw e;
     }
 }
+
+export const deleteUser = (uid: string) => {
+  const userDoc = doc(db, 'users', uid);
+  // This only deletes the Firestore user document, not the Firebase Auth user.
+  // This is the expected behavior for a client-side only operation.
+  return deleteDoc(userDoc).catch(async (serverError) => {
+    const permissionError = new FirestorePermissionError({
+      path: userDoc.path,
+      operation: 'delete',
+    });
+    errorEmitter.emit('permission-error', permissionError);
+    throw serverError; // Re-throw for component-level catch
+  });
+};
 
 
 // This function is no longer needed with the simplified role management.

@@ -11,15 +11,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MoreHorizontal, UserPlus, Search, Crown, Star, Pencil, History, CheckCircle, XCircle } from 'lucide-react';
+import { MoreHorizontal, UserPlus, Search, Crown, Star, Pencil, History, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 import type { UserProfile, UserStatus, ClientTier } from '@/types';
 import { ClientFormDialog } from './new-client-dialog';
 import { useUsers } from '@/hooks/use-users';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Link } from '@/navigation';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { updateUserProfile } from '@/lib/firestore/users';
+import { updateUserProfile, deleteUser } from '@/lib/firestore/users';
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
@@ -40,6 +50,7 @@ export function ClientsPageClient() {
   const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<UserProfile | null>(null);
+  const [clientToDelete, setClientToDelete] = useState<UserProfile | null>(null);
 
   const clientUsers = useMemo(() => {
     return users.filter(user => user.role === 'client');
@@ -63,9 +74,41 @@ export function ClientsPageClient() {
     }
   };
 
+  const handleConfirmDelete = async () => {
+    if (!clientToDelete) return;
+    try {
+      await deleteUser(clientToDelete.uid);
+      toast({
+        title: t('toast_delete_success_title'),
+        description: t('toast_delete_success_desc', { clientName: clientToDelete.businessName }),
+      });
+    } catch (error) {
+      toast({ variant: 'destructive', title: "Error", description: "Could not delete client." });
+    } finally {
+      setClientToDelete(null);
+    }
+  };
+
+
   return (
     <>
       <ClientFormDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} client={selectedClient} />
+      <AlertDialog open={!!clientToDelete} onOpenChange={(open) => !open && setClientToDelete(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>{t('delete_confirm_title')}</AlertDialogTitle>
+                <AlertDialogDescription>
+                    {t('delete_confirm_desc', { clientName: clientToDelete?.businessName })}
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>{t('cancel_button')}</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive hover:bg-destructive/90">
+                    {t('delete_button_confirm')}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -192,6 +235,11 @@ export function ClientsPageClient() {
                                                      {client.status === 'blocked' && (
                                                         <DropdownMenuItem onSelect={() => handleStatusChange(client, 'active')}><CheckCircle className="mr-2 h-4 w-4" />{t('action_unblock')}</DropdownMenuItem>
                                                     )}
+                                                    <DropdownMenuSeparator />
+                                                    <DropdownMenuItem onSelect={() => setClientToDelete(client)} className="text-destructive focus:text-destructive">
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        {t('action_delete')}
+                                                    </DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>

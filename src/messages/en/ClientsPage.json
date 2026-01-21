@@ -1,3 +1,4 @@
+
 {
   "title": "Clients",
   "subtitle": "Manage accounts, credits, and access.",
@@ -22,6 +23,7 @@
   "action_activate": "Activate Client",
   "action_block": "Block Client",
   "action_unblock": "Unblock Client",
+  "action_delete": "Delete Client",
   "change_status_label": "Change Status",
   "toast_status_updated_title": "Status Updated",
   "toast_status_updated_desc": "The status for {clientName} is now '{newStatus}'.",
@@ -80,5 +82,10 @@
   "tier_label": "Client Tier",
   "confirm_delete_pricelist": "Are you sure you want to delete the price list '{priceList}'?",
   "toast_client_updated_title": "Client Updated",
-  "toast_client_updated_desc": "The details for {clientName} have been saved."
+  "toast_client_updated_desc": "The details for {clientName} have been saved.",
+  "delete_confirm_title": "Are you sure?",
+  "delete_confirm_desc": "This will permanently delete the client '{clientName}'. This action cannot be undone.",
+  "delete_button_confirm": "Yes, Delete Client",
+  "toast_delete_success_title": "Client Deleted",
+  "toast_delete_success_desc": "{clientName} has been successfully deleted."
 }

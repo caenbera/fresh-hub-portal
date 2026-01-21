@@ -23,6 +23,7 @@
   "action_activate": "Activar Cliente",
   "action_block": "Bloquear Cliente",
   "action_unblock": "Desbloquear Cliente",
+  "action_delete": "Eliminar Cliente",
   "change_status_label": "Cambiar Estado",
   "toast_status_updated_title": "Estado Actualizado",
   "toast_status_updated_desc": "El estado de {clientName} ahora es '{newStatus}'.",
@@ -81,5 +82,10 @@
   "tier_label": "Nivel de Cliente",
   "confirm_delete_pricelist": "¿Seguro que quieres eliminar la lista de precios '{priceList}'?",
   "toast_client_updated_title": "Cliente Actualizado",
-  "toast_client_updated_desc": "Los datos de {clientName} han sido guardados."
+  "toast_client_updated_desc": "Los datos de {clientName} han sido guardados.",
+  "delete_confirm_title": "¿Estás seguro?",
+  "delete_confirm_desc": "Esto eliminará permanentemente al cliente '{clientName}'. Esta acción no se puede deshacer.",
+  "delete_button_confirm": "Sí, Eliminar Cliente",
+  "toast_delete_success_title": "Cliente Eliminado",
+  "toast_delete_success_desc": "{clientName} ha sido eliminado correctamente."
 }
