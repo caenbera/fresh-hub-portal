@@ -1,6 +1,9 @@
 import type { Timestamp, User } from 'firebase/firestore';
 
 export type UserRole = 'client' | 'admin' | 'superadmin' | 'picker';
+export type UserStatus = 'active' | 'pending_approval' | 'blocked';
+export type ClientTier = 'standard' | 'bronze' | 'silver' | 'gold';
+
 
 export interface UserProfile {
   uid: string;
@@ -10,7 +13,14 @@ export interface UserProfile {
   phone: string;
   role: UserRole;
   createdAt: Timestamp;
+  status?: UserStatus;
+  contactPerson?: string;
+  tier?: ClientTier;
+  creditLimit?: number;
+  paymentTerms?: string; 
+  priceList?: string; 
 }
+
 
 export interface ProductCategory {
   es: string;
@@ -107,24 +117,6 @@ export interface SupplierProduct {
   currentCost: number;
   previousCost: number | null;
   stockStatus: 'available' | 'limited' | 'unavailable';
-}
-
-export interface Client {
-  id: string;
-  name: string;
-  tier: 'gold' | 'silver' | 'bronze';
-  contact: string;
-  email: string;
-  creditLimit: number;
-  creditUsed: number;
-  totalSales: number;
-  status: 'active' | 'inactive' | 'blocked';
-  color: string;
-  address: string;
-  gateCode?: string;
-  paymentTerms: string;
-  priceList: string;
-  memberSince: number;
 }
 
 export interface ClientNote {

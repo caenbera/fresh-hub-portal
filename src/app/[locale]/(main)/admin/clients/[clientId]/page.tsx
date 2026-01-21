@@ -1,12 +1,76 @@
-import { clients } from '@/lib/placeholder-data';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useParams, notFound } from 'next/navigation';
 import { ClientDetailPageClient } from '@/components/admin/clients/client-detail-page-client';
-import { notFound } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getUserProfile } from '@/lib/firestore/users';
+import type { UserProfile } from '@/types';
 
-export default function ClientDetailPage({ params }: { params: { clientId: string } }) {
-  const client = clients.find(c => c.id === params.clientId);
+function ClientDetailSkeleton() {
+    return (
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+            <Skeleton className="h-8 w-1/4" />
+            <div className="flex items-center gap-4">
+                <Skeleton className="h-20 w-20 rounded-2xl" />
+                <div className="space-y-2">
+                    <Skeleton className="h-8 w-48" />
+                    <Skeleton className="h-5 w-64" />
+                </div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-1 flex flex-col gap-6">
+                    <Skeleton className="h-48 w-full rounded-lg" />
+                    <Skeleton className="h-48 w-full rounded-lg" />
+                </div>
+                <div className="lg:col-span-2">
+                    <Skeleton className="h-96 w-full rounded-lg" />
+                </div>
+            </div>
+        </div>
+    )
+}
 
+
+export default function ClientDetailPage() {
+  const params = useParams();
+  const { clientId } = params as { clientId: string };
+
+  const [client, setClient] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!clientId) return;
+
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const clientData = await getUserProfile(clientId);
+
+        if (!clientData) {
+          notFound();
+          return;
+        }
+
+        setClient(clientData);
+
+      } catch (error) {
+        // Errors are now emitted from getUserProfile and thrown by FirebaseErrorListener.
+        console.error("Error fetching client details:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [clientId]);
+
+  if (loading) {
+    return <ClientDetailSkeleton />;
+  }
+  
   if (!client) {
-    notFound();
+    return <div className="p-8 font-semibold text-center">Client could not be loaded. This might be a permission issue or the client does not exist.</div>;
   }
 
   return (

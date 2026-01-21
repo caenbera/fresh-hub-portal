@@ -1,22 +1,43 @@
 
-import { doc, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+import type { UserProfile } from '@/types';
 
-export const updateUserRole = (uid: string, newRole: 'admin' | 'client') => {
+export const updateUserProfile = (uid: string, data: Partial<UserProfile>) => {
   const userDoc = doc(db, 'users', uid);
-  updateDoc(userDoc, {
-    role: newRole,
-  }).catch(async (serverError) => {
+  // Ensure we don't try to write undefined values
+  const cleanData = Object.fromEntries(Object.entries(data).filter(([_, v]) => v !== undefined));
+
+  updateDoc(userDoc, cleanData).catch(async (serverError) => {
     const permissionError = new FirestorePermissionError({
       path: userDoc.path,
       operation: 'update',
-      requestResourceData: { role: newRole },
+      requestResourceData: cleanData,
     });
     errorEmitter.emit('permission-error', permissionError);
   });
 };
+
+export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
+    const userDocRef = doc(db, 'users', uid);
+    try {
+        const docSnap = await getDoc(userDocRef);
+        if (docSnap.exists()) {
+            return { uid: docSnap.id, ...docSnap.data() } as UserProfile;
+        }
+        return null;
+    } catch (e: any) {
+        const permissionError = new FirestorePermissionError({
+            path: userDocRef.path,
+            operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw e;
+    }
+}
+
 
 // This function is no longer needed with the simplified role management.
 // We keep it here in case we want to re-introduce a pre-approval flow later,

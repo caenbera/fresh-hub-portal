@@ -23,6 +23,7 @@ const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
   password: z.string().min(8, { message: "Password must be at least 8 characters." }),
   businessName: z.string().optional(),
+  contactPerson: z.string().optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
 }).refine(data => {
@@ -33,6 +34,14 @@ const formSchema = z.object({
 }, {
   message: "Business name must be at least 2 characters.",
   path: ["businessName"],
+}).refine(data => {
+  if (data.email.toLowerCase() !== SUPER_ADMIN_EMAIL) {
+    return !!data.contactPerson && data.contactPerson.length >= 2;
+  }
+  return true;
+}, {
+  message: "Contact person is required.",
+  path: ["contactPerson"],
 }).refine(data => {
   if (data.email.toLowerCase() !== SUPER_ADMIN_EMAIL) {
     return !!data.phone && data.phone.length >= 10;
@@ -51,6 +60,7 @@ const formSchema = z.object({
   path: ["address"],
 });
 
+
 export function SignupForm() {
   const router = useRouter();
   const { toast } = useToast();
@@ -63,6 +73,7 @@ export function SignupForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       businessName: "",
+      contactPerson: "",
       email: "",
       phone: "",
       address: "",
@@ -91,16 +102,22 @@ export function SignupForm() {
       if (values.email.toLowerCase() === SUPER_ADMIN_EMAIL) {
         userData.role = 'superadmin';
         userData.businessName = 'Super Admin';
+        userData.status = 'active';
       } else {
         userData.role = 'client';
+        userData.status = 'pending_approval';
         userData.businessName = values.businessName;
+        userData.contactPerson = values.contactPerson;
         userData.phone = values.phone;
         userData.address = values.address;
+        userData.tier = 'standard';
+        userData.creditLimit = 0;
+        userData.paymentTerms = 'Net 15';
+        userData.priceList = 'Standard';
       }
       
       await setDoc(doc(db, "users", user.uid), userData);
       
-      // Set the language for the verification email
       auth.languageCode = locale;
       await sendEmailVerification(user);
 
@@ -156,6 +173,19 @@ export function SignupForm() {
                       <FormLabel>Business Name</FormLabel>
                       <FormControl>
                         <Input placeholder="Your Business Inc." {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="contactPerson"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contact Person</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Manager's Name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

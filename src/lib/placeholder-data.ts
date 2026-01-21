@@ -1,4 +1,4 @@
-import type { Supplier, SupplierProduct, Client, ClientNote } from '@/types';
+import type { Supplier, SupplierProduct, ClientNote } from '@/types';
 
 export const suppliers: Supplier[] = [
     {
@@ -119,74 +119,6 @@ export const supplierProducts: SupplierProduct[] = [
         currentCost: 45.00,
         previousCost: null,
         stockStatus: 'limited',
-    }
-];
-
-export const clients: Client[] = [
-    {
-        id: "C-001",
-        name: "Tacos El Rey USA",
-        tier: "gold",
-        contact: "Carlos Gomez",
-        email: "carlos@tacoselrey.com",
-        creditLimit: 5000,
-        creditUsed: 1250,
-        totalSales: 15400,
-        status: "active",
-        color: "#e67e22",
-        address: "450 Brickell Ave, Miami, FL 33131",
-        gateCode: "#4490",
-        paymentTerms: "Net 30",
-        priceList: "VIP Gold",
-        memberSince: 2023,
-    },
-    {
-        id: "C-002",
-        name: "Hotel Miami Beach",
-        tier: "gold",
-        contact: "Sarah Miller",
-        email: "purchasing@hotelmiami.com",
-        creditLimit: 10000,
-        creditUsed: 8900,
-        totalSales: 42000,
-        status: "active",
-        color: "#2980b9",
-        address: "1 Ocean Drive, Miami Beach, FL 33139",
-        paymentTerms: "Net 15",
-        priceList: "VIP Gold",
-        memberSince: 2022,
-    },
-    {
-        id: "C-003",
-        name: "Burger Shack",
-        tier: "silver",
-        contact: "Mike Ross",
-        email: "mike@burgershack.com",
-        creditLimit: 2000,
-        creditUsed: 100,
-        totalSales: 3200,
-        status: "active",
-        color: "#e74c3c",
-        address: "123 Wynwood Walls, Miami, FL 33127",
-        paymentTerms: "Net 7",
-        priceList: "Standard",
-        memberSince: 2024,
-    },
-    {
-        id: "C-004",
-        name: "Cantina La 20",
-        tier: "bronze",
-        contact: "Pedro Infante",
-        email: "admin@la20.com",
-        creditLimit: 1500,
-        creditUsed: 1600,
-        totalSales: 800,
-        status: "blocked",
-        color: "#8e44ad",
-        address: "801 S Miami Ave, Miami, FL 33130",
-        paymentTerms: "Net 7",
-        priceList: "Standard",
-        memberSince: 2024,
     }
 ];
 

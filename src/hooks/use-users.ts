@@ -29,9 +29,10 @@ export function useUsers() {
       (querySnapshot) => {
         const usersData: UserProfile[] = [];
         querySnapshot.forEach((doc) => {
-          // We don't need to show the superadmin their own profile in the list
-          if (doc.id !== user.uid) {
-            usersData.push({ uid: doc.id, ...doc.data() } as UserProfile);
+          // Exclude superadmin role from the list entirely
+          const data = doc.data();
+          if (data.role !== 'superadmin') {
+            usersData.push({ uid: doc.id, ...data } as UserProfile);
           }
         });
         setUsers(usersData);
