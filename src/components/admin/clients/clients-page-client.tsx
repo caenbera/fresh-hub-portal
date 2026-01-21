@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MoreHorizontal, UserPlus, Search, Crown, Star, Pencil, History, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { MoreHorizontal, UserPlus, Search, Crown, Star, Pencil, History, CheckCircle, XCircle, Trash2, Shield, Award } from 'lucide-react';
 import type { UserProfile, UserStatus, ClientTier } from '@/types';
 import { ClientFormDialog } from './new-client-dialog';
 import { useUsers } from '@/hooks/use-users';
@@ -38,9 +38,16 @@ const formatCurrency = (amount: number) => {
 
 const getTierIcon = (tier?: ClientTier) => {
     switch (tier) {
-        case 'gold': return <Crown className="h-4 w-4 text-yellow-500" title="Gold Client" />;
-        case 'silver': return <Star className="h-4 w-4 text-gray-400" title="Silver Client" />;
-        default: return null;
+        case 'gold':
+            return <Crown className="h-4 w-4 text-yellow-600 fill-yellow-400" title="Gold Client" />;
+        case 'silver':
+            return <Star className="h-4 w-4 text-slate-500 fill-slate-400" title="Silver Client" />;
+        case 'bronze':
+            return <Shield className="h-4 w-4 text-orange-700 fill-orange-500" title="Bronze Client" />;
+        case 'standard':
+            return <Award className="h-4 w-4 text-blue-600 fill-blue-400" title="Standard Client" />;
+        default:
+            return null;
     }
 };
 
