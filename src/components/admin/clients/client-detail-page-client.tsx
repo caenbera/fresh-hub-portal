@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { clientNotes, clientOrders } from '@/lib/placeholder-data';
 import { ClientFormDialog } from './new-client-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   ArrowLeft,
   Crown,
@@ -72,10 +73,20 @@ export function ClientDetailPageClient({ client }: ClientDetailPageClientProps) 
                 </Avatar>
                 <div>
                   <h1 className="text-2xl font-bold font-headline">{client.businessName}</h1>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <div className="flex items-center gap-3 mt-1 flex-wrap">
                     <Badge className="bg-green-100 text-green-700 hover:bg-green-100 capitalize">{client.status}</Badge>
                     {client.tier === 'gold' && <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100"><Crown className="mr-1 h-3 w-3"/>{t('tier_gold')}</Badge>}
-                    <span className="text-sm text-muted-foreground">ID: {client.uid.substring(0,7)} &bull; {t('since')} {format(client.createdAt.toDate(), 'yyyy')}</span>
+                     <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <span className="text-sm text-muted-foreground cursor-pointer underline decoration-dotted">ID</span>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{client.uid}</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <span className="text-sm text-muted-foreground">&bull; {t('since')} {format(client.createdAt.toDate(), 'PPP')}</span>
                   </div>
                 </div>
               </div>
