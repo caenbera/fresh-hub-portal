@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef, useMemo } from 'react';
@@ -114,14 +115,6 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   });
   
   const watchedSuppliers = form.watch('suppliers');
-  const salePriceValue = form.watch('salePrice');
-
-  const primarySupplierCost = useMemo(() => {
-    const primary = watchedSuppliers.find(s => s.isPrimary);
-    if (primary) return primary.cost;
-    if (watchedSuppliers.length > 0) return watchedSuppliers[0].cost;
-    return 0;
-  }, [watchedSuppliers]);
 
   const getInitialFormData = (): ProductFormValues => {
     if (product) {
@@ -144,6 +137,36 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
       salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '',
     };
   };
+  
+  const updateMarginAndPrice = (source: 'margin' | 'price', value: number) => {
+    const suppliers = form.getValues('suppliers');
+    const primary = suppliers.find(s => s.isPrimary);
+    const cost = primary ? primary.cost : (suppliers.length > 0 ? suppliers[0].cost : 0);
+
+    if (cost <= 0) {
+        if(source === 'margin') setMargin(isNaN(value) ? '' : value.toString());
+        return;
+    };
+
+    if (source === 'margin') {
+        setMargin(isNaN(value) ? '' : value.toString());
+        if (!isNaN(value) && value < 100) {
+            const newSalePrice = cost / (1 - (value / 100));
+            form.setValue('salePrice', parseFloat(newSalePrice.toFixed(2)), { shouldValidate: true });
+        }
+    }
+
+    if (source === 'price') {
+        form.setValue('salePrice', isNaN(value) ? 0 : value, { shouldValidate: true });
+        if (!isNaN(value) && value > cost) {
+            const newMargin = ((value - cost) / value) * 100;
+            setMargin(newMargin.toFixed(1).replace('.0', ''));
+        } else {
+            setMargin('');
+        }
+    }
+  };
+
 
   useEffect(() => {
     if (suppliersLoading) return;
@@ -154,7 +177,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     const primaryCost = initialData.suppliers.find(s => s.isPrimary)?.cost || initialData.suppliers[0]?.cost || 0;
     const salePrice = initialData.salePrice;
     if (primaryCost > 0 && salePrice > primaryCost) {
-      const calculatedMargin = ((salePrice - primaryCost) / primaryCost) * 100;
+      const calculatedMargin = ((salePrice - primaryCost) / salePrice) * 100;
       setMargin(calculatedMargin.toFixed(1).replace('.0', ''));
     } else {
       setMargin('');
@@ -211,29 +234,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
       setIsSkuLoading(false);
     }
   }
-
-  const handleMarginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const marginValue = e.target.value;
-    setMargin(marginValue);
-    const marginNum = parseFloat(marginValue);
-    if (!isNaN(marginNum) && primarySupplierCost > 0) {
-        const newSalePrice = primarySupplierCost * (1 + marginNum / 100);
-        form.setValue('salePrice', parseFloat(newSalePrice.toFixed(2)), { shouldValidate: true });
-    }
-  };
-
-  const handleSalePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const salePrice = parseFloat(e.target.value);
-    form.setValue('salePrice', isNaN(salePrice) ? 0 : salePrice, { shouldValidate: true });
-
-    if (!isNaN(salePrice) && primarySupplierCost > 0 && salePrice > primarySupplierCost) {
-        const newMargin = ((salePrice - primarySupplierCost) / primarySupplierCost) * 100;
-        setMargin(newMargin.toFixed(1).replace('.0', ''));
-    } else {
-        setMargin('');
-    }
-  }
-
+  
   const handleSetPrimary = (indexToSet: number) => {
     const currentSuppliers = form.getValues('suppliers');
     const newSuppliers = currentSuppliers.map((supplier, index) => ({
@@ -375,9 +376,9 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
             <div className="grid grid-cols-2 gap-4">
                  <FormItem>
                     <FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_margin')}</FormLabel>
-                    <FormControl><div className="relative"><Input type="number" value={margin} onChange={handleMarginChange} className="pl-3 pr-8 h-10 text-right font-bold" placeholder={t('form_placeholder_margin')}/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span></div></FormControl>
+                    <FormControl><div className="relative"><Input type="number" value={margin} onChange={(e) => updateMarginAndPrice('margin', parseFloat(e.target.value))} className="pl-3 pr-8 h-10 text-right font-bold" placeholder={t('form_placeholder_margin')}/><span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span></div></FormControl>
                 </FormItem>
-                <FormField control={form.control} name="salePrice" render={({ field }) => (<FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_price')}</FormLabel><FormControl><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 font-bold text-sm">$</span><Input type="number" className="pl-6 h-10 font-bold text-lg text-right bg-green-50" placeholder="0.00" step="0.01" {...field} onChange={e => { field.onChange(e); handleSalePriceChange(e); }} /></div></FormControl><FormMessage /></FormItem>)}/>
+                <FormField control={form.control} name="salePrice" render={({ field }) => (<FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_price')}</FormLabel><FormControl><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 font-bold text-sm">$</span><Input type="number" className="pl-6 h-10 font-bold text-lg text-right bg-green-50" placeholder="0.00" step="0.01" {...field} onChange={e => { field.onChange(e); updateMarginAndPrice('price', parseFloat(e.target.value)); }} /></div></FormControl><FormMessage /></FormItem>)}/>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-end">
                 <FormField control={form.control} name="stock" render={({ field }) => (<FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_stock')}</FormLabel><FormControl><Input type="number" className="h-10" placeholder="0" {...field} /></FormControl><FormMessage /></FormItem>)}/>
@@ -398,3 +399,5 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     </>
   );
 }
+
+    
