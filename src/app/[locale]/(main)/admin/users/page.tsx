@@ -8,7 +8,7 @@ import { useUsers } from '@/hooks/use-users';
 import { UsersTable } from '@/components/dashboard/users/users-table';
 import { RoleGuard } from '@/components/auth/role-guard';
 import type { UserProfile } from '@/types';
-import { updateUserRole } from '@/lib/firestore/users';
+import { updateUserProfile } from '@/lib/firestore/users';
 import { useToast } from '@/hooks/use-toast';
 
 export default function ManageUsersPage() {
@@ -20,7 +20,7 @@ export default function ManageUsersPage() {
   const handleRoleChange = async (user: UserProfile, newRole: 'admin' | 'client') => {
     setIsUpdating(true);
     try {
-      await updateUserRole(user.uid, newRole);
+      await updateUserProfile(user.uid, { role: newRole });
       toast({
         title: "Success",
         description: `${user.businessName}'s role has been updated. They will need to sign out and sign back in to see the changes.`
@@ -29,7 +29,7 @@ export default function ManageUsersPage() {
        toast({
         variant: "destructive",
         title: "Error updating role",
-        description: error.message || "An unexpected error occurred.",
+        description: error.message || "An unexpected error occurred. This could be a permissions issue.",
       });
     } finally {
       setIsUpdating(false);

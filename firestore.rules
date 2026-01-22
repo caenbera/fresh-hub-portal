@@ -31,11 +31,11 @@ service cloud.firestore {
       
       // A user can update their own data (but not their role).
       // An admin can update a client's data (but not their role).
-      // Only a superadmin can change a user's role.
+      // A superadmin can update any data on another user, as long as that user is not also a superadmin.
       allow update: if isAuthed() && (
                     (request.auth.uid == userId && !('role' in request.resource.data.diff(resource.data).affectedKeys())) ||
-                    (hasAdminRole() && resource.data.role == 'client' && !('role' in request.resource.data.diff(resource.data).affectedKeys())) ||
-                    (isSuperAdmin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role']))
+                    (isSuperAdmin() && resource.data.role != 'superadmin') ||
+                    (hasAdminRole() && resource.data.role == 'client' && !('role' in request.resource.data.diff(resource.data).affectedKeys()))
                   );
       
       allow delete: if isSuperAdmin();
