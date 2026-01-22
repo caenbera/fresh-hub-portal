@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef } from 'react';
@@ -11,7 +12,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Phone, Camera, Check, BotMessageSquare } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
+import { useAuth } from '@/context/auth-context';
+import { storage } from '@/lib/firebase/config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { addSupportTicket } from '@/lib/firestore/tickets';
 
 const WhatsappIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
@@ -21,14 +25,21 @@ export function SupportPageClient() {
   const t = useTranslations('SupportPage');
   const router = useRouter();
   const { toast } = useToast();
+  const { user, userProfile } = useAuth();
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileName, setFileName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [issueType, setIssueType] = useState('bad_product');
+  const [orderDetails, setOrderDetails] = useState('');
+  const [details, setDetails] = useState('');
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      setSelectedFile(file);
       setFileName(file.name);
       toast({
         title: t('upload_success', { fileName: file.name }),
@@ -36,16 +47,48 @@ export function SupportPageClient() {
     }
   };
 
-  const handleSendTicket = () => {
+  const handleSendTicket = async () => {
+    if (!user || !userProfile || !details) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Please fill in all required fields.' });
+      return;
+    }
+
     setIsSubmitting(true);
-    setTimeout(() => {
+    let photoUrl;
+
+    try {
+      if (selectedFile) {
+        const filePath = `support-tickets/${user.uid}/${Date.now()}-${selectedFile.name}`;
+        const storageRef = ref(storage, filePath);
+        const uploadResult = await uploadBytes(storageRef, selectedFile);
+        photoUrl = await getDownloadURL(uploadResult.ref);
+      }
+      
+      await addSupportTicket({
+        userId: user.uid,
+        userName: userProfile.businessName,
+        issueType,
+        orderId: orderDetails,
+        details,
+        photoUrl,
+        status: 'new',
+      });
+
       toast({
         title: t('report_sent_title'),
         description: t('report_sent_desc'),
       });
-      setIsSubmitting(false);
       router.back();
-    }, 1500);
+
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to send report. Please try again.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const faqs = [
@@ -90,7 +133,7 @@ export function SupportPageClient() {
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium">{t('issue_label')}</label>
-              <Select defaultValue="bad_product">
+              <Select value={issueType} onValueChange={setIssueType}>
                 <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
@@ -105,7 +148,7 @@ export function SupportPageClient() {
 
             <div>
               <label className="text-sm font-medium">{t('order_label')}</label>
-               <Select>
+               <Select value={orderDetails} onValueChange={setOrderDetails}>
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder={t('order_option_placeholder')} />
                 </SelectTrigger>
@@ -118,7 +161,7 @@ export function SupportPageClient() {
 
              <div>
                 <label className="text-sm font-medium">{t('details_label')}</label>
-                <Textarea placeholder={t('details_placeholder')} className="mt-1" />
+                <Textarea value={details} onChange={(e) => setDetails(e.target.value)} placeholder={t('details_placeholder')} className="mt-1" />
             </div>
 
              <div>

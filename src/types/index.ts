@@ -231,6 +231,18 @@ export interface RewardActivity {
   createdAt: Timestamp;
 }
 
+export interface SupportTicket {
+  id: string;
+  userId: string;
+  userName: string;
+  issueType: string;
+  orderId?: string;
+  details: string;
+  photoUrl?: string;
+  status: 'new' | 'in_progress' | 'resolved';
+  createdAt: Timestamp;
+}
+
 
 // Exporting Firebase User type for components
 export type { User };
