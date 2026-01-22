@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo } from 'react';
@@ -191,17 +192,17 @@ export function RewardsPageClient() {
 
         <div className="px-4 mt-6">
           <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="item-1" className="border-none">
-              <AccordionTrigger className="bg-card rounded-xl shadow-sm border p-4 hover:no-underline">
+            <AccordionItem value="item-1" className="bg-card rounded-xl border shadow-sm">
+              <AccordionTrigger className="p-4 hover:no-underline">
                 <h3 className="text-sm font-bold text-muted-foreground uppercase">{t('how_to_earn_title')}</h3>
               </AccordionTrigger>
-              <AccordionContent className="pt-2">
+              <AccordionContent className="px-4">
                 <div className="space-y-3">
                   {loading ? (
                     <Skeleton className="h-20 w-full rounded-xl"/>
                   ) : activeRules.length > 0 ? (
                     activeRules.map((rule) => (
-                      <div key={rule.id} className="bg-card rounded-xl p-3 flex items-center gap-4 shadow-sm border">
+                      <div key={rule.id} className="bg-muted/50 rounded-xl p-3 flex items-center gap-4 border">
                         <div className="w-12 h-12 rounded-lg flex items-center justify-center shrink-0 bg-blue-100 text-blue-600">
                           <Zap className="h-6 w-6" />
                         </div>
@@ -278,3 +279,5 @@ export function RewardsPageClient() {
     </>
   );
 }
+
+    
