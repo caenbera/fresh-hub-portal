@@ -1,9 +1,8 @@
+// This file is obsolete and will be removed in a future update.
+// Price lists are now managed dynamically in the 'pricelists' collection in Firestore.
+// The new system can be accessed via "Clients" -> "Edit Client" -> "Manage Lists".
+// This file is kept temporarily to avoid breaking existing imports, but it should not be used.
+
 import type { PriceList } from '@/types';
 
-export const priceLists: PriceList[] = [
-  { name: 'Standard', discount: 0, description: 'Standard pricing for all customers.' },
-  { name: 'Bronze', discount: 3, description: 'A 3% discount for our valued bronze partners.' },
-  { name: 'Silver', discount: 7, description: 'A 7% discount for our committed silver partners.' },
-  { name: 'Gold', discount: 12, description: 'A 12% discount for high-volume gold partners.' },
-  { name: 'VIP', discount: 15, description: 'A 15% discount for our most strategic partners.' },
-];
+export const priceLists: PriceList[] = [];

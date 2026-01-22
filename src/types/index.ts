@@ -136,9 +136,10 @@ export interface Branch {
 }
 
 export interface PriceList {
+  id: string;
   name: string;
   discount: number;
-  description: string;
+  description?: string;
 }
 
 // Exporting Firebase User type for components

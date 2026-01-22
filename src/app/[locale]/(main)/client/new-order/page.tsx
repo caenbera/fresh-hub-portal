@@ -23,7 +23,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useProducts } from '@/hooks/use-products';
 import { useOrders } from '@/hooks/use-orders';
 import { Skeleton } from '@/components/ui/skeleton';
-import { priceLists } from '@/lib/price-lists';
+import { usePriceLists } from '@/hooks/use-pricelists';
 
 interface Cart { [productId: string]: number };
 interface Notes { [productId: string]: string };
@@ -96,6 +96,7 @@ export default function NewOrderPage() {
   const isMobile = useIsMobile();
   const { products, loading: productsLoading } = useProducts();
   const { orders, loading: ordersLoading } = useOrders();
+  const { priceLists, loading: priceListsLoading } = usePriceLists();
 
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(addDays(new Date(), 1));
   const [searchTerm, setSearchTerm] = useState('');
@@ -108,7 +109,7 @@ export default function NewOrderPage() {
   const [currentNote, setCurrentNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loading = productsLoading || ordersLoading;
+  const loading = productsLoading || ordersLoading || priceListsLoading;
 
   const unifiedProductsForClient = useMemo(() => {
     if (loading) return [];
@@ -210,7 +211,7 @@ export default function NewOrderPage() {
       priceListName: priceListConfig?.name || '',
       discountPercentage: priceListConfig?.discount || 0
     };
-  }, [cart, products, userProfile]);
+  }, [cart, products, userProfile, priceLists]);
 
   const handleQuantityChange = (productId: string, change: number) => {
     setCart(prev => {
@@ -478,5 +479,3 @@ export default function NewOrderPage() {
     </div>
   );
 }
-
-    

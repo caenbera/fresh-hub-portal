@@ -78,5 +78,11 @@ service cloud.firestore {
       allow create, read: if isSuperAdmin();
       allow update, delete: if false;
     }
+
+    // PRICE LISTS Collection
+    match /pricelists/{priceListId} {
+      allow read: if isAuthed();
+      allow write: if hasAdminRole();
+    }
   }
 }

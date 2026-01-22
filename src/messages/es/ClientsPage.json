@@ -1,4 +1,3 @@
-
 {
   "title": "Clientes",
   "subtitle": "Administra cuentas, créditos y accesos.",
@@ -80,15 +79,20 @@
   "save_button": "Guardar Cambios",
   "saving_button_text": "Guardando...",
   "tier_label": "Nivel de Cliente",
-  "confirm_delete_pricelist": "¿Seguro que quieres eliminar la lista de precios '{priceList}'?",
+  "confirm_delete_pricelist": "¿Estás seguro de que quieres eliminar la lista de precios '{priceListName}'? Esta acción no se puede deshacer.",
   "toast_client_updated_title": "Cliente Actualizado",
   "toast_client_updated_desc": "Los datos de {clientName} han sido guardados.",
   "delete_confirm_title": "¿Estás seguro?",
   "delete_confirm_desc": "Esto eliminará permanentemente al cliente '{clientName}'. Esta acción no se puede deshacer.",
-  "delete_button_confirm": "Sí, Eliminar Cliente",
+  "delete_button_confirm": "Sí, Eliminar",
   "toast_delete_success_title": "Cliente Eliminado",
   "toast_delete_success_desc": "{clientName} ha sido eliminado correctamente.",
   "delete_note_confirm_title": "¿Estás seguro?",
   "delete_note_confirm_desc": "Esto eliminará la nota permanentemente. Esta acción no se puede deshacer.",
-  "delete_note_confirm_action": "Eliminar"
+  "delete_note_confirm_action": "Eliminar",
+  "manage_pricelists_title": "Gestionar Listas de Precios",
+  "manage_pricelists_desc": "Añade, edita o elimina las listas de precios disponibles para todos los clientes.",
+  "new_pricelist_name_label": "Nombre de la Lista",
+  "new_pricelist_discount_label": "Descuento (%)",
+  "add_pricelist_button": "Añadir Lista"
 }

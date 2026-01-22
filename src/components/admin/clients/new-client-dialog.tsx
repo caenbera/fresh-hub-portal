@@ -20,7 +20,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import type { UserProfile, ClientTier } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { updateUserProfile } from '@/lib/firestore/users';
-import { priceLists } from '@/lib/price-lists';
+import { usePriceLists } from '@/hooks/use-pricelists';
+import { PriceListManagerDialog } from './price-list-manager-dialog';
+import { Settings } from 'lucide-react';
 
 
 const clientFormSchema = z.object({
@@ -48,7 +50,10 @@ export function ClientFormDialog({ open, onOpenChange, client }: ClientFormDialo
   const t = useTranslations('ClientsPage');
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isManagerOpen, setIsManagerOpen] = useState(false);
   
+  const { priceLists, loading: priceListsLoading } = usePriceLists();
+
   const form = useForm<FormValues>({
     resolver: zodResolver(clientFormSchema),
     defaultValues: {
@@ -105,6 +110,8 @@ export function ClientFormDialog({ open, onOpenChange, client }: ClientFormDialo
   };
 
   return (
+    <>
+    <PriceListManagerDialog open={isManagerOpen} onOpenChange={setIsManagerOpen} />
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
@@ -130,26 +137,31 @@ export function ClientFormDialog({ open, onOpenChange, client }: ClientFormDialo
                         <SelectContent>{initialTiers.map(tier => <SelectItem key={tier} value={tier} className="capitalize">{tier}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )}/>
                     <FormField control={form.control} name="creditLimit" render={({ field }) => ( <FormItem><FormLabel>{t('credit_limit_input_label')}</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem> )}/>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                     <FormField control={form.control} name="paymentTerms" render={({ field }) => ( <FormItem><FormLabel>{t('payment_terms_label')}</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
                         <SelectContent><SelectItem value="Net 7">Net 7</SelectItem><SelectItem value="Net 15">Net 15</SelectItem><SelectItem value="Net 30">Net 30</SelectItem></SelectContent></Select><FormMessage /></FormItem> )}/>
                      <FormField control={form.control} name="priceList" render={({ field }) => (
                         <FormItem>
                           <FormLabel>{t('price_list_label')}</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder={t('price_list_label')} />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {priceLists.map(pl => <SelectItem key={pl.name} value={pl.name}>{pl.name}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
+                            <div className="flex gap-2">
+                                <Select onValueChange={field.onChange} value={field.value} disabled={priceListsLoading}>
+                                <FormControl>
+                                    <SelectTrigger>
+                                    <SelectValue placeholder={t('price_list_label')} />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {priceLists.map(pl => <SelectItem key={pl.id} value={pl.name}>{pl.name}</SelectItem>)}
+                                </SelectContent>
+                                </Select>
+                                <Button type="button" variant="outline" size="icon" onClick={() => setIsManagerOpen(true)}>
+                                    <Settings className="h-4 w-4" />
+                                </Button>
+                            </div>
                             {selectedPriceList && (
                                 <p className="text-xs text-muted-foreground pt-1">
-                                    {selectedPriceList.description}
+                                    Client receives a <strong>{selectedPriceList.discount}% discount</strong> on all orders.
                                 </p>
                             )}
                           <FormMessage />
@@ -164,5 +176,6 @@ export function ClientFormDialog({ open, onOpenChange, client }: ClientFormDialo
         </Form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }
