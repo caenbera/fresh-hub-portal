@@ -193,11 +193,11 @@ export function RewardsPageClient() {
         <div className="px-4 mt-6">
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="item-1" className="bg-card rounded-xl border shadow-sm">
-              <AccordionTrigger className="p-4 hover:no-underline">
-                <h3 className="text-sm font-bold text-muted-foreground uppercase">{t('how_to_earn_title')}</h3>
+              <AccordionTrigger className="p-4 hover:no-underline bg-green-100/70 hover:bg-green-100 transition-colors">
+                <h3 className="text-sm font-bold text-green-900 uppercase">{t('how_to_earn_title')}</h3>
               </AccordionTrigger>
               <AccordionContent className="px-4">
-                <div className="space-y-3">
+                <div className="space-y-3 pt-2 pb-4">
                   {loading ? (
                     <Skeleton className="h-20 w-full rounded-xl"/>
                   ) : activeRules.length > 0 ? (
@@ -279,5 +279,7 @@ export function RewardsPageClient() {
     </>
   );
 }
+
+    
 
     
