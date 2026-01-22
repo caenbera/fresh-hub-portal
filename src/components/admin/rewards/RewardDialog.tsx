@@ -23,16 +23,17 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
 import { manageReward } from '@/lib/firestore/rewards';
 import type { Reward } from '@/types';
-import { useTranslations } from 'next-intl';
+import { allowedIcons, iconNames } from '@/lib/constants/icons';
 
 const rewardSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
   description: z.string().min(5, 'Description must be at least 5 characters'),
   pointCost: z.coerce.number().int().min(1, 'Point cost must be a positive integer'),
-  iconName: z.string().min(2, 'Icon name is required'),
+  iconName: z.enum(iconNames as [string, ...string[]], {
+    required_error: 'Please select an icon',
+  }),
   color: z.string().min(1, 'Color is required'),
 });
 
@@ -55,7 +56,6 @@ interface RewardDialogProps {
 
 export function RewardDialog({ open, onOpenChange, reward }: RewardDialogProps) {
   const { toast } = useToast();
-  const t = useTranslations('AdminRewardsPage');
 
   const form = useForm<RewardFormValues>({
     resolver: zodResolver(rewardSchema),
@@ -86,141 +86,170 @@ export function RewardDialog({ open, onOpenChange, reward }: RewardDialogProps) 
     try {
       await manageReward(reward?.id || null, data);
       toast({
-        title: reward ? t('toast_reward_updated') : t('toast_reward_created'),
+        title: `Reward ${reward ? 'updated' : 'created'} successfully.`,
       });
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving reward:', error);
       toast({
         variant: 'destructive',
-        title: t('toast_reward_error'),
-        description: t('toast_reward_error_desc'),
+        title: 'Failed to save reward.',
+        description: 'Please check your inputs and try again.',
       });
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden">
         <DialogHeader>
-          <DialogTitle>{reward ? t('dialog_edit_reward') : t('dialog_create_reward')}</DialogTitle>
+          <DialogTitle>{reward ? 'Edit Reward' : 'Create New Reward'}</DialogTitle>
           <DialogDescription>
-            {t('dialog_reward_desc')}
+            Define a redeemable item or benefit for your loyalty program.
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('dialog_reward_name_label')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t('dialog_reward_name_placeholder')} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+        {/* 👇 Contenedor scrollable que incluye el formulario con los íconos */}
+        <div className="overflow-y-auto px-1 pb-1 max-h-[50vh]">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Reward Name</FormLabel>
+                    <FormControl>
+                      {/* Nota: Ya no hay Input para iconName */}
+                      <input
+                        type="text"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="e.g., $20 Credit"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('dialog_reward_desc_label')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t('dialog_reward_desc_placeholder')} {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    {t('dialog_reward_desc_help')}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <input
+                        type="text"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Applicable on your next invoice"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      A short explanation visible to users in the rewards catalog.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="pointCost"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('dialog_reward_cost_label')}</FormLabel>
-                  <FormControl>
-                    <Input type="number" min="1" step="1" placeholder={t('dialog_reward_cost_placeholder')} {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    {t('dialog_reward_cost_help')}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="pointCost"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Point Cost</FormLabel>
+                    <FormControl>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="1000"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      How many loyalty points are required to redeem this reward?
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="iconName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('dialog_reward_icon_label')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t('dialog_reward_icon_placeholder')} {...field} />
-                  </FormControl>
-                  <FormDescription className="text-xs text-muted-foreground">
-                    {t('dialog_reward_icon_help')}{' '}
-                    <a
-                      href="https://lucide.dev"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary underline hover:no-underline"
-                    >
-                      lucide.dev
-                    </a>
-                    .
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="iconName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Icon</FormLabel>
+                    <div className="grid grid-cols-5 gap-2 pt-2">
+                      {allowedIcons.map((iconOption) => {
+                        const IconComponent = iconOption.component;
+                        return (
+                          <button
+                            key={iconOption.name}
+                            type="button"
+                            onClick={() => field.onChange(iconOption.name)}
+                            className={`flex flex-col items-center justify-center p-2 rounded-md border transition-all ${
+                              field.value === iconOption.name
+                                ? 'border-primary bg-primary/10 scale-105'
+                                : 'border-muted hover:bg-muted/30'
+                            }`}
+                            aria-label={`Select ${iconOption.name} icon`}
+                          >
+                            <IconComponent className="w-6 h-6" />
+                            <span className="text-xs mt-1 text-muted-foreground">{iconOption.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('dialog_reward_color_label')}</FormLabel>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {colorOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => field.onChange(option.value)}
-                        className={`w-10 h-10 rounded-full border-2 transition-colors ${
-                          field.value === option.value
-                            ? 'border-primary scale-105'
-                            : 'border-transparent hover:opacity-80'
-                        }`}
-                        aria-label={t('dialog_reward_color_select_aria', { colorName: option.name })}
-                      >
-                        <div className={`w-full h-full rounded-full ${option.value}`} />
-                      </button>
-                    ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="color"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Badge Color</FormLabel>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {colorOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => field.onChange(option.value)}
+                          className={`w-10 h-10 rounded-full border-2 transition-colors ${
+                            field.value === option.value
+                              ? 'border-primary scale-105'
+                              : 'border-transparent hover:opacity-80'
+                          }`}
+                          aria-label={`Select ${option.name} color`}
+                        >
+                          <div className={`w-full h-full rounded-full ${option.value}`} />
+                        </button>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
+        </div>
 
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                {t('cancel_button')}
-              </Button>
-              <Button type="submit">{reward ? t('dialog_reward_update_button') : t('dialog_reward_create_button')}</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button type="submit" onClick={form.handleSubmit(onSubmit)}>
+            {reward ? 'Update Reward' : 'Create Reward'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

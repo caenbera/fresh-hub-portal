@@ -17,7 +17,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -26,12 +25,14 @@ import {
 import { Input } from '@/components/ui/input';
 import { manageTier } from '@/lib/firestore/rewards';
 import type { RewardTier } from '@/types';
-import { useTranslations } from 'next-intl';
+import { allowedIcons, iconNames } from '@/lib/constants/icons';
 
 const tierSchema = z.object({
   name: z.string().min(2, 'Name is too short'),
-  minPoints: z.coerce.number().int().min(0, 'Points must be a non-negative number'),
-  iconName: z.string().min(2, 'Icon name is required'),
+  minPoints: z.coerce.number().min(0, 'Points must be a non-negative number'),
+  iconName: z.enum(iconNames as [string, ...string[]], {
+    required_error: 'Please select an icon',
+  }),
 });
 
 type TierFormValues = z.infer<typeof tierSchema>;
@@ -44,7 +45,6 @@ interface TierDialogProps {
 
 export function TierDialog({ open, onOpenChange, tier }: TierDialogProps) {
   const { toast } = useToast();
-  const t = useTranslations('AdminRewardsPage');
 
   const form = useForm<TierFormValues>({
     resolver: zodResolver(tierSchema),
@@ -71,15 +71,15 @@ export function TierDialog({ open, onOpenChange, tier }: TierDialogProps) {
     try {
       await manageTier(tier?.id || null, data);
       toast({
-        title: tier ? t('toast_tier_updated') : t('toast_tier_created'),
+        title: `Tier ${tier ? 'updated' : 'created'} successfully.`,
       });
       onOpenChange(false);
     } catch (error) {
       console.error('Error saving tier:', error);
       toast({
         variant: 'destructive',
-        title: t('toast_tier_error'),
-        description: t('toast_tier_error_desc'),
+        title: 'Error saving tier.',
+        description: 'Please try again or contact support.',
       });
     }
   };
@@ -88,9 +88,9 @@ export function TierDialog({ open, onOpenChange, tier }: TierDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{tier ? t('dialog_edit_tier') : t('dialog_create_tier')}</DialogTitle>
+          <DialogTitle>{tier ? 'Edit Tier' : 'Create New Tier'}</DialogTitle>
           <DialogDescription>
-            {t('dialog_tier_desc')}
+            Define a customer loyalty level. Users will unlock this tier once they reach the minimum points.
           </DialogDescription>
         </DialogHeader>
 
@@ -101,9 +101,9 @@ export function TierDialog({ open, onOpenChange, tier }: TierDialogProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('dialog_tier_name_label')}</FormLabel>
+                  <FormLabel>Tier Name</FormLabel>
                   <FormControl>
-                    <Input placeholder={t('dialog_tier_name_placeholder')} {...field} />
+                    <Input placeholder="e.g., Bronze, Silver, Gold" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,13 +115,10 @@ export function TierDialog({ open, onOpenChange, tier }: TierDialogProps) {
               name="minPoints"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('dialog_tier_points_label')}</FormLabel>
+                  <FormLabel>Minimum Points to Achieve</FormLabel>
                   <FormControl>
-                    <Input type="number" min="0" placeholder={t('dialog_tier_points_placeholder')} {...field} />
+                    <Input type="number" min="0" placeholder="0" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    {t('dialog_tier_points_help')}
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -132,22 +129,28 @@ export function TierDialog({ open, onOpenChange, tier }: TierDialogProps) {
               name="iconName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('dialog_reward_icon_label')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t('dialog_tier_icon_placeholder')} {...field} />
-                  </FormControl>
-                  <FormDescription className="text-xs text-muted-foreground">
-                    {t('dialog_reward_icon_help')}{' '}
-                    <a
-                      href="https://lucide.dev"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary underline hover:no-underline"
-                    >
-                      lucide.dev
-                    </a>
-                    .
-                  </FormDescription>
+                  <FormLabel>Icon</FormLabel>
+                  <div className="grid grid-cols-5 gap-2 pt-2">
+                    {allowedIcons.map((iconOption) => {
+                      const IconComponent = iconOption.component;
+                      return (
+                        <button
+                          key={iconOption.name}
+                          type="button"
+                          onClick={() => field.onChange(iconOption.name)}
+                          className={`flex flex-col items-center justify-center p-2 rounded-md border transition-all ${
+                            field.value === iconOption.name
+                              ? 'border-primary bg-primary/10 scale-105'
+                              : 'border-muted hover:bg-muted/30'
+                          }`}
+                          aria-label={`Select ${iconOption.name} icon`}
+                        >
+                          <IconComponent className="w-6 h-6" />
+                          <span className="text-xs mt-1 text-muted-foreground">{iconOption.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
@@ -155,9 +158,9 @@ export function TierDialog({ open, onOpenChange, tier }: TierDialogProps) {
 
             <DialogFooter className="gap-2 sm:gap-0">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                {t('cancel_button')}
+                Cancel
               </Button>
-              <Button type="submit">{tier ? t('dialog_tier_update_button') : t('dialog_tier_create_button')}</Button>
+              <Button type="submit">{tier ? 'Update Tier' : 'Create Tier'}</Button>
             </DialogFooter>
           </form>
         </Form>

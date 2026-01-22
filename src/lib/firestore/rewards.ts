@@ -14,15 +14,28 @@ import type { Reward, RewardTier, RewardRule, UserProfile, Order } from '@/types
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
+// Helper to remove undefined values from data objects
+const cleanDataForFirestore = (data: object) => {
+  return Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
+};
+
 // --- CRUD for Admin Management ---
 
 export const manageReward = (id: string | null, data: Partial<Omit<Reward, 'id'>>) => {
-  const ref = id ? doc(db, 'rewards', id) : doc(collection(db, 'rewards'));
-  return (id ? updateDoc(ref, data) : addDoc(collection(db, 'rewards'), data)).catch(async (e) => {
-    const op = id ? 'update' : 'create';
-    errorEmitter.emit('permission-error', new FirestorePermissionError({ path: ref.path, operation: op, requestResourceData: data }));
-    throw e;
-  });
+  const cleanData = cleanDataForFirestore(data);
+  if (id) {
+    const ref = doc(db, 'rewards', id);
+    return updateDoc(ref, cleanData).catch(async (e) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: ref.path, operation: 'update', requestResourceData: cleanData }));
+      throw e;
+    });
+  } else {
+    const collectionRef = collection(db, 'rewards');
+    return addDoc(collectionRef, cleanData).catch(async (e) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: collectionRef.path, operation: 'create', requestResourceData: cleanData }));
+      throw e;
+    });
+  }
 };
 
 export const deleteReward = (id: string) => {
@@ -34,12 +47,20 @@ export const deleteReward = (id: string) => {
 };
 
 export const manageTier = (id: string | null, data: Partial<Omit<RewardTier, 'id'>>) => {
-  const ref = id ? doc(db, 'rewardTiers', id) : doc(collection(db, 'rewardTiers'));
-  return (id ? updateDoc(ref, data) : addDoc(collection(db, 'rewardTiers'), data)).catch(async (e) => {
-    const op = id ? 'update' : 'create';
-    errorEmitter.emit('permission-error', new FirestorePermissionError({ path: ref.path, operation: op, requestResourceData: data }));
-    throw e;
-  });
+  const cleanData = cleanDataForFirestore(data);
+  if (id) {
+    const ref = doc(db, 'rewardTiers', id);
+    return updateDoc(ref, cleanData).catch(async (e) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: ref.path, operation: 'update', requestResourceData: cleanData }));
+      throw e;
+    });
+  } else {
+    const collectionRef = collection(db, 'rewardTiers');
+    return addDoc(collectionRef, cleanData).catch(async (e) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: collectionRef.path, operation: 'create', requestResourceData: cleanData }));
+      throw e;
+    });
+  }
 };
 
 export const deleteTier = (id: string) => {
@@ -51,12 +72,20 @@ export const deleteTier = (id: string) => {
 };
 
 export const manageRule = (id: string | null, data: Partial<Omit<RewardRule, 'id'>>) => {
-  const ref = id ? doc(db, 'rewardRules', id) : doc(collection(db, 'rewardRules'));
-  return (id ? updateDoc(ref, data) : addDoc(collection(db, 'rewardRules'), data)).catch(async (e) => {
-    const op = id ? 'update' : 'create';
-    errorEmitter.emit('permission-error', new FirestorePermissionError({ path: ref.path, operation: op, requestResourceData: data }));
-    throw e;
-  });
+  const cleanData = cleanDataForFirestore(data);
+  if (id) {
+    const ref = doc(db, 'rewardRules', id);
+    return updateDoc(ref, cleanData).catch(async (e) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: ref.path, operation: 'update', requestResourceData: cleanData }));
+      throw e;
+    });
+  } else {
+    const collectionRef = collection(db, 'rewardRules');
+    return addDoc(collectionRef, cleanData).catch(async (e) => {
+      errorEmitter.emit('permission-error', new FirestorePermissionError({ path: collectionRef.path, operation: 'create', requestResourceData: cleanData }));
+      throw e;
+    });
+  }
 };
 
 export const deleteRule = (id: string) => {
