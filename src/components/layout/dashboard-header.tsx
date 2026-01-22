@@ -63,7 +63,7 @@ export function DashboardHeader() {
             className="overflow-hidden rounded-full"
           >
             <Avatar>
-              <AvatarImage src="/placeholder-user.jpg" alt="User avatar" />
+              
               <AvatarFallback>
                 {userProfile ? getInitials(userProfile.businessName) : 'U'}
               </AvatarFallback>

@@ -101,7 +101,7 @@ function MoreMenuSheetContent({ onClose, navConfig }: { onClose: () => void, nav
               <SheetTitle>
                 <div className="flex items-center gap-3">
                     <Avatar>
-                        <AvatarImage src="/placeholder-user.jpg" alt={userProfile?.businessName} />
+                        
                         <AvatarFallback>{userProfile ? getInitials(userProfile.businessName) : 'U'}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">

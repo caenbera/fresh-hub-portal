@@ -125,7 +125,7 @@ export const redeemReward = async (userId: string, rewardId: string, cost: numbe
 
   // 3. Apply the actual benefit
   if (name.toLowerCase().includes('credit') || name.toLowerCase().includes('crédito')) {
-    const creditAmountMatch = name.match(/\\$?(\d+(\\.\\d{1,2})?)/);
+    const creditAmountMatch = name.match(/\$?(\d+(\.\d{1,2})?)/);
     const creditAmount = creditAmountMatch ? parseFloat(creditAmountMatch[1]) : 0;
     if (creditAmount > 0) {
       batch.update(userRef, {
