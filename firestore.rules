@@ -30,6 +30,13 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'superadmin', 'purchaser'];
     }
 
+    // Helper function for roles with picking/packing responsibilities.
+    function hasPickingPermissions() {
+      return isAuthed() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['picker', 'admin', 'superadmin'];
+    }
+
     // USERS Collection
     match /users/{userId} {
       allow create: if isAuthed() && request.auth.uid == userId;
@@ -63,8 +70,8 @@ service cloud.firestore {
     // ORDERS Collection
     match /orders/{orderId} {
       allow create: if isAuthed() && request.resource.data.userId == request.auth.uid;
-      allow read: if isAuthed() && (resource.data.userId == request.auth.uid || hasAdminRole());
-      allow update: if hasAdminRole();
+      allow read: if isAuthed() && (resource.data.userId == request.auth.uid || hasPickingPermissions());
+      allow update: if hasPickingPermissions();
       allow delete: if hasAdminRole();
     }
     
