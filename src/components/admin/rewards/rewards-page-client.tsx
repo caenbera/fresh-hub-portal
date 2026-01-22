@@ -5,9 +5,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 // Import the real components
-import { ManageRewardsTab } from './manage-rewards-tab';
-import { ManageTiersTab } from './manage-tiers-tab';
-import { ManageRulesTab } from './manage-rules-tab';
+import { ManageRewardsTab } from '@/components/admin/rewards/manage-rewards-tab';
+import { ManageTiersTab } from '@/components/admin/rewards/manage-tiers-tab';
+import { ManageRulesTab } from '@/components/admin/rewards/manage-rules-tab';
 
 export function RewardsPageClient() {
   const t = useTranslations('AdminRewardsPage');
