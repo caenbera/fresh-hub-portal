@@ -1,14 +1,14 @@
+
 {
   "welcome_back": "Welcome back,",
   "expenses_this_month": "Expenses this Month",
   "budget_message": "You are within your monthly budget.",
-  "saved_ytd": "Saved (YTD)",
-  "vs_2023": "vs 2023",
+  "saved_ytd": "Saved",
+  "vs_last_year": "vs last year",
+  "vs_same_period_last_year": "vs same period last year",
   "pending_balance": "Pending Balance",
   "due": "Due",
   "my_expenses_chart_title": "My Expenses (Last 6 months)",
-  "period_semi_annual": "Semi-annual",
-  "period_annual": "Annual",
   "what_you_buy_most_title": "What You Buy Most",
   "units_purchased": "{count, plural, one {# unit purchased} other {# units purchased}}",
   "buy_again_button": "Buy again",
@@ -16,5 +16,10 @@
   "category_vegetables": "Vegetables",
   "category_fruits": "Fruits",
   "category_groceries": "Groceries",
-  "category_others": "Others"
+  "category_others": "Others",
+  "period_week": "This Week",
+  "period_month": "This Month",
+  "period_quarter": "This Quarter",
+  "period_semester": "This Semester",
+  "period_year": "This Year"
 }

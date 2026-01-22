@@ -77,6 +77,7 @@ export interface Order {
   status: OrderStatus;
   createdAt: Timestamp;
   shippingAddress: string;
+  discountApplied?: number;
 }
 
 // NEW TYPES

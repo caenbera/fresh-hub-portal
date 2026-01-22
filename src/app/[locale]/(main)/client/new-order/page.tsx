@@ -277,6 +277,7 @@ export default function NewOrderPage() {
         total,
         status: 'pending',
         shippingAddress: userProfile.address,
+        discountApplied: discountAmount,
       });
       toast({ title: t('orderPlaced'), description: t('orderPlacedDesc') });
       setCart({});

@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
 import { useOrders } from '@/hooks/use-orders';
 import { useProducts } from '@/hooks/use-products';
@@ -11,20 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
-import { AlertCircle, PiggyBank, Wallet, Repeat } from 'lucide-react';
-import type { Product } from '@/types';
-import { format } from 'date-fns';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AlertCircle, PiggyBank, Wallet, Repeat, ArrowDown, ArrowUp } from 'lucide-react';
+import type { Order, Product } from '@/types';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subYears, getMonth } from 'date-fns';
 import { useRouter } from '@/navigation';
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
@@ -34,23 +26,19 @@ const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
 };
 
-const spendChartData = [
-  { name: 'Ago', Gasto: 2100 },
-  { name: 'Sep', Gasto: 2400 },
-  { name: 'Oct', Gasto: 1800 },
-  { name: 'Nov', Gasto: 3200 },
-  { name: 'Dic', Gasto: 4500 },
-  { name: 'Ene', Gasto: 3250 },
-];
+const COLORS = ['#27ae60', '#f1c40f', '#2c3e50', '#e74c3c', '#8e44ad'];
+type Period = "week" | "month" | "quarter" | "semester" | "year";
 
-const categoryChartData = [
-  { name: 'Verduras', value: 55 },
-  { name: 'Frutas', value: 25 },
-  { name: 'Otros', value: 20 },
-];
-
-const COLORS = ['#27ae60', '#f1c40f', '#2c3e50'];
-
+// Helper function to get semester dates
+const getSemesterDetails = (date: Date) => {
+  const month = date.getMonth();
+  const year = date.getFullYear();
+  if (month < 6) { // First semester (Jan - Jun)
+    return { start: new Date(year, 0, 1), end: new Date(year, 5, 30, 23, 59, 59, 999) };
+  } else { // Second semester (Jul - Dec)
+    return { start: new Date(year, 6, 1), end: new Date(year, 11, 31, 23, 59, 59, 999) };
+  }
+};
 
 export function ClientDashboard() {
   const t = useTranslations('ClientDashboardPage');
@@ -59,48 +47,104 @@ export function ClientDashboard() {
   const locale = useLocale();
   const { orders, loading: ordersLoading } = useOrders();
   const { products, loading: productsLoading } = useProducts();
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('year');
 
   const loading = ordersLoading || productsLoading;
 
   const dashboardData = useMemo(() => {
-    if (loading) {
-      return {
-        monthSpend: 0,
-        topProducts: [],
-      };
+    if (loading || !userProfile) {
+        return {
+            monthSpend: 0,
+            pendingBalance: 0,
+            topProducts: [],
+            savingsData: { currentSavings: 0, comparison: null },
+            spendChartData: [],
+            categoryChartData: [],
+        };
     }
 
     const now = new Date();
-    const currentMonth = format(now, 'yyyy-MM');
-    const monthSpend = orders
-      .filter(order => order.createdAt && format(order.createdAt.toDate(), 'yyyy-MM') === currentMonth)
-      .reduce((sum, order) => sum + order.total, 0);
 
-    const productCounts = orders
-      .flatMap(order => order.items)
-      .reduce((acc, item) => {
+    // Month Spend
+    const currentMonthStr = format(now, 'yyyy-MM');
+    const monthSpend = orders
+      .filter(order => order.createdAt && format(order.createdAt.toDate(), 'yyyy-MM') === currentMonthStr)
+      .reduce((sum, order) => sum + order.total, 0);
+    
+    // Pending Balance
+    const pendingBalance = orders
+        .filter(order => order.status !== 'delivered' && order.status !== 'cancelled')
+        .reduce((sum, order) => sum + order.total, 0);
+
+    // Top Products
+    const productCounts = orders.flatMap(order => order.items).reduce((acc, item) => {
         acc[item.productId] = (acc[item.productId] || 0) + item.quantity;
         return acc;
-      }, {} as Record<string, number>);
-
-    const topProductIds = Object.entries(productCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(entry => entry[0]);
-
+    }, {} as Record<string, number>);
+    const topProductIds = Object.entries(productCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(entry => entry[0]);
     const topProducts = topProductIds.map(id => {
         const product = products.find(p => p.id === id);
-        return {
-            ...product,
-            totalQuantity: productCounts[id],
-            // Mocking total spent per product as it's not easily calculable
-            totalSpent: Math.random() * 500 + 300 
+        if (!product) return null;
+        const totalSpent = orders.flatMap(o => o.items).filter(i => i.productId === id).reduce((sum, i) => sum + i.price * i.quantity, 0);
+        return { ...product, totalQuantity: productCounts[id], totalSpent };
+    }).filter((p): p is (Product & { totalQuantity: number, totalSpent: number }) => !!p?.id);
+
+    // Savings Card
+    let startDate: Date, endDate: Date;
+    switch (selectedPeriod) {
+        case 'week': startDate = startOfWeek(now); endDate = endOfWeek(now); break;
+        case 'month': startDate = startOfMonth(now); endDate = endOfMonth(now); break;
+        case 'quarter': startDate = startOfQuarter(now); endDate = endOfQuarter(now); break;
+        case 'semester': { const sem = getSemesterDetails(now); startDate = sem.start; endDate = sem.end; break; }
+        case 'year': default: startDate = startOfYear(now); endDate = endOfYear(now); break;
+    }
+    const currentOrders = orders.filter(o => o.createdAt.toDate() >= startDate && o.createdAt.toDate() <= endDate);
+    const currentSavings = currentOrders.reduce((sum, order) => sum + (order.discountApplied || 0), 0);
+    
+    let comparison = null;
+    const registrationDate = userProfile.createdAt.toDate();
+    if (registrationDate < subYears(now, 1)) {
+        const prevStartDate = subYears(startDate, 1);
+        const prevEndDate = subYears(endDate, 1);
+        const prevOrders = orders.filter(o => o.createdAt.toDate() >= prevStartDate && o.createdAt.toDate() <= prevEndDate);
+        const previousSavings = prevOrders.reduce((sum, order) => sum + (order.discountApplied || 0), 0);
+        if (previousSavings > 0) {
+            const percentageChange = ((currentSavings - previousSavings) / previousSavings) * 100;
+            comparison = { value: percentageChange };
+        } else if (currentSavings > 0) {
+            comparison = { value: 100 }; // If no savings last year, any saving is a 100% increase
         }
-      }).filter((p): p is (Product & { totalQuantity: number, totalSpent: number }) => !!p?.id);
+    }
+    const savingsData = { currentSavings, comparison };
+    
+    // Spend Chart
+    const spendChartData = Array.from({ length: 6 }).map((_, i) => {
+        const d = subYears(startOfMonth(now), i/12);
+        const monthStr = format(d, 'MMM');
+        const monthKey = format(d, 'yyyy-MM');
+        const total = orders.filter(o => format(o.createdAt.toDate(), 'yyyy-MM') === monthKey).reduce((sum, o) => sum + o.total, 0);
+        return { name: monthStr, Gasto: total };
+    }).reverse();
 
-    return { monthSpend, topProducts };
+    // Category Chart
+    const salesByCategory: { [category: string]: number } = {};
+    orders.forEach(order => {
+        order.items.forEach(item => {
+            const product = products.find(p => p.id === item.productId);
+            if(product) {
+                const categoryName = product.category[locale as 'es' | 'en'];
+                salesByCategory[categoryName] = (salesByCategory[categoryName] || 0) + (item.price * item.quantity);
+            }
+        });
+    });
+    const totalSales = Object.values(salesByCategory).reduce((sum, val) => sum + val, 0);
+    const categoryChartData = totalSales > 0 ? Object.entries(salesByCategory).map(([name, value]) => ({
+      name,
+      value: parseFloat(((value / totalSales) * 100).toFixed(1))
+    })).sort((a, b) => b.value - a.value) : [];
 
-  }, [orders, products, loading]);
+    return { monthSpend, pendingBalance, topProducts, savingsData, spendChartData, categoryChartData };
+  }, [orders, products, loading, userProfile, locale, selectedPeriod]);
 
   const budget = 5000;
   const budgetPercentage = Math.min((dashboardData.monthSpend / budget) * 100, 100);
@@ -120,7 +164,6 @@ export function ClientDashboard() {
             </Avatar>
         </div>
 
-        {/* Budget Card */}
         <Card className="mt-4 bg-primary text-primary-foreground border-none shadow-lg relative overflow-hidden">
             <div className="absolute w-24 h-24 bg-white/5 rounded-full -top-5 -right-5"></div>
             <div className="absolute w-16 h-16 bg-white/5 rounded-full bottom-2 left-2"></div>
@@ -138,43 +181,56 @@ export function ClientDashboard() {
         </Card>
       </div>
 
-       {/* Main Grid */}
        <div className="px-4 md:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          
-          {/* Main content - Left Column on Desktop */}
           <div className="md:col-span-2 flex flex-col gap-4">
-              {/* Metrics Grid */}
               <div className="grid grid-cols-2 gap-4">
                   <Card>
-                      <CardContent className="p-3">
-                          <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-yellow-100 text-yellow-500 mb-2"><PiggyBank className="h-5 w-5"/></div>
-                          <div className="text-xs text-muted-foreground font-semibold uppercase">{t('saved_ytd')}</div>
-                          <div className="text-lg font-bold">{formatCurrency(845.00)}</div>
-                          <small className="text-green-600 font-semibold text-xs">+12% {t('vs_2023')}</small>
+                      <CardHeader className='pb-2'>
+                        <div className="flex justify-between items-start">
+                          <CardTitle className="text-xs text-muted-foreground font-semibold uppercase">{t('saved_ytd')}</CardTitle>
+                          <Select defaultValue="year" onValueChange={(value: Period) => setSelectedPeriod(value)}>
+                            <SelectTrigger className="h-7 w-[120px] text-xs focus:ring-0 focus:ring-offset-0 border-0 bg-muted/50">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="week">{t('period_week')}</SelectItem>
+                                <SelectItem value="month">{t('period_month')}</SelectItem>
+                                <SelectItem value="quarter">{t('period_quarter')}</SelectItem>
+                                <SelectItem value="semester">{t('period_semester')}</SelectItem>
+                                <SelectItem value="year">{t('period_year')}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                          <div className="text-2xl font-bold">{formatCurrency(dashboardData.savingsData.currentSavings)}</div>
+                          {dashboardData.savingsData.comparison && (
+                            <small className={`font-semibold text-xs flex items-center gap-1 ${dashboardData.savingsData.comparison.value >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {dashboardData.savingsData.comparison.value >= 0 ? <ArrowUp className="h-3 w-3"/> : <ArrowDown className="h-3 w-3" />}
+                                {dashboardData.savingsData.comparison.value.toFixed(0)}% {t('vs_same_period_last_year')}
+                            </small>
+                          )}
                       </CardContent>
                   </Card>
                   <Card>
-                       <CardContent className="p-3">
+                       <CardContent className="p-4">
                           <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-blue-100 text-blue-500 mb-2"><Wallet className="h-5 w-5"/></div>
                           <div className="text-xs text-muted-foreground font-semibold uppercase">{t('pending_balance')}</div>
-                          <div className="text-lg font-bold">{formatCurrency(1250.00)}</div>
-                          <small className="text-muted-foreground text-xs">{t('due')}: 30 Jan</small>
+                          <div className="text-lg font-bold">{formatCurrency(dashboardData.pendingBalance)}</div>
+                          <small className="text-muted-foreground text-xs">{t('due')}: 30 Ene</small>
                       </CardContent>
                   </Card>
               </div>
 
-               {/* Spend Chart */}
               <Card>
-                  <CardHeader>
-                      <CardTitle className="text-base">{t('my_expenses_chart_title')}</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle className="text-base">{t('my_expenses_chart_title')}</CardTitle></CardHeader>
                   <CardContent>
                       <div className="h-52">
                           <ResponsiveContainer width="100%" height="100%">
-                              <BarChart data={spendChartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                              <BarChart data={dashboardData.spendChartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                                   <XAxis dataKey="name" fontSize={12} tickLine={false} axisLine={false} />
                                   <YAxis fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value/1000}k`} />
-                                  <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} contentStyle={{ borderRadius: 'var(--radius)', border: '1px solid hsl(var(--border))' }}/>
+                                  <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} contentStyle={{ borderRadius: 'var(--radius)', border: '1px solid hsl(var(--border))' }} formatter={(value: number) => [formatCurrency(value), 'Gasto']}/>
                                   <Bar dataKey="Gasto" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
                               </BarChart>
                           </ResponsiveContainer>
@@ -183,18 +239,14 @@ export function ClientDashboard() {
               </Card>
           </div>
 
-          {/* Right Column on Desktop */}
           <div className="flex flex-col gap-4">
-              {/* Top Products */}
               <Card>
-                  <CardHeader>
-                      <CardTitle className="text-base">{t('what_you_buy_most_title')}</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle className="text-base">{t('what_you_buy_most_title')}</CardTitle></CardHeader>
                   <CardContent className="space-y-3">
                       {loading ? Array.from({length:3}).map((_,i)=><Skeleton key={i} className="h-12 w-full"/>) : (
                           dashboardData.topProducts.map(product => (
                               <div key={product.id} className="flex items-center gap-3 pb-2 border-b last:border-0">
-                                <Image src={product.photoUrl} alt={product.name[locale as 'es' | 'en']} width={45} height={45} className="rounded-lg object-cover" data-ai-hint="product image"/>
+                                <Image src={product.photoUrl || ''} alt={product.name[locale as 'es' | 'en']} width={45} height={45} className="rounded-lg object-cover bg-muted" data-ai-hint="product image"/>
                                 <div className="flex-grow">
                                     <div className="font-semibold text-sm">{product.name[locale as 'es' | 'en']}</div>
                                     <div className="text-xs text-muted-foreground">{t('units_purchased', {count: product.totalQuantity})}</div>
@@ -209,28 +261,28 @@ export function ClientDashboard() {
                   </CardContent>
               </Card>
 
-                {/* Category Chart */}
                <Card>
-                  <CardHeader>
-                      <CardTitle className="text-base">{t('expense_by_category_title')}</CardTitle>
-                  </CardHeader>
+                  <CardHeader><CardTitle className="text-base">{t('expense_by_category_title')}</CardTitle></CardHeader>
                   <CardContent className="flex items-center gap-4">
                       <div className="h-36 w-36">
                           <ResponsiveContainer width="100%" height="100%">
                               <PieChart>
-                                  <Pie data={categoryChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={60} paddingAngle={2}>
-                                      {categoryChartData.map((entry, index) => (
+                                  <Pie data={dashboardData.categoryChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={60} paddingAngle={2}>
+                                      {dashboardData.categoryChartData.map((entry, index) => (
                                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                       ))}
                                   </Pie>
-                                   <Tooltip contentStyle={{ borderRadius: 'var(--radius)', border: '1px solid hsl(var(--border))' }}/>
+                                   <Tooltip contentStyle={{ borderRadius: 'var(--radius)', border: '1px solid hsl(var(--border))' }} formatter={(value, name) => [`${value}%`, name]}/>
                               </PieChart>
                           </ResponsiveContainer>
                       </div>
                       <div className="flex flex-col gap-2 text-sm">
-                        <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-full" style={{backgroundColor: COLORS[0]}}></div>{t('category_vegetables')} (55%)</div>
-                        <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-full" style={{backgroundColor: COLORS[1]}}></div>{t('category_fruits')} (25%)</div>
-                        <div className="flex items-center gap-2"><div className="h-3 w-3 rounded-full" style={{backgroundColor: COLORS[2]}}></div>{t('category_others')} (20%)</div>
+                        {dashboardData.categoryChartData.slice(0, 3).map((entry, index) => (
+                            <div key={entry.name} className="flex items-center gap-2">
+                                <div className="h-3 w-3 rounded-full" style={{backgroundColor: COLORS[index % COLORS.length]}}></div>
+                                {entry.name} ({entry.value}%)
+                            </div>
+                        ))}
                       </div>
                   </CardContent>
               </Card>
