@@ -27,7 +27,7 @@ import * as LucideIcons from 'lucide-react';
 import { redeemReward } from '@/lib/firestore/rewards';
 import { Skeleton } from '@/components/ui/skeleton';
 import { format } from 'date-fns';
-import type { RewardRule } from '@/types';
+import type { Reward, RewardRule } from '@/types';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 type IconName = keyof typeof LucideIcons;
@@ -49,9 +49,9 @@ export function RewardsPageClient() {
   const { rewards, tiers, rules, loading: rewardsLoading } = useRewardData();
   const { activities, loading: activityLoading } = useRewardActivity(user?.uid);
   const { products, loading: productsLoading } = useProducts();
-  const locale = useLocale();
+  const locale = useLocale() as 'es' | 'en';
 
-  const [selectedReward, setSelectedReward] = useState<{id: string; name: string, pointCost: number} | null>(null);
+  const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
 
   const loading = authLoading || rewardsLoading || activityLoading || productsLoading;
   const points = userProfile?.rewardPoints || 0;
@@ -92,7 +92,7 @@ export function RewardsPageClient() {
         case 'bonusForAmount': return t('rule_desc_bonusForAmount', { points: rule.points, amount: rule.amount });
         case 'fixedPointsPerOrder': return t('rule_desc_fixedPointsPerOrder', { points: rule.points });
         case 'bonusForProduct':
-            const productName = products.find(p => p.id === rule.productId)?.name[locale as 'es'|'en'] || t('rule_desc_bonusForProduct_fallback');
+            const productName = products.find(p => p.id === rule.productId)?.name[locale] || t('rule_desc_bonusForProduct_fallback');
             return t('rule_desc_bonusForProduct', { points: rule.points, productName });
         case 'multiplierPerDay':
             const dayName = finalDayNames[rule.dayOfWeek || 0];
@@ -100,7 +100,7 @@ export function RewardsPageClient() {
         case 'firstOrderBonus': return t('rule_desc_firstOrderBonus', { points: rule.points });
         case 'anniversaryBonus': return t('rule_desc_anniversaryBonus', { points: rule.points });
         case 'bonusForVariety': return t('rule_desc_bonusForVariety', { points: rule.points, amount: rule.amount });
-        case 'bonusForCategory': return t('rule_desc_bonusForCategory', { points: rule.points, categoryName: rule.category?.[locale as 'es'|'en'] });
+        case 'bonusForCategory': return t('rule_desc_bonusForCategory', { points: rule.points, categoryName: rule.category?.[locale] });
         case 'consecutiveBonus': return t('rule_desc_consecutiveBonus', { points: rule.points, weeks: rule.weeks });
         default: return t('rule_desc_misconfigured');
     }
@@ -112,7 +112,7 @@ export function RewardsPageClient() {
   }, [rules, loading]);
 
 
-  const handleRedeemClick = (reward: {id: string, name: string, pointCost: number}) => {
+  const handleRedeemClick = (reward: Reward) => {
     if (points >= reward.pointCost) {
       setSelectedReward(reward);
     } else {
@@ -127,7 +127,7 @@ export function RewardsPageClient() {
   const confirmRedemption = async () => {
     if (!selectedReward || !user) return;
     try {
-        await redeemReward(user.uid, selectedReward.id, selectedReward.pointCost, selectedReward.name);
+        await redeemReward(user.uid, selectedReward.id, selectedReward.pointCost, selectedReward.name[locale]);
         toast({
             title: t('redeem_success_title'),
             description: t('redeem_success_desc'),
@@ -146,7 +146,7 @@ export function RewardsPageClient() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t('redeem_confirm_title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t('redeem_confirm_desc', { rewardName: selectedReward?.name, rewardCost: selectedReward?.pointCost })}
+              {t('redeem_confirm_desc', { rewardName: selectedReward?.name[locale], rewardCost: selectedReward?.pointCost })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -170,14 +170,14 @@ export function RewardsPageClient() {
           </div>
           <div className="inline-flex items-center gap-1.5 bg-primary text-yellow-400 font-bold px-4 py-1.5 rounded-full mt-4">
             {currentTier ? <Icon name={currentTier.iconName as IconName} className="h-4 w-4" /> : <Skeleton className="h-4 w-4 rounded-full"/>}
-            {loading ? <Skeleton className="h-4 w-16" /> : <span>{currentTier?.name}</span>}
+            {loading ? <Skeleton className="h-4 w-16" /> : <span>{currentTier?.name[locale]}</span>}
           </div>
           <div className="max-w-xs mx-auto mt-4">
             {loading ? <Skeleton className="h-8 w-full"/> : (
               nextTier ? (
                 <>
                   <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                    <span>{currentTier?.name}</span>
+                    <span>{currentTier?.name[locale]}</span>
                     <span>{t('next_level_progress', { points: nextTier.minPoints - points })}</span>
                   </div>
                   <Progress value={progressToNextTier} className="h-2 [&>div]:bg-yellow-400" />
@@ -193,8 +193,8 @@ export function RewardsPageClient() {
         <div className="px-4 mt-6">
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="item-1" className="bg-card rounded-xl border shadow-sm">
-              <AccordionTrigger className="p-4 hover:no-underline bg-green-100/70 hover:bg-green-100 transition-colors">
-                <h3 className="text-sm font-bold text-green-900 uppercase">{t('how_to_earn_title')}</h3>
+              <AccordionTrigger className="p-4 hover:no-underline bg-green-50 text-green-800 font-bold transition-colors">
+                <h3 className="text-sm font-bold uppercase">{t('how_to_earn_title')}</h3>
               </AccordionTrigger>
               <AccordionContent className="px-4">
                 <div className="space-y-3 pt-2 pb-4">
@@ -207,7 +207,7 @@ export function RewardsPageClient() {
                           <Zap className="h-6 w-6" />
                         </div>
                         <div className="flex-grow">
-                          <h6 className="font-bold text-sm text-foreground">{rule.name}</h6>
+                          <h6 className="font-bold text-sm text-foreground">{rule.name[locale]}</h6>
                           <p className="text-xs text-muted-foreground">{generateRuleDescription(rule)}</p>
                         </div>
                       </div>
@@ -244,8 +244,8 @@ export function RewardsPageClient() {
                     <Icon name={reward.iconName as IconName} className="h-6 w-6" />
                   </div>
                   <div className="flex-grow">
-                    <h6 className="font-bold text-sm text-foreground">{reward.name}</h6>
-                    <p className="text-xs text-muted-foreground">{reward.description}</p>
+                    <h6 className="font-bold text-sm text-foreground">{reward.name[locale]}</h6>
+                    <p className="text-xs text-muted-foreground">{reward.description[locale]}</p>
                   </div>
                   <div className="text-right bg-muted/50 px-2 py-1 rounded-md shrink-0">
                     <div className="font-bold text-amber-600 text-sm">{reward.pointCost.toLocaleString()}</div>
@@ -279,7 +279,3 @@ export function RewardsPageClient() {
     </>
   );
 }
-
-    
-
-    

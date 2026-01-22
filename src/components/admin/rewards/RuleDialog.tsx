@@ -51,7 +51,10 @@ const ruleTypes = [
 ] as const satisfies Readonly<RewardRule['ruleType'][]>;
 
 const createRuleSchema = (t: Function) => z.object({
-  name: z.string().min(3, t('toast_rule_error')),
+  name: z.object({
+    es: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
+    en: z.string().min(3, 'Name must be at least 3 characters'),
+  }),
   ruleType: z.enum(ruleTypes, { required_error: t('toast_rule_error') }),
   points: z.coerce.number().optional(),
   amount: z.coerce.number().optional(),
@@ -258,7 +261,7 @@ export function RuleDialog({
   
   const form = useForm<RuleFormValues>({
     resolver: zodResolver(createRuleSchema(t)),
-    defaultValues: { isActive: true },
+    defaultValues: { name: { es: '', en: '' }, isActive: true },
   });
 
   const watchedRuleType = form.watch('ruleType');
@@ -269,7 +272,7 @@ export function RuleDialog({
         rule
           ? { ...rule, dayOfWeek: rule.dayOfWeek ?? undefined }
           : {
-              name: '',
+              name: { es: '', en: '' },
               ruleType: undefined,
               points: undefined,
               amount: undefined,
@@ -307,19 +310,34 @@ export function RuleDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('dialog_rule_name_label')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t('dialog_rule_name_placeholder')} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="name.es"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('dialog_rule_name_label_es')}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t('dialog_rule_name_placeholder_es')} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="name.en"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('dialog_rule_name_label_en')}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t('dialog_rule_name_placeholder_en')} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}

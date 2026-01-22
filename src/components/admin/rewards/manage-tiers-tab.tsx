@@ -22,7 +22,7 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 import type { RewardTier } from '@/types';
 import * as LucideIcons from 'lucide-react';
 import { TierDialog } from './TierDialog';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 type IconName = keyof typeof LucideIcons;
 
@@ -38,6 +38,7 @@ export function ManageTiersTab() {
   const { tiers, loading } = useRewardData();
   const { toast } = useToast();
   const t = useTranslations('AdminRewardsPage');
+  const locale = useLocale() as 'es' | 'en';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tierToEdit, setTierToEdit] = useState<RewardTier | null>(null);
   const [tierToDelete, setTierToDelete] = useState<RewardTier | null>(null);
@@ -74,7 +75,7 @@ export function ManageTiersTab() {
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>{t('delete_reward_confirm_title')}</AlertDialogTitle>
-                <AlertDialogDescription>{t('delete_tier_confirm_desc', { tierName: tierToDelete?.name })}</AlertDialogDescription>
+                <AlertDialogDescription>{t('delete_tier_confirm_desc', { tierName: tierToDelete?.name[locale] })}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel>{t('cancel_button')}</AlertDialogCancel>
@@ -99,7 +100,7 @@ export function ManageTiersTab() {
                   <div className="flex items-center gap-4">
                       <Icon name={tier.iconName as IconName} className="h-6 w-6 text-amber-500" />
                       <div>
-                        <h3 className="font-bold">{tier.name}</h3>
+                        <h3 className="font-bold">{tier.name[locale]}</h3>
                         <p className="text-sm text-muted-foreground">{t('tier_points_required', { points: tier.minPoints.toLocaleString() })}</p>
                       </div>
                   </div>

@@ -29,8 +29,14 @@ import { allowedIcons, iconNames } from '@/lib/constants/icons';
 import { useTranslations } from 'next-intl';
 
 const rewardSchema = z.object({
-  name: z.string().min(3, 'Name must be at least 3 characters'),
-  description: z.string().min(5, 'Description must be at least 5 characters'),
+  name: z.object({
+    es: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
+    en: z.string().min(3, 'Name must be at least 3 characters'),
+  }),
+  description: z.object({
+    es: z.string().min(5, 'La descripción debe tener al menos 5 caracteres'),
+    en: z.string().min(5, 'Description must be at least 5 characters'),
+  }),
   pointCost: z.coerce.number().int().min(1, 'Point cost must be a positive integer'),
   iconName: z.enum(iconNames as [string, ...string[]], {
     required_error: 'Please select an icon',
@@ -62,8 +68,8 @@ export function RewardDialog({ open, onOpenChange, reward }: RewardDialogProps) 
   const form = useForm<RewardFormValues>({
     resolver: zodResolver(rewardSchema),
     defaultValues: {
-      name: '',
-      description: '',
+      name: { es: '', en: '' },
+      description: { es: '', en: '' },
       pointCost: 100,
       iconName: 'Gift',
       color: 'bg-gray-100 text-gray-600',
@@ -74,8 +80,8 @@ export function RewardDialog({ open, onOpenChange, reward }: RewardDialogProps) 
     if (open) {
       form.reset(
         reward || {
-          name: '',
-          description: '',
+          name: { es: '', en: '' },
+          description: { es: '', en: '' },
           pointCost: 100,
           iconName: 'Gift',
           color: 'bg-gray-100 text-gray-600',
@@ -103,7 +109,7 @@ export function RewardDialog({ open, onOpenChange, reward }: RewardDialogProps) 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-hidden">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle>{reward ? t('dialog_edit_reward') : t('dialog_create_reward')}</DialogTitle>
           <DialogDescription>
@@ -114,46 +120,86 @@ export function RewardDialog({ open, onOpenChange, reward }: RewardDialogProps) 
         <div className="overflow-y-auto px-1 pb-1 max-h-[50vh]">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('dialog_reward_name_label')}</FormLabel>
-                    <FormControl>
-                      <input
-                        type="text"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder={t('dialog_reward_name_placeholder')}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="name.es"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('dialog_reward_name_label_es')}</FormLabel>
+                      <FormControl>
+                        <input
+                          type="text"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder={t('dialog_reward_name_placeholder_es')}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="name.en"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('dialog_reward_name_label_en')}</FormLabel>
+                      <FormControl>
+                        <input
+                          type="text"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder={t('dialog_reward_name_placeholder_en')}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('dialog_reward_desc_label')}</FormLabel>
-                    <FormControl>
-                      <input
-                        type="text"
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder={t('dialog_reward_desc_placeholder')}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      {t('dialog_reward_desc_help')}
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                 <FormField
+                  control={form.control}
+                  name="description.es"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('dialog_reward_desc_label_es')}</FormLabel>
+                      <FormControl>
+                        <input
+                          type="text"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder={t('dialog_reward_desc_placeholder_es')}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="description.en"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('dialog_reward_desc_label_en')}</FormLabel>
+                      <FormControl>
+                        <input
+                          type="text"
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          placeholder={t('dialog_reward_desc_placeholder_en')}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+               <FormDescription>
+                {t('dialog_reward_desc_help')}
+              </FormDescription>
 
               <FormField
                 control={form.control}

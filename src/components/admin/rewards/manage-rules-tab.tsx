@@ -20,7 +20,7 @@ export function ManageRulesTab() {
   const { rules, loading: rulesLoading } = useRewardData();
   const { products, loading: productsLoading } = useProducts();
   const { toast } = useToast();
-  const locale = useLocale();
+  const locale = useLocale() as 'es' | 'en';
   const t = useTranslations('AdminRewardsPage');
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -76,7 +76,7 @@ export function ManageRulesTab() {
         case 'bonusForAmount': return t('rule_desc_bonusForAmount', { points: rule.points, amount: rule.amount });
         case 'fixedPointsPerOrder': return t('rule_desc_fixedPointsPerOrder', { points: rule.points });
         case 'bonusForProduct':
-            const productName = products.find(p => p.id === rule.productId)?.name[locale as 'es'|'en'] || t('rule_desc_bonusForProduct_fallback');
+            const productName = products.find(p => p.id === rule.productId)?.name[locale] || t('rule_desc_bonusForProduct_fallback');
             return t('rule_desc_bonusForProduct', { points: rule.points, productName });
         case 'multiplierPerDay':
             const dayName = dayNames[rule.dayOfWeek || 0];
@@ -103,7 +103,7 @@ export function ManageRulesTab() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('delete_reward_confirm_title')}</AlertDialogTitle>
-            <AlertDialogDescription>{t('delete_rule_confirm_desc', { ruleName: deletingRule?.name })}</AlertDialogDescription>
+            <AlertDialogDescription>{t('delete_rule_confirm_desc', { ruleName: deletingRule?.name[locale] })}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('cancel_button')}</AlertDialogCancel>
@@ -131,7 +131,7 @@ export function ManageRulesTab() {
                         <div className="flex items-center gap-4">
                             <Switch checked={rule.isActive} onCheckedChange={() => handleToggleActive(rule)} aria-label="Toggle rule status" />
                             <div>
-                                <h4 className="font-bold text-sm">{rule.name}</h4>
+                                <h4 className="font-bold text-sm">{rule.name[locale]}</h4>
                                 <p className="text-xs text-muted-foreground">{generateRuleDescription(rule)}</p>
                             </div>
                         </div>

@@ -22,7 +22,7 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 import type { Reward } from '@/types';
 import * as LucideIcons from 'lucide-react';
 import { RewardDialog } from './RewardDialog';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 type IconName = keyof typeof LucideIcons;
 
@@ -38,6 +38,7 @@ export function ManageRewardsTab() {
   const { rewards, loading } = useRewardData();
   const { toast } = useToast();
   const t = useTranslations('AdminRewardsPage');
+  const locale = useLocale() as 'es' | 'en';
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [rewardToEdit, setRewardToEdit] = useState<Reward | null>(null);
   const [rewardToDelete, setRewardToDelete] = useState<Reward | null>(null);
@@ -74,7 +75,7 @@ export function ManageRewardsTab() {
         <AlertDialogContent>
             <AlertDialogHeader>
                 <AlertDialogTitle>{t('delete_reward_confirm_title')}</AlertDialogTitle>
-                <AlertDialogDescription>{t('delete_reward_confirm_desc', { rewardName: rewardToDelete?.name })}</AlertDialogDescription>
+                <AlertDialogDescription>{t('delete_reward_confirm_desc', { rewardName: rewardToDelete?.name[locale] })}</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel>{t('cancel_button')}</AlertDialogCancel>
@@ -106,8 +107,8 @@ export function ManageRewardsTab() {
                           <div className="text-xs text-muted-foreground font-semibold">PTS</div>
                       </div>
                     </div>
-                    <h3 className="font-bold mt-3">{reward.name}</h3>
-                    <p className="text-sm text-muted-foreground">{reward.description}</p>
+                    <h3 className="font-bold mt-3">{reward.name[locale]}</h3>
+                    <p className="text-sm text-muted-foreground">{reward.description[locale]}</p>
                   </div>
                   <div className="flex gap-2 mt-4">
                       <Button variant="outline" size="sm" className="w-full" onClick={() => handleEdit(reward)}>

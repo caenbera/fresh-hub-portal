@@ -183,15 +183,15 @@ export interface Offer {
 
 export interface RewardTier {
   id: string;
-  name: string;
+  name: { es: string; en: string; };
   minPoints: number;
   iconName: string;
 }
 
 export interface Reward {
   id:string;
-  name: string;
-  description: string;
+  name: { es: string; en: string; };
+  description: { es: string; en: string; };
   pointCost: number;
   iconName: string;
   color: string;
@@ -211,7 +211,7 @@ export type RewardRuleType =
 
 export interface RewardRule {
   id: string;
-  name: string;
+  name: { es: string; en: string; };
   ruleType: RewardRuleType;
   points?: number;      // For fixed points, bonus
   amount?: number;      // For dollar thresholds

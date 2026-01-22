@@ -29,7 +29,10 @@ import { allowedIcons, iconNames } from '@/lib/constants/icons';
 import { useTranslations } from 'next-intl';
 
 const tierSchema = z.object({
-  name: z.string().min(2, 'Name is too short'),
+  name: z.object({
+    es: z.string().min(2, 'El nombre es muy corto'),
+    en: z.string().min(2, 'Name is too short'),
+  }),
   minPoints: z.coerce.number().min(0, 'Points must be a non-negative number'),
   iconName: z.enum(iconNames as [string, ...string[]], {
     required_error: 'Please select an icon',
@@ -51,7 +54,7 @@ export function TierDialog({ open, onOpenChange, tier }: TierDialogProps) {
   const form = useForm<TierFormValues>({
     resolver: zodResolver(tierSchema),
     defaultValues: {
-      name: '',
+      name: { es: '', en: '' },
       minPoints: 0,
       iconName: 'Shield',
     },
@@ -61,7 +64,7 @@ export function TierDialog({ open, onOpenChange, tier }: TierDialogProps) {
     if (open) {
       form.reset(
         tier || {
-          name: '',
+          name: { es: '', en: '' },
           minPoints: 0,
           iconName: 'Shield',
         }
@@ -98,19 +101,35 @@ export function TierDialog({ open, onOpenChange, tier }: TierDialogProps) {
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('dialog_tier_name_label')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t('dialog_tier_name_placeholder')} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="name.es"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('dialog_tier_name_label_es')}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t('dialog_tier_name_placeholder_es')} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="name.en"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('dialog_tier_name_label_en')}</FormLabel>
+                    <FormControl>
+                      <Input placeholder={t('dialog_tier_name_placeholder_en')} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
 
             <FormField
               control={form.control}
