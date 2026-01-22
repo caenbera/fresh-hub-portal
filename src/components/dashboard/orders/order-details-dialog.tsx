@@ -73,6 +73,8 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
   };
   const nextStatus = getNextStatus();
   
+  const subtotal = order.total + (order.discountApplied || 0);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl print-this-dialog">
@@ -117,8 +119,9 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                   <TableRow key={index}>
                     <TableCell className="font-medium">
                       {item.productName[locale as 'es' | 'en']}
-                      {/* Placeholder for notes */}
-                      {index === 0 && <p className="text-xs text-muted-foreground italic">Nota: "Que estén verdes"</p>}
+                      {order.notes?.items?.[item.productId] && (
+                        <p className="text-xs text-muted-foreground italic">Nota: "{order.notes.items[item.productId]}"</p>
+                      )}
                     </TableCell>
                     <TableCell className="text-center">{item.quantity}</TableCell>
                     <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
@@ -127,6 +130,16 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                 ))}
               </TableBody>
               <TableFoot>
+                <TableRow>
+                  <TableCell colSpan={3} className="text-right">Subtotal</TableCell>
+                  <TableCell className="text-right">{formatCurrency(subtotal)}</TableCell>
+                </TableRow>
+                {order.discountApplied && order.discountApplied > 0 && (
+                  <TableRow className="text-md font-semibold">
+                    <TableCell colSpan={3} className="text-right text-primary">Descuento Aplicado</TableCell>
+                    <TableCell className="text-right text-primary">-{formatCurrency(order.discountApplied)}</TableCell>
+                  </TableRow>
+                )}
                 <TableRow className="text-lg font-bold">
                   <TableCell colSpan={3} className="text-right">{t('details_total_header').toUpperCase()}</TableCell>
                   <TableCell className="text-right text-green-600">{formatCurrency(order.total)}</TableCell>
@@ -135,12 +148,14 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
             </Table>
           </ScrollArea>
            
-           <Alert className="mt-4">
-             <Info className="h-4 w-4" />
-             <AlertDescription>
-                <strong>{t('details_client_note')}</strong> "Por favor llegar antes de las 10am, entrar por la puerta trasera."
-             </AlertDescription>
-           </Alert>
+           {order.notes?.general && (
+            <Alert className="mt-4">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                <strong>{t('details_client_note')}</strong> "{order.notes.general}"
+              </AlertDescription>
+            </Alert>
+           )}
 
         <DialogFooter className="mt-4 no-print">
           <Button variant="outline" onClick={handlePrint}>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -14,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
-import type { Product as ProductType, OrderItem, ProductCategory, PriceList } from '@/types';
+import type { Product as ProductType, OrderItem } from '@/types';
 import { CalendarIcon, Search, MessageSquarePlus, Pencil, Minus, Plus, ShoppingBasket, Star } from 'lucide-react';
 import { format, addDays } from 'date-fns';
 import { es, enUS } from 'date-fns/locale';
@@ -24,13 +23,13 @@ import { useProducts } from '@/hooks/use-products';
 import { useOrders } from '@/hooks/use-orders';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePriceLists } from '@/hooks/use-pricelists';
-
-interface Cart { [productId: string]: number };
-interface Notes { [productId: string]: string };
+import { useCart } from '@/context/cart-context';
+import { useOffers } from '@/hooks/use-offers';
+import { calculateDiscount } from '@/lib/pricing';
 
 const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 
-const CheckoutContent = ({ orderItems, notes, subtotal, discountAmount, total, deliveryDate, isSubmitting, handleSubmitOrder, t, locale, priceListName, discountPercentage }: any) => (
+const CheckoutContent = ({ orderItems, itemNotes, generalObservations, onGeneralObservationsChange, subtotal, discountAmount, total, deliveryDate, isSubmitting, handleSubmitOrder, t, locale, priceListName, discountPercentage }: any) => (
   <div className="flex flex-col h-full">
     <SheetHeader className="p-3 text-left border-b">
       <SheetTitle className="text-base">{t('confirmOrder')}</SheetTitle>
@@ -49,9 +48,9 @@ const CheckoutContent = ({ orderItems, notes, subtotal, discountAmount, total, d
             <div className="flex-grow min-w-0">
               <p className="font-medium text-sm truncate">{item.productName[locale]}</p>
               <p className="text-xs text-muted-foreground">{item.quantity} x {formatCurrency(item.price)}</p>
-              {notes[item.productId] && (
+              {itemNotes[item.productId] && (
                 <p className="text-xs text-blue-600 bg-blue-50 p-1 rounded mt-1">
-                  <b className="font-bold">Nota:</b> {notes[item.productId]}
+                  <b className="font-bold">Nota:</b> {itemNotes[item.productId]}
                 </p>
               )}
             </div>
@@ -61,7 +60,12 @@ const CheckoutContent = ({ orderItems, notes, subtotal, discountAmount, total, d
       </div>
       <div className="mt-4">
         <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">{t('observations')}</label>
-        <Textarea placeholder={t('observationsPlaceholder')} className="mt-1 text-sm" />
+        <Textarea 
+            placeholder={t('observationsPlaceholder')} 
+            className="mt-1 text-sm" 
+            value={generalObservations}
+            onChange={(e) => onGeneralObservationsChange(e.target.value)}
+        />
       </div>
     </div>
     <div className="p-3 bg-gray-50 border-t">
@@ -72,7 +76,7 @@ const CheckoutContent = ({ orderItems, notes, subtotal, discountAmount, total, d
           </div>
           {discountAmount > 0 && (
               <div className="flex justify-between text-primary">
-                  <span className="font-medium">{t('discount')} ({priceListName} {discountPercentage}%)</span>
+                  <span className="font-medium">{t('discount')} {discountPercentage > 0 ? `(${priceListName} ${discountPercentage}%)` : ''}</span>
                   <span className="font-medium">-{formatCurrency(discountAmount)}</span>
               </div>
           )}
@@ -95,21 +99,23 @@ export default function NewOrderPage() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const { products, loading: productsLoading } = useProducts();
+  const { offers, loading: offersLoading } = useOffers();
   const { orders, loading: ordersLoading } = useOrders();
   const { priceLists, loading: priceListsLoading } = usePriceLists();
+  const { cart, notes, addToCart, updateNote, clearCart, getNote } = useCart();
 
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(addDays(new Date(), 1));
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
-  const [cart, setCart] = useState<Cart>({});
-  const [notes, setNotes] = useState<Notes>({});
+
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [currentProductForNote, setCurrentProductForNote] = useState<ProductType | null>(null);
   const [currentNote, setCurrentNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [generalObservations, setGeneralObservations] = useState("");
 
-  const loading = productsLoading || ordersLoading || priceListsLoading;
+  const loading = productsLoading || ordersLoading || priceListsLoading || offersLoading;
 
   const unifiedProductsForClient = useMemo(() => {
     if (loading) return [];
@@ -147,9 +153,9 @@ export default function NewOrderPage() {
     if (loading) return [];
     const uniqueCategories = Array.from(new Map(unifiedProductsForClient.map(p => [p.category.es, p.category])).values());
     
-    const favCategory: ProductCategory & { isFavorite?: boolean } = { es: t('favorites'), en: 'Favorites', isFavorite: true };
+    const favCategory: any = { es: t('favorites'), en: 'Favorites', isFavorite: true };
 
-    return [favCategory, ...uniqueCategories];
+    return [favCategory, ...uniqueCategories.sort((a,b) => a.es.localeCompare(b.es))];
   }, [unifiedProductsForClient, loading, t]);
   
   useEffect(() => {
@@ -175,75 +181,55 @@ export default function NewOrderPage() {
   }, [activeCategory, searchTerm, unifiedProductsForClient, loading, favoriteProductIds, t, locale]);
 
   const { orderItems, subtotal, discountAmount, total, totalItems, priceListName, discountPercentage } = useMemo(() => {
-    const orderItems: (OrderItem & { photoUrl: string })[] = [];
-    let subtotal = 0;
-    let totalItems = 0;
+    if (loading) return { orderItems: [], subtotal: 0, discountAmount: 0, total: 0, totalItems: 0, priceListName: '', discountPercentage: 0 };
+    
+    const clientPriceList = priceLists.find(pl => pl.name === userProfile?.priceList) || null;
+    let runningSubtotal = 0;
+    let runningDiscount = 0;
+    let runningTotalItems = 0;
+    const runningOrderItems: (OrderItem & { photoUrl: string })[] = [];
 
     for (const productId in cart) {
-      const product = products.find(p => p.id === productId);
-      const quantity = cart[productId];
-      if (product && quantity > 0) {
-        orderItems.push({
-          productId: product.id,
-          productName: product.name,
-          quantity,
-          price: product.salePrice,
-          photoUrl: product.photoUrl || '',
+        const cartItem = cart[productId];
+        const product = products.find(p => p.id === productId);
+        if (!product || !cartItem) continue;
+
+        const offer = offers.find(o => o.id === cartItem.offerId);
+        const { finalPrice, discount } = calculateDiscount(product, clientPriceList, offer);
+
+        runningSubtotal += product.salePrice * cartItem.quantity;
+        runningDiscount += discount * cartItem.quantity;
+        runningTotalItems += cartItem.quantity;
+        
+        runningOrderItems.push({
+            productId: product.id,
+            productName: product.name,
+            quantity: cartItem.quantity,
+            price: finalPrice, // Use the final price after the best discount
+            photoUrl: product.photoUrl || '',
         });
-        subtotal += product.salePrice * quantity;
-        totalItems += quantity;
-      }
     }
-    
-    const clientPriceListName = userProfile?.priceList || 'Standard';
-    const priceListConfig = priceLists.find(pl => pl.name === clientPriceListName);
-    const discountPerc = priceListConfig ? priceListConfig.discount / 100 : 0;
-    
-    const discountAmount = subtotal * discountPerc;
-    const total = subtotal - discountAmount;
 
     return { 
-      orderItems, 
-      subtotal, 
-      discountAmount, 
-      total, 
-      totalItems,
-      priceListName: priceListConfig?.name || '',
-      discountPercentage: priceListConfig?.discount || 0
+      orderItems: runningOrderItems,
+      subtotal: runningSubtotal,
+      discountAmount: runningDiscount,
+      total: runningSubtotal - runningDiscount,
+      totalItems: runningTotalItems,
+      priceListName: clientPriceList?.name || '',
+      discountPercentage: clientPriceList?.discount || 0
     };
-  }, [cart, products, userProfile, priceLists]);
-
-  const handleQuantityChange = (productId: string, change: number) => {
-    setCart(prev => {
-      const newCart = { ...prev };
-      const currentQty = newCart[productId] || 0;
-      const newQty = currentQty + change;
-      if (newQty > 0) {
-        newCart[productId] = newQty;
-      } else {
-        delete newCart[productId];
-      }
-      return newCart;
-    });
-  };
+  }, [cart, products, offers, userProfile, priceLists, loading]);
 
   const handleOpenNoteModal = (product: ProductType) => {
     setCurrentProductForNote(product);
-    setCurrentNote(notes[product.id] || '');
+    setCurrentNote(getNote(product.id) || '');
     setIsNoteModalOpen(true);
   };
 
   const handleSaveNote = () => {
     if (currentProductForNote) {
-      setNotes(prev => {
-        const newNotes = { ...prev };
-        if (currentNote.trim()) {
-          newNotes[currentProductForNote.id] = currentNote;
-        } else {
-          delete newNotes[currentProductForNote.id];
-        }
-        return newNotes;
-      });
+      updateNote(currentProductForNote.id, currentNote);
     }
     setIsNoteModalOpen(false);
     setCurrentProductForNote(null);
@@ -278,10 +264,13 @@ export default function NewOrderPage() {
         status: 'pending',
         shippingAddress: userProfile.address,
         discountApplied: discountAmount,
+        notes: {
+            general: generalObservations,
+            items: notes
+        }
       });
       toast({ title: t('orderPlaced'), description: t('orderPlacedDesc') });
-      setCart({});
-      setNotes({});
+      clearCart();
       setIsCheckoutOpen(false);
     } catch (error: any) {
       toast({ variant: "destructive", title: t('orderFailed'), description: error.message || t('orderFailedDesc') });
@@ -292,7 +281,9 @@ export default function NewOrderPage() {
 
   const checkoutProps = {
     orderItems,
-    notes,
+    itemNotes: notes,
+    generalObservations,
+    onGeneralObservationsChange: setGeneralObservations,
     subtotal,
     discountAmount,
     total,
@@ -367,7 +358,7 @@ export default function NewOrderPage() {
             </div>
         ) : filteredProducts.length > 0 ? (
           filteredProducts.map(p => {
-            const quantity = cart[p.id] || 0;
+            const quantity = cart[p.id]?.quantity || 0;
             const hasNote = !!notes[p.id];
             const unitText = typeof p.unit === 'object' && p.unit?.[locale] ? p.unit[locale] : (p.unit as any);
             return (
@@ -402,7 +393,7 @@ export default function NewOrderPage() {
                     size="icon"
                     variant="ghost"
                     className="h-6 w-6 rounded-full"
-                    onClick={() => handleQuantityChange(p.id, -1)}
+                    onClick={() => addToCart(p.id, -1)}
                   >
                     <Minus className="h-3 w-3" />
                   </Button>
@@ -416,7 +407,7 @@ export default function NewOrderPage() {
                     size="icon"
                     variant="ghost"
                     className="h-6 w-6 rounded-full"
-                    onClick={() => handleQuantityChange(p.id, 1)}
+                    onClick={() => addToCart(p.id, 1)}
                   >
                     <Plus className="h-3 w-3" />
                   </Button>

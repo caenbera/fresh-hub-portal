@@ -78,6 +78,10 @@ export interface Order {
   createdAt: Timestamp;
   shippingAddress: string;
   discountApplied?: number;
+  notes?: {
+    general?: string;
+    items?: Record<string, string>;
+  };
 }
 
 // NEW TYPES
