@@ -167,6 +167,7 @@ function RuleDialog({ open, onOpenChange, rule, products }: { open: boolean, onO
   );
 }
 
+
 export function ManageRulesTab() {
   const { rules, loading: rulesLoading } = useRewardData();
   const { products, loading: productsLoading } = useProducts();
