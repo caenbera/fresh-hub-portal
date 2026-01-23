@@ -15,7 +15,6 @@ import {
   DragEndEvent,
 } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,12 +30,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { updateSupportTicket } from '@/lib/firestore/tickets';
 import { SupportTicket } from '@/types';
-import { CircleAlert, Clock, CheckCircle2, Loader2, GripVertical } from 'lucide-react';
+import { CircleAlert, Clock, CheckCircle2, Loader2, GripVertical, Paperclip } from 'lucide-react';
 import { SortableTicketItem } from './SortableTicketItem';
+import { useTranslations } from 'next-intl';
 
 const VALID_STATUSES = ['new', 'in_progress', 'resolved'] as const;
+type TicketStatus = (typeof VALID_STATUSES)[number];
 
-export const STATUS_CONFIG: Record<(typeof VALID_STATUSES)[number], { label: string; color: string; icon: React.ReactNode }> = {
+export const STATUS_CONFIG: Record<TicketStatus, { label: string; color: string; icon: React.ReactNode }> = {
   new: {
     label: 'Nuevo',
     color: 'bg-blue-100 text-blue-800 border-blue-300',
@@ -59,7 +60,7 @@ interface TicketBoardProps {
 }
 
 export function TicketBoard({ tickets }: TicketBoardProps) {
-  const [columns, setColumns] = useState<Record<(typeof VALID_STATUSES)[number], SupportTicket[]>>({
+  const [columns, setColumns] = useState<Record<TicketStatus, SupportTicket[]>>({
     new: [],
     in_progress: [],
     resolved: [],
@@ -68,9 +69,10 @@ export function TicketBoard({ tickets }: TicketBoardProps) {
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const t = useTranslations('SupportPage');
 
   useEffect(() => {
-    const newCols: Record<(typeof VALID_STATUSES)[number], SupportTicket[]> = {
+    const newCols: Record<TicketStatus, SupportTicket[]> = {
       new: [],
       in_progress: [],
       resolved: [],
@@ -83,7 +85,7 @@ export function TicketBoard({ tickets }: TicketBoardProps) {
     );
 
     filtered.forEach((ticket) => {
-      const status = ticket.status as (typeof VALID_STATUSES)[number];
+      const status = ticket.status as TicketStatus;
       if (VALID_STATUSES.includes(status)) {
         newCols[status].push(ticket);
       } else {
@@ -140,12 +142,22 @@ export function TicketBoard({ tickets }: TicketBoardProps) {
   };
 
   const activeTicket = tickets.find((t) => t.id === activeId) || null;
+  
+  const issueTypeMap: Record<string, string> = {
+    bad_product: t('issue_option_bad_product'),
+    missing_product: t('issue_option_missing_product'),
+    late_order: t('issue_option_late_order'),
+    invoice_problem: t('issue_option_invoice_problem'),
+  };
+  
+  const getTranslatedIssueType = (issueType: string) => {
+      return issueTypeMap[issueType] || issueType;
+  }
 
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
-      modifiers={[restrictToVerticalAxis]}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
@@ -203,16 +215,23 @@ export function TicketBoard({ tickets }: TicketBoardProps) {
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <CardTitle className="text-sm font-medium line-clamp-1">
-                    {activeTicket.issueType}
+                    {getTranslatedIssueType(activeTicket.issueType)}
                   </CardTitle>
-                  <Badge className={`border ${STATUS_CONFIG[activeTicket.status].color}`}>
-                    {STATUS_CONFIG[activeTicket.status].icon}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    {activeTicket.photoUrl && <Paperclip className="h-4 w-4 text-muted-foreground" />}
+                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab"/>
+                    <Badge className={`border ${STATUS_CONFIG[activeTicket.status].color}`}>
+                      {STATUS_CONFIG[activeTicket.status].icon}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
                 <p className="text-xs text-muted-foreground line-clamp-2">
                   {activeTicket.details || 'Sin detalles'}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {activeTicket.userName}
                 </p>
               </CardContent>
             </Card>
@@ -223,7 +242,7 @@ export function TicketBoard({ tickets }: TicketBoardProps) {
           {selectedTicket && (
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
               <DialogHeader>
-                <DialogTitle>{selectedTicket.issueType}</DialogTitle>
+                <DialogTitle>{getTranslatedIssueType(selectedTicket.issueType)}</DialogTitle>
               </DialogHeader>
               <div className="overflow-y-auto flex-grow py-4">
                 <div className="space-y-4">
@@ -250,7 +269,7 @@ export function TicketBoard({ tickets }: TicketBoardProps) {
                   <div className="flex justify-between items-center">
                     <Badge className={`border ${STATUS_CONFIG[selectedTicket.status].color}`}>
                       {STATUS_CONFIG[selectedTicket.status].icon}
-                      {STATUS_CONFIG[selectedTicket.status].label}
+                      <span className='ml-2'>{STATUS_CONFIG[selectedTicket.status].label}</span>
                     </Badge>
                     <div className="text-xs text-gray-500">
                       Creado:{" "}
