@@ -11,7 +11,7 @@ admin.initializeApp();
 // The public key MUST match the one used in `src/lib/notifications.ts`.
 const VAPID_PUBLIC_KEY = "BPhgGfH_TCI66-3o7kXQ2S2G4iO4-dJkYx9A3C2A1Z1E4W4zY2zJ4J8L4zX3w5H_k3K9J6n3L1oY8E";
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
-const NOTIFICATION_ICON = "https://i.postimg.cc/y86gF4Cp/the-fresh_hub-noback.png";
+const NOTIFICATION_ICON = "https://i.postimg.cc/sxBVGnMp/icon.png";
 
 if (VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(
