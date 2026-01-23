@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -49,15 +50,11 @@ export function AccountPageClient() {
     }
   }, []);
 
-  const handleNotificationToggle = async () => {
+  const handleNotificationToggle = async (checked: boolean) => {
     if (!user) return;
     setIsNotificationProcessing(true);
     try {
-        if (isNotificationsEnabled) {
-            await unsubscribeFromPushNotifications(user.uid);
-            setIsNotificationsEnabled(false);
-            toast({ title: "Notifications Disabled", description: "You will no longer receive push notifications on this device." });
-        } else {
+        if (checked) {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
                 await subscribeToPushNotifications(user.uid);
@@ -66,14 +63,21 @@ export function AccountPageClient() {
             } else {
                 toast({ variant: 'destructive', title: "Permission Denied", description: "You need to grant permission to enable notifications." });
             }
+        } else {
+            await unsubscribeFromPushNotifications(user.uid);
+            setIsNotificationsEnabled(false);
+            toast({ title: "Notifications Disabled", description: "You will no longer receive push notifications on this device." });
         }
     } catch (error) {
         console.error("Error toggling notifications", error);
         toast({ variant: 'destructive', title: "Error", description: "Could not change notification settings." });
+        // Revert UI state on error
+        setIsNotificationsEnabled(!checked);
     } finally {
         setIsNotificationProcessing(false);
     }
   };
+
 
   const handleSignOut = async () => {
     if (confirm(t('logout_confirm'))) {
