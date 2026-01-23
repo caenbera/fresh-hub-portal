@@ -13,7 +13,7 @@ export function usePriceLists() {
 
   useEffect(() => {
     const priceListsCollection = collection(db, 'pricelists');
-    const q = query(priceListsCollection, orderBy('discount', 'asc'));
+    const q = query(priceListsCollection, orderBy('name', 'asc'));
 
     const unsubscribe = onSnapshot(
       q,
