@@ -1,9 +1,8 @@
-
 "use client";
 
 import { Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarSeparator } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/auth-context';
-import { LayoutGrid, ShoppingCart, Package, Users, History, Home, ClipboardList, Leaf, Truck, ShoppingBag, Boxes, UserCircle, Trophy } from 'lucide-react';
+import { LayoutGrid, ShoppingCart, Package, Users, History, Home, ClipboardList, Leaf, Truck, ShoppingBag, Boxes, UserCircle, Trophy, Headset } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -67,6 +66,7 @@ export function AppSidebar() {
         { href: '/admin/purchasing', label: t('purchasing'), icon: ShoppingBag },
         { href: '/admin/suppliers', label: t('suppliers'), icon: Truck },
         { href: '/admin/rewards', label: t('rewards'), icon: Trophy },
+        { href: '/admin/support', label: t('support'), icon: Headset },
       ],
       superadmin: [
         { href: '/admin/users', label: t('manageUsers'), icon: Users },
@@ -94,6 +94,7 @@ export function AppSidebar() {
         { href: '/admin/purchasing', label: t('purchasing'), icon: ShoppingBag },
         { href: '/admin/suppliers', label: t('suppliers'), icon: Truck },
         { href: '/admin/rewards', label: t('rewards'), icon: Trophy },
+        { href: '/admin/support', label: t('support'), icon: Headset },
       ],
       picker: [
         { href: '/admin/picking', label: t('picking'), icon: Boxes },

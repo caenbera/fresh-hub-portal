@@ -1,11 +1,12 @@
 
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, updateDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import type { SupportTicket } from '@/types';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
 type TicketInput = Omit<SupportTicket, 'id' | 'createdAt'>;
+type TicketUpdateInput = Partial<Pick<SupportTicket, 'status'>>;
 
 export const addSupportTicket = (ticketData: TicketInput) => {
   const ticketsCollection = collection(db, 'supportTickets');
@@ -23,4 +24,17 @@ export const addSupportTicket = (ticketData: TicketInput) => {
     errorEmitter.emit('permission-error', permissionError);
     throw serverError;
   });
+};
+
+export const updateSupportTicket = (ticketId: string, data: TicketUpdateInput) => {
+    const ticketDoc = doc(db, 'supportTickets', ticketId);
+    return updateDoc(ticketDoc, data).catch(async (serverError) => {
+        const permissionError = new FirestorePermissionError({
+            path: ticketDoc.path,
+            operation: 'update',
+            requestResourceData: data,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+        throw serverError;
+    });
 };
