@@ -17,7 +17,7 @@ export default async function RootLayout({
   const { locale } = await params; // ✅ AWAIT aquí
   setRequestLocale(locale); // ✅ sin "unstable_"
   const messages = await getMessages();
-  const iconUrl = "https://i.postimg.cc/sxBVGnMp/icon.png";
+  const iconUrl = "https://i.postimg.cc/sxBVGnMp/icon.png?v=2";
 
   return (
     <html lang={locale} suppressHydrationWarning>

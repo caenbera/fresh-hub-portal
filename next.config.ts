@@ -17,13 +17,13 @@ const withPWA = withPWAInit({
     theme_color: '#27ae60',
     icons: [
       {
-        src: 'https://i.postimg.cc/sxBVGnMp/icon.png',
+        src: 'https://i.postimg.cc/sxBVGnMp/icon.png?v=2',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: 'https://i.postimg.cc/sxBVGnMp/icon.png',
+        src: 'https://i.postimg.cc/sxBVGnMp/icon.png?v=2',
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
