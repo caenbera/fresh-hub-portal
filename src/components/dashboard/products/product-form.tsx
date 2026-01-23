@@ -12,6 +12,7 @@ import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
@@ -44,6 +45,7 @@ const formSchema = z.object({
   }),
   suppliers: z.array(supplierSchema).min(1, "At least one supplier is required."),
   salePrice: z.coerce.number().min(0.01),
+  pricingMethod: z.enum(['margin', 'markup']).optional(),
   stock: z.coerce.number().int().min(0),
   minStock: z.coerce.number().int().min(0),
   active: z.boolean(),
@@ -100,14 +102,14 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const [editUnitTarget, setEditUnitTarget] = useState<{ es: string; en: string } | null>(null);
   const esUnitInputRef = useRef<HTMLInputElement>(null);
   const enUnitInputRef = useRef<HTMLInputElement>(null);
-
-  const [margin, setMargin] = useState<string>('');
+  
+  const [priceCalculationMethod, setPriceCalculationMethod] = useState<'margin' | 'markup'>('margin');
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       sku: '', name: { es: '', en: '' }, category: { es: '', en: '' }, unit: { es: '', en: '' },
-      suppliers: [], salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '',
+      suppliers: [], salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '', pricingMethod: 'margin'
     },
   });
 
@@ -119,31 +121,44 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const watchedSuppliers = form.watch('suppliers');
   const watchedSalePrice = form.watch('salePrice');
   const primarySupplierCost = form.watch('suppliers')?.find(s => s.isPrimary)?.cost || 0;
+  
+  const { margin, markup } = useMemo(() => {
+    const price = watchedSalePrice;
+    const cost = primarySupplierCost;
 
-
-  useEffect(() => {
-    // This effect runs when the primary supplier's cost or the sale price changes.
-    // It recalculates the margin accordingly.
-    if (primarySupplierCost > 0 && watchedSalePrice > primarySupplierCost) {
-      const calculatedMargin = ((watchedSalePrice - primarySupplierCost) / watchedSalePrice) * 100;
-      // Update margin state without triggering a new price calculation
-      setMargin(calculatedMargin.toFixed(1).replace('.0', ''));
-    } else {
-      setMargin('');
+    if (!price || !cost || price <= 0 || cost <= 0) {
+        return { margin: '', markup: '' };
     }
-  }, [primarySupplierCost, watchedSalePrice]);
+
+    const marginValue = (((price - cost) / price) * 100).toFixed(1);
+    const markupValue = (((price - cost) / cost) * 100).toFixed(1);
+    
+    const formatValue = (value: string) => value.endsWith('.0') ? value.slice(0, -2) : value;
+
+    return { 
+        margin: formatValue(marginValue),
+        markup: formatValue(markupValue),
+    };
+  }, [watchedSalePrice, primarySupplierCost]);
 
   const updatePriceFromMargin = (marginInput: string) => {
-    setMargin(marginInput);
     const marginValue = parseFloat(marginInput);
-    const cost = form.getValues('suppliers')?.find(s => s.isPrimary)?.cost || 0;
-    
+    const cost = primarySupplierCost;
     if (cost > 0 && !isNaN(marginValue) && marginValue < 100) {
         const newSalePrice = cost / (1 - (marginValue / 100));
         form.setValue('salePrice', parseFloat(newSalePrice.toFixed(2)), { shouldValidate: true });
     }
   };
-  
+
+  const updatePriceFromMarkup = (markupInput: string) => {
+      const markupValue = parseFloat(markupInput);
+      const cost = primarySupplierCost;
+      if (cost > 0 && !isNaN(markupValue)) {
+          const newSalePrice = cost * (1 + (markupValue / 100));
+          form.setValue('salePrice', parseFloat(newSalePrice.toFixed(2)), { shouldValidate: true });
+      }
+  };
+
   const getInitialFormData = (): ProductFormValues => {
     if (product) {
        // This is an existing product, handle both old and new data structures
@@ -155,14 +170,15 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
       return {
         ...product,
         photoUrl: product.photoUrl || '',
-        suppliers: suppliersArray
+        suppliers: suppliersArray,
+        pricingMethod: product.pricingMethod || 'margin',
       };
     }
     const supplierContextId = pathname.includes('/suppliers/') ? pathname.split('/suppliers/')[1].split('/')[0] : defaultSupplierId;
     return {
       sku: '', name: { es: '', en: '' }, category: { es: '', en: '' }, unit: { es: '', en: '' },
       suppliers: supplierContextId ? [{ supplierId: supplierContextId, cost: 0, isPrimary: true }] : [],
-      salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '',
+      salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '', pricingMethod: 'margin',
     };
   };
   
@@ -170,17 +186,9 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     if (suppliersLoading) return;
     const initialData = getInitialFormData();
     form.reset(initialData);
+    setPriceCalculationMethod(initialData.pricingMethod || 'margin');
     setEditingProduct(product);
     setImgUrlInputValue(initialData.photoUrl || '');
-    // When resetting, we also need to recalculate the initial margin
-    const primaryCost = initialData.suppliers.find(s => s.isPrimary)?.cost || initialData.suppliers[0]?.cost || 0;
-    const salePrice = initialData.salePrice;
-    if (primaryCost > 0 && salePrice > primaryCost) {
-      const calculatedMargin = ((salePrice - primaryCost) / salePrice) * 100;
-      setMargin(calculatedMargin.toFixed(1).replace('.0', ''));
-    } else {
-      setMargin('');
-    }
   }, [product, defaultSupplierId, pathname, suppliersLoading]);
 
 
@@ -203,11 +211,11 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
           finalSuppliers.push({ supplierId: supplierContextId, cost: 0, isPrimary: finalSuppliers.length === 0 });
         }
         
-        form.reset({ ...existingProduct, suppliers: finalSuppliers, photoUrl: existingProduct.photoUrl || '' });
+        form.reset({ ...existingProduct, suppliers: finalSuppliers, photoUrl: existingProduct.photoUrl || '', pricingMethod: existingProduct.pricingMethod || 'margin' });
+        setPriceCalculationMethod(existingProduct.pricingMethod || 'margin');
         setImgUrlInputValue(existingProduct.photoUrl || '');
       } else {
           setEditingProduct(null);
-          // Keep form values except for suppliers, reset those based on context
           const currentValues = form.getValues();
           const supplierContextId = pathname.includes('/suppliers/') ? pathname.split('/suppliers/')[1].split('/')[0] : defaultSupplierId;
           const newSuppliers = supplierContextId ? [{ supplierId: supplierContextId, cost: 0, isPrimary: true }] : [];
@@ -359,22 +367,64 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
             </div>
 
           <hr className="my-2 border-dashed border-gray-200" />
-            <div className="grid grid-cols-2 gap-4">
-                 <FormItem>
-                    <FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_margin')}</FormLabel>
-                    <FormControl>
-                        <div className="relative">
-                            <Input
-                                type="number"
-                                value={margin}
-                                onChange={(e) => updatePriceFromMargin(e.target.value)}
-                                className="pl-3 pr-8 h-10 text-right font-bold"
-                                placeholder={t('form_placeholder_margin')}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                        <FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">
+                            {priceCalculationMethod === 'margin' ? "Margen (%)" : "Markup (%)"}
+                        </FormLabel>
+                        <div className="flex items-center gap-2">
+                            <Label htmlFor="price-calc-switch" className={cn("text-xs font-medium", priceCalculationMethod === 'margin' ? 'text-primary' : 'text-muted-foreground')}>
+                                Margen
+                            </Label>
+                            <FormField
+                                control={form.control}
+                                name="pricingMethod"
+                                render={({ field }) => (
+                                <Switch
+                                    id="price-calc-switch"
+                                    checked={priceCalculationMethod === 'markup'}
+                                    onCheckedChange={(checked) => {
+                                        const newMethod = checked ? 'markup' : 'margin';
+                                        setPriceCalculationMethod(newMethod);
+                                        field.onChange(newMethod);
+                                    }}
+                                />
+                                )}
                             />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                            <Label htmlFor="price-calc-switch" className={cn("text-xs font-medium", priceCalculationMethod === 'markup' ? 'text-primary' : 'text-muted-foreground')}>
+                                Markup
+                            </Label>
+                        </div>
+                    </div>
+                    <FormControl>
+                        <div className="grid grid-cols-2 gap-2">
+                             <div className="relative">
+                                <Input
+                                    type="number"
+                                    value={margin}
+                                    onChange={(e) => updatePriceFromMargin(e.target.value)}
+                                    className="pl-3 pr-8 h-10 text-right font-bold disabled:bg-muted/30"
+                                    placeholder={t('form_placeholder_margin')}
+                                    disabled={priceCalculationMethod === 'markup'}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                            </div>
+                            <div className="relative">
+                                <Input
+                                    type="number"
+                                    value={markup}
+                                    onChange={(e) => updatePriceFromMarkup(e.target.value)}
+                                    className="pl-3 pr-8 h-10 text-right font-bold disabled:bg-muted/30"
+                                    placeholder="e.g., 42.9"
+                                    disabled={priceCalculationMethod === 'margin'}
+                                />
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                            </div>
                         </div>
                     </FormControl>
-                </FormItem>
+                </div>
+
                 <FormField control={form.control} name="salePrice" render={({ field }) => (<FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_price')}</FormLabel><FormControl><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 font-bold text-sm">$</span><Input type="number" className="pl-6 h-10 font-bold text-lg text-right bg-green-50" placeholder="0.00" step="0.01" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} /></div></FormControl><FormMessage /></FormItem>)}/>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-end">
@@ -396,5 +446,3 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     </>
   );
 }
-
-    

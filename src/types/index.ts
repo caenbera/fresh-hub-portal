@@ -61,6 +61,7 @@ export interface Product {
   };
   suppliers: ProductSupplier[];
   salePrice: number;
+  pricingMethod?: 'margin' | 'markup';
   stock: number;
   minStock: number;
   active: boolean;
