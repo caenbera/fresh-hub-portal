@@ -55,7 +55,13 @@ export function TicketCard({ ticket, onSelect }: TicketCardProps) {
              </div>
         </CardContent>
         <CardFooter className="p-3 border-t">
-            <Button variant="outline" size="sm" className="w-full" onClick={() => onSelect(ticket)}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => onSelect(ticket)}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
                 <Eye className="mr-2 h-4 w-4" />
                 {t('view_details')}
             </Button>
