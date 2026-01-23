@@ -9,6 +9,27 @@ const withPWA = withPWAInit({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  manifest: {
+    name: 'Fresh Hub Portal',
+    short_name: 'Fresh Hub',
+    description: "Wholesale fresh produce for Chicago's latin businesses.",
+    background_color: '#ffffff',
+    theme_color: '#27ae60',
+    icons: [
+      {
+        src: 'https://i.postimg.cc/sxBVGnMp/icon.png',
+        sizes: '192x192',
+        type: 'image/png',
+        purpose: 'any',
+      },
+      {
+        src: 'https://i.postimg.cc/sxBVGnMp/icon.png',
+        sizes: '512x512',
+        type: 'image/png',
+        purpose: 'any',
+      },
+    ],
+  },
 });
 
 
