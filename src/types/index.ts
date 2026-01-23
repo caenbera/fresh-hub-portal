@@ -246,3 +246,5 @@ export interface SupportTicket {
 
 // Exporting Firebase User type for components
 export type { User };
+
+

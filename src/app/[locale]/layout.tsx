@@ -1,7 +1,7 @@
-
+// src/app/[locale]/layout.tsx
 import type { ReactNode } from 'react';
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, unstable_setRequestLocale } from 'next-intl/server';
+import { getMessages, setRequestLocale } from 'next-intl/server'; // ✅ setRequestLocale (sin "unstable_")
 import '../globals.css';
 import { AuthProvider } from '@/context/auth-context';
 import { Toaster } from '@/components/ui/toaster';
@@ -12,10 +12,10 @@ export default async function RootLayout({
   params,
 }: Readonly<{
   children: ReactNode;
-  params: { locale: string };
+  params: Promise<{ locale: string }>; // ✅ Promise<{...}>
 }>) {
-  const { locale } = params;
-  unstable_setRequestLocale(locale);
+  const { locale } = await params; // ✅ AWAIT aquí
+  setRequestLocale(locale); // ✅ sin "unstable_"
   const messages = await getMessages();
 
   return (
@@ -26,7 +26,6 @@ export default async function RootLayout({
           name="description"
           content="Wholesale fresh produce for Chicago's latin businesses."
         />
-        {/* 👇 META TAG CRÍTICA PARA MÓVILES 👇 */}
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"

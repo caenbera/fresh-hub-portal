@@ -1,3 +1,4 @@
+// src/hooks/useSupportTickets.ts
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -7,6 +8,8 @@ import type { SupportTicket } from '@/types';
 import { useAuth } from '@/context/auth-context';
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
+
+const VALID_STATUSES = ['new', 'in_progress', 'resolved'] as const;
 
 export function useSupportTickets() {
   const { user } = useAuth();
@@ -28,7 +31,24 @@ export function useSupportTickets() {
       (querySnapshot) => {
         const ticketsData: SupportTicket[] = [];
         querySnapshot.forEach((doc) => {
-          ticketsData.push({ id: doc.id, ...doc.data() } as SupportTicket);
+          const data = doc.data();
+
+          let status = data.status;
+          if (!VALID_STATUSES.includes(status)) {
+            status = 'new';
+          }
+
+          ticketsData.push({
+            id: doc.id,
+            userId: data.userId || '',
+            userName: data.userName || 'Usuario desconocido',
+            issueType: data.issueType || 'Sin tipo',
+            orderId: data.orderId,
+            details: data.details || '',
+            photoUrl: data.photoUrl,
+            status,
+            createdAt: data.createdAt,
+          } as SupportTicket);
         });
         setTickets(ticketsData);
         setLoading(false);
