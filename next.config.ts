@@ -36,6 +36,12 @@ const nextConfig: NextConfig = {
         hostname: 'ui-avatars.com',
         port: '',
         pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+        port: '',
+        pathname: '/**',
       }
     ],
   },
