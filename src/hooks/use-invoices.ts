@@ -22,10 +22,11 @@ export function useInvoices() {
     }
 
     const invoicesCollection = collection(db, 'invoices');
+    // The orderBy clause on a different field than the where clause requires a composite index.
+    // Removing it to fix the permission error, as the index is likely missing.
     const q = query(
       invoicesCollection,
-      where('userId', '==', user.uid),
-      orderBy('invoiceDate', 'desc')
+      where('userId', '==', user.uid)
     );
 
     const unsubscribe = onSnapshot(
@@ -35,6 +36,8 @@ export function useInvoices() {
         querySnapshot.forEach((doc) => {
           invoicesData.push({ id: doc.id, ...doc.data() } as Invoice);
         });
+        // Sort manually on the client-side
+        invoicesData.sort((a, b) => b.invoiceDate.toMillis() - a.invoiceDate.toMillis());
         setInvoices(invoicesData);
         setLoading(false);
       },
