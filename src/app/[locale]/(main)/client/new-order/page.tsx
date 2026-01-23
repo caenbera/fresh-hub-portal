@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -217,7 +218,7 @@ export default function NewOrderPage() {
       total: runningSubtotal - runningDiscount,
       totalItems: runningTotalItems,
       priceListName: clientPriceList?.name || '',
-      discountPercentage: clientPriceList?.discount || 0
+      discountPercentage: (clientPriceList?.tiers && clientPriceList.tiers[0]?.discount) || 0,
     };
   }, [cart, products, offers, userProfile, priceLists, loading]);
 

@@ -1,3 +1,4 @@
+
 import type { Product, Offer, PriceList } from '@/types';
 
 export const getFinalPrice = (product: Product, priceList: PriceList | null, offer?: Offer | null): number => {
@@ -18,8 +19,10 @@ export const getFinalPrice = (product: Product, priceList: PriceList | null, off
     }
 
     // Apply price list discount if no overriding offer
-    if (priceList) {
-        return product.salePrice * (1 - priceList.discount / 100);
+    if (priceList && priceList.tiers && priceList.tiers.length > 0) {
+        // TEMP: Just use the first tier for now.
+        const firstTierDiscount = priceList.tiers[0].discount || 0;
+        return product.salePrice * (1 - firstTierDiscount / 100);
     }
     
     return product.salePrice;
@@ -48,8 +51,10 @@ export const calculateDiscount = (product: Product, priceList: PriceList | null,
     }
 
     // Calculate discount from price list
-    if (priceList) {
-        priceListDiscountAmount = originalPrice * (priceList.discount / 100);
+    if (priceList && priceList.tiers && priceList.tiers.length > 0) {
+        // TEMP: Just use the first tier for now. Full logic will be implemented later.
+        const firstTierDiscount = priceList.tiers[0].discount || 0;
+        priceListDiscountAmount = originalPrice * (firstTierDiscount / 100);
     }
 
     // Use the greater of the two discounts

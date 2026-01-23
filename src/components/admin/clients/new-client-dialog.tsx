@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -161,7 +162,7 @@ export function ClientFormDialog({ open, onOpenChange, client }: ClientFormDialo
                             </div>
                             {selectedPriceList && (
                                 <p className="text-xs text-muted-foreground pt-1">
-                                    Client receives a <strong>{selectedPriceList.discount}% discount</strong> on all orders.
+                                    This list has <strong>{selectedPriceList.tiers?.length || 0} pricing tiers</strong>.
                                 </p>
                             )}
                           <FormMessage />

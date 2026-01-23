@@ -153,12 +153,19 @@ export interface Branch {
   manager: string;
 }
 
+export interface PriceListTier {
+  from: number;
+  to: number | null;
+  discount: number;
+}
+
 export interface PriceList {
   id: string;
   name: string;
-  discount: number;
+  tiers: PriceListTier[];
   description?: string;
 }
+
 
 export interface AdminInvite {
   email: string;
