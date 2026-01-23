@@ -32,7 +32,11 @@ export function TicketBoard() {
     if (!loading) {
       const newCols: Record<TicketStatus, SupportTicket[]> = { new: [], in_progress: [], resolved: [] };
       tickets.forEach(ticket => {
-        newCols[ticket.status as TicketStatus].push(ticket);
+        const status = ticket.status as TicketStatus;
+        // This check prevents a crash if a ticket has a missing or invalid status
+        if (newCols[status]) {
+          newCols[status].push(ticket);
+        }
       });
       setColumns(newCols);
     }
