@@ -92,9 +92,20 @@
   "delete_note_confirm_desc": "This will permanently delete the note. This action cannot be undone.",
   "delete_note_confirm_action": "Delete",
   "manage_pricelists_title": "Manage Price Lists",
-  "manage_pricelists_desc": "Add, edit, or delete price lists available for all clients.",
+  "manage_pricelists_desc": "Add, edit, or delete the price lists available for all clients.",
   "new_pricelist_name_label": "List Name",
   "add_pricelist_button": "Add List",
   "edit_pricelist": "Edit List",
-  "new_pricelist": "New List"
+  "new_pricelist": "New List",
+  "existing_lists_title": "Existing Lists",
+  "no_tiers_desc": "No tiers defined",
+  "single_tier_desc": "{discount}% discount",
+  "multiple_tiers_desc": "Discounts from {minDiscount}% to {maxDiscount}%",
+  "from_label": "From ($)",
+  "to_label": "To ($)",
+  "discount_label": "Discount (%)",
+  "to_placeholder": "or more",
+  "add_tier_button": "Add Tier",
+  "save_changes_button": "Save Changes",
+  "create_new_list_button": "Create New List"
 }

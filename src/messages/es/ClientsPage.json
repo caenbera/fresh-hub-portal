@@ -96,5 +96,16 @@
   "new_pricelist_name_label": "Nombre de la Lista",
   "add_pricelist_button": "Añadir Lista",
   "edit_pricelist": "Editar Lista",
-  "new_pricelist": "Nueva Lista"
+  "new_pricelist": "Nueva Lista",
+  "existing_lists_title": "Listas Existentes",
+  "no_tiers_desc": "Sin niveles definidos",
+  "single_tier_desc": "{discount}% de descuento",
+  "multiple_tiers_desc": "Descuentos de {minDiscount}% a {maxDiscount}%",
+  "from_label": "Desde ($)",
+  "to_label": "Hasta ($)",
+  "discount_label": "Descuento (%)",
+  "to_placeholder": "o más",
+  "add_tier_button": "Añadir Nivel",
+  "save_changes_button": "Guardar Cambios",
+  "create_new_list_button": "Crear Nueva Lista"
 }

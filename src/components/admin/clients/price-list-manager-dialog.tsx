@@ -83,11 +83,11 @@ export function PriceListManagerDialog({ open, onOpenChange }: PriceListManagerD
   };
   
   const getTierDescription = (list: PriceList) => {
-    if (!list.tiers || list.tiers.length === 0) return "No tiers";
+    if (!list.tiers || list.tiers.length === 0) return t('no_tiers_desc');
     const minDiscount = Math.min(...list.tiers.map(t => t.discount));
     const maxDiscount = Math.max(...list.tiers.map(t => t.discount));
-    if (minDiscount === maxDiscount) return `${minDiscount}% discount`;
-    return `Discounts from ${minDiscount}% to ${maxDiscount}%`;
+    if (minDiscount === maxDiscount) return t('single_tier_desc', { discount: minDiscount });
+    return t('multiple_tiers_desc', { minDiscount, maxDiscount });
   };
 
   return (
@@ -100,7 +100,7 @@ export function PriceListManagerDialog({ open, onOpenChange }: PriceListManagerD
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="flex flex-col gap-2">
-                 <h3 className="font-semibold text-sm">Existing Lists</h3>
+                 <h3 className="font-semibold text-sm">{t('existing_lists_title')}</h3>
                  <ScrollArea className="h-72 pr-4 border rounded-lg bg-muted/30">
                     <div className="space-y-2 p-2">
                         {loading && <div className="flex justify-center p-4"><Loader2 className="animate-spin" /></div>}
@@ -133,7 +133,7 @@ export function PriceListManagerDialog({ open, onOpenChange }: PriceListManagerD
             </div>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(editingId ? handleUpdate : handleAddNew)} className="space-y-4">
-                    <h3 className="text-sm font-semibold">{editingId ? t('edit_pricelist') : t('new_pricelist')}</h3>
+                    <p className="text-sm font-semibold">{editingId ? t('edit_pricelist') : t('new_pricelist')}</p>
                     <FormField control={form.control} name="name" render={({ field }) => (
                          <FormItem>
                              <FormLabel>{t('new_pricelist_name_label')}</FormLabel>
@@ -146,14 +146,14 @@ export function PriceListManagerDialog({ open, onOpenChange }: PriceListManagerD
                         <FormLabel>Pricing Tiers</FormLabel>
                         {fields.map((field, index) => (
                            <div key={field.id} className="grid grid-cols-[1fr,auto,1fr,1fr,auto] items-end gap-2 p-2 border rounded-md bg-muted/20">
-                               <FormField control={form.control} name={`tiers.${index}.from`} render={({ field }) => (<FormItem><FormLabel className="text-xs">From ($)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)}/>
+                               <FormField control={form.control} name={`tiers.${index}.from`} render={({ field }) => (<FormItem><FormLabel className="text-xs">{t('from_label')}</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)}/>
                                <ArrowRight className="h-4 w-4 text-muted-foreground self-center mt-6"/>
-                               <FormField control={form.control} name={`tiers.${index}.to`} render={({ field }) => (<FormItem><FormLabel className="text-xs">To ($)</FormLabel><FormControl><Input type="number" placeholder="or more" {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
-                               <FormField control={form.control} name={`tiers.${index}.discount`} render={({ field }) => (<FormItem><FormLabel className="text-xs">Discount (%)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)}/>
+                               <FormField control={form.control} name={`tiers.${index}.to`} render={({ field }) => (<FormItem><FormLabel className="text-xs">{t('to_label')}</FormLabel><FormControl><Input type="number" placeholder={t('to_placeholder')} {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
+                               <FormField control={form.control} name={`tiers.${index}.discount`} render={({ field }) => (<FormItem><FormLabel className="text-xs">{t('discount_label')}</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>)}/>
                                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => remove(index)}><Trash2 className="h-4 w-4"/></Button>
                            </div>
                         ))}
-                        <Button type="button" variant="outline" size="sm" onClick={() => append({from: 0, to: null, discount: 0})}><Plus className="mr-2 h-4 w-4"/>Add Tier</Button>
+                        <Button type="button" variant="outline" size="sm" onClick={() => append({from: 0, to: null, discount: 0})}><Plus className="mr-2 h-4 w-4"/>{t('add_tier_button')}</Button>
                      </div>
                      <FormMessage>{form.formState.errors.tiers?.root?.message || form.formState.errors.tiers?.message}</FormMessage>
 
@@ -163,7 +163,7 @@ export function PriceListManagerDialog({ open, onOpenChange }: PriceListManagerD
                         )}
                         <Button type="submit" disabled={isSubmitting}>
                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : editingId ? <Check className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
-                           {editingId ? "Save Changes" : "Create New List"}
+                           {editingId ? t('save_changes_button') : t('create_new_list_button')}
                        </Button>
                     </DialogFooter>
                 </form>
