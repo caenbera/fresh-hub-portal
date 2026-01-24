@@ -3,8 +3,9 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, notFound } from 'next/navigation';
-import { getSupplier } from '@/lib/firestore/suppliers';
-import { getProducts } from '@/lib/firestore/products';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
+import { useProducts } from '@/hooks/use-products';
 import { SupplierDetailPageClient } from '@/components/admin/suppliers/supplier-detail-page-client';
 import type { Product, Supplier } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -39,56 +40,60 @@ export default function SupplierDetailPage() {
   const { supplierId } = params as { supplierId: string };
 
   const [supplier, setSupplier] = useState<Supplier | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [supplierProducts, setSupplierProducts] = useState<Product[]>([]);
+  const { products, loading: productsLoading } = useProducts();
+  const [supplierLoading, setSupplierLoading] = useState(true);
 
+  // Listener for the supplier
   useEffect(() => {
-    if (!supplierId) return;
-
-    async function fetchData() {
-      setLoading(true);
-      try {
-        const [supplierData, allProductsData] = await Promise.all([
-          getSupplier(supplierId),
-          getProducts(),
-        ]);
-
-        if (!supplierData) {
-          notFound();
-          return;
-        }
-
-        const supplierProducts = allProductsData.filter(p => 
-          p.suppliers && p.suppliers.some(s => s.supplierId === supplierData.id)
-        );
-
-        setSupplier(supplierData);
-        setProducts(supplierProducts);
-
-      } catch (error) {
-        // Errors are now emitted from getSupplier/getProducts and thrown by FirebaseErrorListener.
-        // This catch block allows the 'finally' block to run and update the loading state.
-        // The dev overlay will show the detailed error from the listener.
-      } finally {
-        setLoading(false);
-      }
+    if (!supplierId) {
+      setSupplierLoading(false);
+      return;
     }
+    setSupplierLoading(true);
+    const supplierDocRef = doc(db, 'suppliers', supplierId);
+    const unsubscribe = onSnapshot(supplierDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setSupplier({ id: docSnap.id, ...docSnap.data() } as Supplier);
+      } else {
+        setSupplier(null);
+        notFound();
+      }
+      setSupplierLoading(false);
+    }, (error) => {
+      console.error("Error fetching supplier details:", error);
+      setSupplier(null);
+      setSupplierLoading(false);
+    });
 
-    fetchData();
+    return () => unsubscribe();
   }, [supplierId]);
+
+  // Effect to filter products whenever the full product list or supplier changes
+  useEffect(() => {
+    if (!productsLoading && supplier) {
+      const filtered = products.filter(p => 
+        p.suppliers && p.suppliers.some(s => s.supplierId === supplier.id)
+      );
+      setSupplierProducts(filtered);
+    }
+  }, [products, productsLoading, supplier]);
+  
+  const loading = supplierLoading || productsLoading;
+
 
   if (loading) {
     return <SupplierDetailSkeleton />;
   }
   
   if (!supplier) {
-    // This case is hit if getSupplier returns null (not found) or if a permission error occurs.
     return <div className="p-8 font-semibold text-center">Supplier could not be loaded. This might be a permission issue or the supplier does not exist.</div>;
   }
 
   return (
      <div className="p-4 sm:p-6 lg:p-8">
-        <SupplierDetailPageClient supplier={supplier} products={products} />
+        <SupplierDetailPageClient supplier={supplier} products={supplierProducts} />
     </div>
   );
 }
+
