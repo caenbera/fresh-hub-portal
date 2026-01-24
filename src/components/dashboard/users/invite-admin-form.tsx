@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { UserRole } from '@/types';
+import { useTranslations } from 'next-intl';
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -20,6 +21,7 @@ interface InviteAdminFormProps {
 }
 
 export function InviteAdminForm({ onInvite }: InviteAdminFormProps) {
+  const t = useTranslations('AdminUsersPage');
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -43,9 +45,9 @@ export function InviteAdminForm({ onInvite }: InviteAdminFormProps) {
           name="email"
           render={({ field }) => (
             <FormItem className="flex-grow w-full">
-              <FormLabel>Email Address</FormLabel>
+              <FormLabel>{t('invite_email_label')}</FormLabel>
               <FormControl>
-                <Input placeholder="new.admin@example.com" {...field} />
+                <Input placeholder={t('invite_email_placeholder')} {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -56,17 +58,17 @@ export function InviteAdminForm({ onInvite }: InviteAdminFormProps) {
           name="role"
           render={({ field }) => (
             <FormItem className="w-full sm:w-auto">
-              <FormLabel>Role</FormLabel>
+              <FormLabel>{t('invite_role_label')}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a role" />
+                      <SelectValue placeholder={t('invite_role_placeholder')} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="picker">Picker</SelectItem>
-                    <SelectItem value="purchaser">Purchaser</SelectItem>
+                    <SelectItem value="admin">{t('invite_role_admin')}</SelectItem>
+                    <SelectItem value="picker">{t('invite_role_picker')}</SelectItem>
+                    <SelectItem value="purchaser">{t('invite_role_purchaser')}</SelectItem>
                   </SelectContent>
                 </Select>
               <FormMessage />
@@ -74,7 +76,7 @@ export function InviteAdminForm({ onInvite }: InviteAdminFormProps) {
           )}
         />
         <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-          {isSubmitting ? 'Pre-Approving...' : 'Pre-Approve'}
+          {isSubmitting ? t('invite_button_loading_text') : t('invite_button_text')}
         </Button>
       </form>
     </Form>

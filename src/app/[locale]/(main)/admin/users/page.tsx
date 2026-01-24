@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { InviteAdminForm } from '@/components/dashboard/users/invite-admin-form';
 
 export default function ManageUsersPage() {
-  const t = useTranslations('Dashboard');
+  const t = useTranslations('AdminUsersPage');
   const { users, loading: usersLoading } = useUsers();
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -57,13 +57,13 @@ export default function ManageUsersPage() {
   return (
     <RoleGuard allowedRoles={['superadmin']}>
       <div className="flex flex-col gap-4 p-4 sm:p-6 lg:p-8">
-        <h1 className="text-2xl font-headline font-bold">{t('users_title')}</h1>
+        <h1 className="text-2xl font-headline font-bold">{t('title')}</h1>
         
         <Card>
             <CardHeader>
-                <CardTitle>Pre-Approve Admin / Staff</CardTitle>
+                <CardTitle>{t('invite_title')}</CardTitle>
                 <CardDescription>
-                    Invite a new admin or staff member. They will be prompted to create an account with the role you assign.
+                    {t('invite_desc')}
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -73,8 +73,8 @@ export default function ManageUsersPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>{t('users_card_title')}</CardTitle>
-            <CardDescription>{t('users_card_desc')}</CardDescription>
+            <CardTitle>{t('all_users_title')}</CardTitle>
+            <CardDescription>{t('all_users_desc')}</CardDescription>
           </CardHeader>
           <CardContent>
              {usersLoading ? (
@@ -96,4 +96,3 @@ export default function ManageUsersPage() {
     </RoleGuard>
   );
 }
-

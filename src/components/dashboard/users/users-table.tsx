@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/table';
 import type { UserProfile, UserRole } from '@/types';
 import { useAuth } from '@/context/auth-context';
+import { useTranslations } from 'next-intl';
 
 interface UsersTableProps {
   users: UserProfile[];
@@ -28,6 +29,7 @@ interface UsersTableProps {
 
 export function UsersTable({ users, onRoleChange, isUpdating }: UsersTableProps) {
   const { user: currentUser } = useAuth();
+  const t = useTranslations('AdminUsersPage');
 
   const getRoleVariant = (role: UserRole) => {
     switch (role) {
@@ -43,11 +45,11 @@ export function UsersTable({ users, onRoleChange, isUpdating }: UsersTableProps)
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Business Name</TableHead>
-          <TableHead>Email</TableHead>
-          <TableHead>Role</TableHead>
+          <TableHead>{t('table_header_business')}</TableHead>
+          <TableHead>{t('table_header_email')}</TableHead>
+          <TableHead>{t('table_header_role')}</TableHead>
           <TableHead>
-            <span className="sr-only">Actions</span>
+            <span className="sr-only">{t('table_header_actions')}</span>
           </TableHead>
         </TableRow>
       </TableHeader>
@@ -72,19 +74,19 @@ export function UsersTable({ users, onRoleChange, isUpdating }: UsersTableProps)
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+                      <DropdownMenuLabel>{t('table_action_change_role')}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         disabled={user.role === 'admin'}
                         onSelect={() => onRoleChange(user, 'admin')}
                       >
-                        Make Admin
+                        {t('table_action_make_admin')}
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         disabled={user.role === 'client'}
                         onSelect={() => onRoleChange(user, 'client')}
                       >
-                        Make Client
+                        {t('table_action_make_client')}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -95,7 +97,7 @@ export function UsersTable({ users, onRoleChange, isUpdating }: UsersTableProps)
         ) : (
           <TableRow>
             <TableCell colSpan={4} className="h-24 text-center">
-              No other users found.
+              {t('table_no_users')}
             </TableCell>
           </TableRow>
         )}

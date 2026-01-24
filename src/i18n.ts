@@ -38,6 +38,7 @@ async function getMessages(locale: string) {
     const productsPageMessages = (await import(`./messages/${locale}/ProductsPage.json`)).default;
     const adminRewardsPageMessages = (await import(`./messages/${locale}/AdminRewardsPage.json`)).default;
     const adminSupportPageMessages = (await import(`./messages/${locale}/AdminSupportPage.json`)).default;
+    const adminUsersPageMessages = (await import(`./messages/${locale}/AdminUsersPage.json`)).default;
 
 
     return {
@@ -72,6 +73,7 @@ async function getMessages(locale: string) {
       ProductsPage: productsPageMessages,
       AdminRewardsPage: adminRewardsPageMessages,
       AdminSupportPage: adminSupportPageMessages,
+      AdminUsersPage: adminUsersPageMessages,
     };
   } catch (error) {
     notFound();
