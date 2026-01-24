@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { usePriceLists } from '@/hooks/use-pricelists';
 import { addPriceList, updatePriceList, deletePriceList } from '@/lib/firestore/pricelists';
-import { Pencil, Trash2, Check, X, Loader2, Plus, AlertTriangle } from 'lucide-react';
+import { Pencil, Trash2, Check, X, Loader2, Plus, AlertTriangle, ArrowRight } from 'lucide-react';
 import type { PriceList } from '@/types';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
