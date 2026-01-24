@@ -1,10 +1,12 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useParams, notFound } from 'next/navigation';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 import { ClientDetailPageClient } from '@/components/admin/clients/client-detail-page-client';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getUserProfile } from '@/lib/firestore/users';
 import type { UserProfile, Order } from '@/types';
 import { useAllOrders } from '@/hooks/use-all-orders';
 
@@ -40,43 +42,44 @@ export default function ClientDetailPage() {
 
   const [client, setClient] = useState<UserProfile | null>(null);
   const [clientOrders, setClientOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [clientLoading, setClientLoading] = useState(true);
 
   useEffect(() => {
-    if (!clientId) return;
+    if (!clientId) {
+        setClientLoading(false);
+        return;
+    };
 
-    async function fetchData() {
-      setLoading(true);
-      try {
-        const clientData = await getUserProfile(clientId);
-
-        if (!clientData) {
-          notFound();
-          return;
-        }
-
-        setClient(clientData);
-
-      } catch (error) {
-        // Errors are now emitted from getUserProfile and thrown by FirebaseErrorListener.
-        console.error("Error fetching client details:", error);
-      } finally {
-        // The main loading state will be set to false once orders are also processed.
+    setClientLoading(true);
+    const userDocRef = doc(db, 'users', clientId);
+    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setClient({ uid: docSnap.id, ...docSnap.data() } as UserProfile);
+      } else {
+        setClient(null);
+        notFound();
       }
-    }
+      setClientLoading(false);
+    }, (error) => {
+      console.error("Error fetching client details:", error);
+      setClient(null);
+      setClientLoading(false);
+    });
 
-    fetchData();
+    return () => unsubscribe();
   }, [clientId]);
+
 
   useEffect(() => {
     if (!ordersLoading && client) {
       const filteredOrders = orders.filter(order => order.userId === clientId);
       setClientOrders(filteredOrders);
-      setLoading(false); // Now we can stop loading
     }
   }, [orders, ordersLoading, client, clientId]);
 
-  if (loading) {
+  const isLoading = clientLoading || ordersLoading;
+
+  if (isLoading) {
     return <ClientDetailSkeleton />;
   }
   
