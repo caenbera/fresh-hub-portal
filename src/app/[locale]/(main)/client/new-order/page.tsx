@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -10,7 +9,7 @@ import { addOrder } from '@/lib/firestore/orders';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
@@ -167,18 +166,22 @@ export default function NewOrderPage() {
 
   const filteredProducts = useMemo(() => {
     if (loading) return [];
-    
+
+    let productList: ProductType[];
+
     if (activeCategory === t('favorites')) {
-      return unifiedProductsForClient.filter(p => favoriteProductIds.has(p.id));
+      productList = unifiedProductsForClient.filter(p => favoriteProductIds.has(p.id));
+    } else {
+      productList = unifiedProductsForClient.filter(p => p.category.es === activeCategory);
     }
-    
-    let productList = unifiedProductsForClient.filter(p => p.category.es === activeCategory);
     
     if (searchTerm) {
-      return productList.filter(p => p.name[locale].toLowerCase().includes(searchTerm.toLowerCase()));
+      productList = productList.filter(p => p.name[locale].toLowerCase().includes(searchTerm.toLowerCase()));
     }
     
-    return productList;
+    // Sort the resulting list alphabetically by name based on the current locale
+    return productList.sort((a, b) => a.name[locale].localeCompare(b.name[locale]));
+    
   }, [activeCategory, searchTerm, unifiedProductsForClient, loading, favoriteProductIds, t, locale]);
 
   const { orderItems, subtotal, discountAmount, total, totalItems, priceListName, discountPercentage } = useMemo(() => {
