@@ -25,7 +25,7 @@ if (VAPID_PRIVATE_KEY) {
 
 
 /**
- * Sends a push notification to a single user.
+ * Sends a push notification to a single user and creates a notification document.
  * @param {string} userId - The user's ID.
  * @param {object} payload - The notification payload.
  */
@@ -44,9 +44,16 @@ async function sendNotificationToUser(userId, payload) {
         const userProfile = userDoc.data();
         const subscription = userProfile.pushSubscription;
 
+        // Create notification doc regardless of push subscription status
+        await admin.firestore().collection('users').doc(userId).collection('notifications').add({
+            ...payload,
+            read: false,
+            createdAt: admin.firestore.FieldValue.serverTimestamp()
+        });
+
         if (subscription && subscription.endpoint) {
             await webpush.sendNotification(subscription, JSON.stringify(payload));
-            functions.logger.log("Successfully sent notification to user:", userId);
+            functions.logger.log("Successfully sent push notification to user:", userId);
         } else {
             functions.logger.log("No push subscription found for user:", userId);
         }
@@ -62,7 +69,7 @@ async function sendNotificationToUser(userId, payload) {
 }
 
 /**
- * Sends a push notification to all users with the specified roles.
+ * Sends a push notification to all users with the specified roles and creates notification documents.
  * @param {Array<string>} roles - Array of roles (e.g., ['admin', 'superadmin']).
  * @param {object} payload - The notification payload.
  */
@@ -78,8 +85,19 @@ async function sendNotificationToRoles(roles, payload) {
         }
 
         const notificationPromises = [];
+        const batch = admin.firestore().batch();
+        
         usersSnapshot.forEach(doc => {
             const userProfile = doc.data();
+            
+            // Create notification doc for each user
+            const notificationRef = admin.firestore().collection('users').doc(doc.id).collection('notifications').doc();
+            batch.set(notificationRef, {
+                ...payload,
+                read: false,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+
             const subscription = userProfile.pushSubscription;
             if (subscription && subscription.endpoint) {
                 notificationPromises.push(
@@ -89,7 +107,8 @@ async function sendNotificationToRoles(roles, payload) {
         });
 
         await Promise.all(notificationPromises);
-        functions.logger.log(`Sent notifications to ${notificationPromises.length} users with roles:`, roles);
+        await batch.commit();
+        functions.logger.log(`Sent notifications to ${usersSnapshot.size} users with roles:`, roles);
     } catch (error) {
         functions.logger.error("Error sending notifications to roles:", roles, error);
     }

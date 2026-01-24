@@ -9,5 +9,7 @@
   "item2_time": "Hace 1 hora",
   "item3_title": "Pedido Enviado",
   "item3_desc": "Tu pedido #ORD-8852 ya está en camino.",
-  "item3_time": "Ayer"
+  "item3_time": "Ayer",
+  "no_notifications": "No tienes notificaciones.",
+  "loading": "Cargando"
 }

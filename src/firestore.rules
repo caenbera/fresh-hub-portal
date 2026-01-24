@@ -65,6 +65,12 @@ service cloud.firestore {
         allow read: if request.auth.uid == userId || hasAdminRole();
         allow write: if hasAdminRole(); // Only admins (via triggered logic) can grant points
       }
+      
+      // NOTIFICATIONS sub-collection inside USERS
+      match /notifications/{notificationId} {
+        allow read, update, delete: if request.auth.uid == userId;
+        // Writes are only from backend functions
+      }
     }
 
     // PRODUCTS Collection

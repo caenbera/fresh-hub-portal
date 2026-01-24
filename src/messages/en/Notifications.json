@@ -9,5 +9,7 @@
   "item2_time": "1 hour ago",
   "item3_title": "Order Shipped",
   "item3_desc": "Your order #ORD-8852 is now on its way.",
-  "item3_time": "Yesterday"
+  "item3_time": "Yesterday",
+  "no_notifications": "You have no notifications.",
+  "loading": "Loading"
 }

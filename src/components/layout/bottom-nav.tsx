@@ -15,6 +15,7 @@ import { LogOut, UserCircle, MoreHorizontal, ChevronRight, Users, LayoutGrid, Ta
 import { Separator } from '@/components/ui/separator';
 import type { NavDefinition } from './app-sidebar';
 import { NotificationSheetContent } from './notification-sheet';
+import { useNotifications } from '@/context/notification-context';
 
 export function BottomNavBar({ navConfig }: { navConfig: NavDefinition }) {
   const pathname = usePathname();
@@ -22,6 +23,7 @@ export function BottomNavBar({ navConfig }: { navConfig: NavDefinition }) {
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { role } = useAuth();
+  const { unreadCount, markAllAsRead } = useNotifications();
 
   let baseNavItems = role === 'client' ? navConfig.mobile.client : navConfig.mobile.admin;
   if (!role) baseNavItems = [];
@@ -43,7 +45,12 @@ export function BottomNavBar({ navConfig }: { navConfig: NavDefinition }) {
 
             if (item.href === '#notifications') {
               return (
-                <Sheet key={item.href} open={isNotificationsOpen} onOpenChange={setIsNotificationsOpen}>
+                <Sheet key={item.href} open={isNotificationsOpen} onOpenChange={(open) => {
+                    setIsNotificationsOpen(open);
+                    if (open && unreadCount > 0) {
+                      markAllAsRead();
+                    }
+                }}>
                   <SheetTrigger asChild>
                     <button
                         type="button"
@@ -51,9 +58,11 @@ export function BottomNavBar({ navConfig }: { navConfig: NavDefinition }) {
                     >
                         <item.icon className="w-5 h-5 mb-1" />
                         <span className="text-[11px] whitespace-normal text-center">{item.label}</span>
-                        <span className="absolute top-1.5 right-3.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
-                          3
-                        </span>
+                        {unreadCount > 0 && (
+                          <span className="absolute top-1.5 right-3.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground">
+                            {unreadCount}
+                          </span>
+                        )}
                     </button>
                   </SheetTrigger>
                   <SheetContent side="bottom" className="h-[90dvh] max-h-[90dvh] p-0 flex flex-col">

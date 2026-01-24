@@ -272,6 +272,18 @@ export interface Invoice {
   status: InvoiceStatus;
 }
 
+export interface Notification {
+  id: string;
+  title: string;
+  body: string;
+  icon?: string;
+  data: {
+    url: string;
+  };
+  read: boolean;
+  createdAt: Timestamp;
+}
+
 
 // Exporting Firebase User type for components
 export type { User };
