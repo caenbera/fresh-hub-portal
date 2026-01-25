@@ -9,7 +9,7 @@ const withPWA = withPWAInit({
   register: true,
   skipWaiting: true,
   swSrc: 'src/app/sw.ts', // Use our custom service worker
-  disable: false, // ALWAYS-ON: Force PWA capabilities in development
+  disable: process.env.NODE_ENV === 'development',
   manifest: {
     name: 'Fresh Hub Portal',
     short_name: 'Fresh Hub',
