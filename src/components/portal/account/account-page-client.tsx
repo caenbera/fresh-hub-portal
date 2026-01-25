@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Crown, Pencil, Plus, MapPin, Store, Tag, Headset, FileText, LogOut, ChevronRight, MoreVertical, Bell, BellOff } from 'lucide-react';
+import { Crown, Pencil, Plus, MapPin, Store, Tag, Headset, FileText, LogOut, ChevronRight, MoreVertical, Bell, BellOff, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { subscribeToPushNotifications, unsubscribeFromPushNotifications, getPushSubscription } from '@/lib/notifications';
 
@@ -43,13 +43,13 @@ export function AccountPageClient() {
   const loading = authLoading || branchesLoading;
   
   const syncPushSubscriptionState = async () => {
-    // Don't run on server or if APIs are not present
-    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
+    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) {
         setIsApiSupported(false);
         setIsNotificationProcessing(false);
         return;
     }
     setIsApiSupported(true);
+    setIsNotificationProcessing(true);
 
     setNotificationPermission(Notification.permission);
 
@@ -73,6 +73,7 @@ export function AccountPageClient() {
     try {
       if (checked) {
         const permission = await Notification.requestPermission();
+        setNotificationPermission(permission); // Update permission state
         if (permission === 'granted') {
           await subscribeToPushNotifications(user.uid);
           toast({ title: t('toast_notifications_enabled_title'), description: t('toast_notifications_enabled_desc') });
@@ -87,6 +88,7 @@ export function AccountPageClient() {
         console.error("Error toggling notifications", error);
         toast({ variant: "destructive", title: "Error", description: "Could not change notification settings." });
     } finally {
+        // Always re-sync the state from the browser
         await syncPushSubscriptionState();
     }
   };
@@ -244,29 +246,28 @@ export function AccountPageClient() {
                 <div className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", isNotificationsEnabled ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500')}>
-                            {isNotificationsEnabled ? <Bell className="h-5 w-5"/> : <BellOff className="h-5 w-5"/>}
+                            {isNotificationProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : isNotificationsEnabled ? <Bell className="h-5 w-5"/> : <BellOff className="h-5 w-5"/>}
                         </div>
                         <div>
                             <span className="font-semibold text-sm">Notificaciones Push</span>
                             <p className="text-xs text-muted-foreground">Recibe actualizaciones de pedidos y soporte.</p>
                         </div>
                     </div>
-                    {isApiSupported ? (
+                    {isApiSupported && (
                       <Switch
                           checked={isNotificationsEnabled}
                           onCheckedChange={handleNotificationToggle}
                           disabled={isNotificationProcessing || notificationPermission === 'denied'}
                       />
-                    ) : null}
+                    )}
                 </div>
-                 {notificationPermission === 'denied' && isApiSupported && (
-                    <div className="px-4 pb-3 -mt-2 border-t pt-3">
-                      <p className="text-xs text-destructive">{t('notifications_blocked')}</p>
-                    </div>
-                 )}
-                 {!isApiSupported && (
+                 {!isApiSupported ? (
                     <div className="px-4 pb-3 -mt-2 border-t pt-3">
                       <p className="text-xs text-destructive">{t('notifications_not_supported')}</p>
+                    </div>
+                 ) : notificationPermission === 'denied' && (
+                    <div className="px-4 pb-3 -mt-2 border-t pt-3">
+                      <p className="text-xs text-destructive">{t('notifications_blocked')}</p>
                     </div>
                  )}
             </div>
