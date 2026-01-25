@@ -1,4 +1,15 @@
 {
+  "hosting": {
+    "public": "out",
+    "ignore": ["firebase-debug.log", "firebase-debug.*.log"],
+    "cleanUrls": true,
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
   "functions": [
     {
       "source": "functions",

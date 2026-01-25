@@ -1,4 +1,5 @@
-import type {NextConfig} from 'next';
+// next.config.ts
+import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
 import withPWAInit from '@ducanh2912/next-pwa';
 
@@ -8,7 +9,7 @@ const withPWA = withPWAInit({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  swSrc: 'src/app/sw.ts', // Use our custom service worker
+  swSrc: 'src/app/sw.ts',
   disable: process.env.NODE_ENV === 'development',
   manifest: {
     name: 'Fresh Hub Portal',
@@ -18,13 +19,13 @@ const withPWA = withPWAInit({
     theme_color: '#27ae60',
     icons: [
       {
-        src: 'https://i.postimg.cc/sxBVGnMp/icon.png?v=2',
+        src: 'https://i.postimg.cc/sxBVGnMp/icon.png?v=2', // ⚠️ Elimina espacios al final
         sizes: '192x192',
         type: 'image/png',
         purpose: 'any',
       },
       {
-        src: 'https://i.postimg.cc/sxBVGnMp/icon.png?v=2',
+        src: 'https://i.postimg.cc/sxBVGnMp/icon.png?v=2', // ⚠️ Elimina espacios al final
         sizes: '512x512',
         type: 'image/png',
         purpose: 'any',
@@ -33,10 +34,8 @@ const withPWA = withPWAInit({
   },
 });
 
-
 const nextConfig: NextConfig = {
-  /* config options here */
-  typescript: {
+   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {

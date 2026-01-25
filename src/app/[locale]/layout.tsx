@@ -1,22 +1,28 @@
 // src/app/[locale]/layout.tsx
 import type { ReactNode } from 'react';
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server'; // ✅ setRequestLocale (sin "unstable_")
+import { getMessages, setRequestLocale } from 'next-intl/server';
 import '../globals.css';
 import { AuthProvider } from '@/context/auth-context';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { NotificationProvider } from '@/context/notification-context';
+import { routing } from '@/i18n/routing'; // 👈 Importa tu configuración
+
+// 👇 AGREGA ESTA FUNCIÓN
+export async function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
 
 export default async function RootLayout({
   children,
   params,
 }: Readonly<{
   children: ReactNode;
-  params: Promise<{ locale: string }>; // ✅ Promise<{...}>
+  params: Promise<{ locale: string }>;
 }>) {
-  const { locale } = await params; // ✅ AWAIT aquí
-  setRequestLocale(locale); // ✅ sin "unstable_"
+  const { locale } = await params;
+  setRequestLocale(locale);
   const messages = await getMessages();
   const iconUrl = "https://i.postimg.cc/sxBVGnMp/icon.png?v=2";
 
