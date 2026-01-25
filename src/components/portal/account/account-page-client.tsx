@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -62,9 +60,31 @@ export function AccountPageClient() {
     setIsNotificationProcessing(false);
   };
   
+  // Sync on mount
   useEffect(() => {
     syncPushSubscriptionState();
   }, []);
+
+  // Listen for permission changes
+  useEffect(() => {
+    const checkPermissionChange = async () => {
+      if (!isApiSupported || !user) return;
+      await syncPushSubscriptionState();
+    };
+
+    if (typeof window !== 'undefined' && 'permissions' in navigator) {
+      navigator.permissions.query({ name: 'notifications' as PermissionName })
+        .then((permissionStatus) => {
+          permissionStatus.onchange = () => {
+            checkPermissionChange();
+          };
+        })
+        .catch(() => {
+          // Fallback
+          checkPermissionChange();
+        });
+    }
+  }, [isApiSupported, user]);
 
   const handleNotificationToggle = async (checked: boolean) => {
     if (!user) return;
@@ -73,26 +93,30 @@ export function AccountPageClient() {
     try {
       if (checked) {
         const permission = await Notification.requestPermission();
-        setNotificationPermission(permission); // Update permission state
+        setNotificationPermission(permission);
+        
         if (permission === 'granted') {
           await subscribeToPushNotifications(user.uid);
+          setIsNotificationsEnabled(true); // Set directly
           toast({ title: t('toast_notifications_enabled_title'), description: t('toast_notifications_enabled_desc') });
         } else {
+          setIsNotificationsEnabled(false);
           toast({ variant: 'destructive', title: t('toast_permission_denied_title'), description: t('toast_permission_denied_desc') });
         }
       } else {
         await unsubscribeFromPushNotifications(user.uid);
+        setIsNotificationsEnabled(false); // Set directly
         toast({ title: t('toast_notifications_disabled_title'), description: t('toast_notifications_disabled_desc') });
       }
     } catch (error) {
         console.error("Error toggling notifications", error);
         toast({ variant: "destructive", title: "Error", description: "Could not change notification settings." });
-    } finally {
-        // Always re-sync the state from the browser
+        // Only resync on error
         await syncPushSubscriptionState();
+    } finally {
+        setIsNotificationProcessing(false);
     }
   };
-
 
   const handleSignOut = async () => {
     if (confirm(t('logout_confirm'))) {

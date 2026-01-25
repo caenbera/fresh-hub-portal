@@ -1,4 +1,3 @@
-
 'use client';
 import { updateUserProfile } from '@/lib/firestore/users';
 
@@ -29,12 +28,12 @@ export async function subscribeToPushNotifications(userId: string): Promise<Push
 
     // Save to user profile
     const subscriptionData = subscription.toJSON();
-    await updateUserProfile(userId, { 
-        pushSubscription: {
-            endpoint: subscriptionData.endpoint,
-            keys: subscriptionData.keys,
-        }
-    });
+    const pushSubscription = {
+        endpoint: subscriptionData.endpoint,
+        keys: subscriptionData.keys || {}, // Handle undefined keys
+    };
+
+    await updateUserProfile(userId, { pushSubscription });
 
     return subscription;
 }
@@ -46,7 +45,7 @@ export async function unsubscribeFromPushNotifications(userId: string): Promise<
     if (subscription) {
         const unsubscribed = await subscription.unsubscribe();
         if (unsubscribed) {
-             await updateUserProfile(userId, { pushSubscription: null } as any);
+            await updateUserProfile(userId, { pushSubscription: null } as any);
         }
         return unsubscribed;
     }
@@ -54,11 +53,18 @@ export async function unsubscribeFromPushNotifications(userId: string): Promise<
 }
 
 export async function getPushSubscription(): Promise<PushSubscription | null> {
-    if ('serviceWorker' in navigator) {
-        const swRegistration = await navigator.serviceWorker.ready;
-        return swRegistration.pushManager.getSubscription();
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
+        return null;
     }
-    return null;
-}
 
-    
+    try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (!registration?.active) {
+            return null;
+        }
+        return await registration.pushManager.getSubscription();
+    } catch (err) {
+        console.warn('Failed to get push subscription:', err);
+        return null;
+    }
+}
