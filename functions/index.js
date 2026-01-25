@@ -59,42 +59,51 @@ async function sendNotificationToUser(userId, payload) {
 
 async function sendNotificationToRoles(roles, payload) {
     try {
-        const usersRef = admin.firestore().collection('users');
-        const q = usersRef.where('role', 'in', roles);
-        const usersSnapshot = await q.get();
-
+        const usersSnapshot = await admin.firestore().collection('users').get();
         if (usersSnapshot.empty) {
-            functions.logger.log("No users found with roles:", roles);
+            functions.logger.log("No users found to send notifications to.");
             return;
         }
 
-        const notificationPromises = [];
         const batch = admin.firestore().batch();
-        
+        const notificationPromises = [];
+        let targetUserCount = 0;
+
         usersSnapshot.forEach(doc => {
             const userProfile = doc.data();
-            const notificationRef = admin.firestore().collection('users').doc(doc.id).collection('notifications').doc();
-            batch.set(notificationRef, {
-                ...payload,
-                read: false,
-                createdAt: admin.firestore.FieldValue.serverTimestamp()
-            });
+            if (userProfile.role && roles.includes(userProfile.role)) {
+                targetUserCount++;
+                const notificationRef = admin.firestore().collection('users').doc(doc.id).collection('notifications').doc();
+                batch.set(notificationRef, {
+                    ...payload,
+                    read: false,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
 
-            const subscription = userProfile.pushSubscription;
-            if (subscription && subscription.endpoint) {
-                notificationPromises.push(
-                    webpush.sendNotification(subscription, JSON.stringify(payload))
-                );
+                const subscription = userProfile.pushSubscription;
+                if (subscription && subscription.endpoint) {
+                    notificationPromises.push(
+                        webpush.sendNotification(subscription, JSON.stringify(payload)).catch(err => {
+                            functions.logger.error(`Failed to send push to ${doc.id}:`, err);
+                        })
+                    );
+                }
             }
         });
 
-        await Promise.all(notificationPromises);
+        if (targetUserCount === 0) {
+            functions.logger.log("No users found with specified roles:", roles);
+            return;
+        }
+        
         await batch.commit();
-        functions.logger.log(`Sent notifications to ${usersSnapshot.size} users with roles:`, roles);
+        await Promise.all(notificationPromises);
+        functions.logger.log(`Notifications created for ${targetUserCount} users with roles:`, roles);
     } catch (error) {
         functions.logger.error("Error sending notifications to roles:", roles, error);
     }
 }
+
 
 // --- REWARD POINTS ENGINE ---
 async function awardPointsForOrder(order, userProfile, allOrders, allRules) {
@@ -185,6 +194,32 @@ async function awardPointsForOrder(order, userProfile, allOrders, allRules) {
 
 
 // --- SUPPORT TICKET NOTIFICATIONS ---
+exports.onNewSupportTicket = functions.firestore
+    .document("supportTickets/{ticketId}")
+    .onCreate(async (snap) => {
+        const ticket = snap.data();
+        
+        // Notify admins
+        const adminPayload = {
+          title: "Nuevo Ticket de Soporte",
+          body: `De ${ticket.userName}: "${ticket.issueType}"`,
+          icon: NOTIFICATION_ICON,
+          data: { url: `/admin/support` },
+        };
+        await sendNotificationToRoles(['admin', 'superadmin'], adminPayload);
+
+        // Notify client
+        const clientPayload = {
+          title: "✅ Ticket Enviado",
+          body: `Hemos recibido tu solicitud: "${ticket.issueType}". Te responderemos pronto.`,
+          icon: NOTIFICATION_ICON,
+          data: { url: `/client/support` },
+        };
+        await sendNotificationToUser(ticket.userId, clientPayload);
+
+        return null;
+    });
+
 exports.onSupportTicketUpdate = functions.firestore
     .document("supportTickets/{ticketId}")
     .onUpdate(async (change, context) => {
@@ -200,20 +235,6 @@ exports.onSupportTicketUpdate = functions.firestore
           data: { url: `/client/support` },
         };
         await sendNotificationToUser(newValue.userId, notificationPayload);
-        return null;
-    });
-
-exports.onNewSupportTicket = functions.firestore
-    .document("supportTickets/{ticketId}")
-    .onCreate(async (snap) => {
-        const ticket = snap.data();
-        const notificationPayload = {
-          title: "Nuevo Ticket de Soporte",
-          body: `De ${ticket.userName}: "${ticket.issueType}"`,
-          icon: NOTIFICATION_ICON,
-          data: { url: `/admin/support` },
-        };
-        await sendNotificationToRoles(['admin', 'superadmin'], notificationPayload);
         return null;
     });
 
