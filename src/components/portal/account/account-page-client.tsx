@@ -38,16 +38,18 @@ export function AccountPageClient() {
   const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(false);
   const [isNotificationProcessing, setIsNotificationProcessing] = useState(true);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | null>(null);
+  const [isApiSupported, setIsApiSupported] = useState(true);
 
   const loading = authLoading || branchesLoading;
   
   const syncPushSubscriptionState = async () => {
     // Don't run on server or if APIs are not present
-    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) {
+    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
+        setIsApiSupported(false);
         setIsNotificationProcessing(false);
-        setNotificationPermission('denied'); // Effectively disabled
         return;
     }
+    setIsApiSupported(true);
 
     setNotificationPermission(Notification.permission);
 
@@ -83,9 +85,8 @@ export function AccountPageClient() {
       }
     } catch (error) {
         console.error("Error toggling notifications", error);
-        toast({ variant: 'destructive', title: "Error", description: "Could not change notification settings." });
+        toast({ variant: "destructive", title: "Error", description: "Could not change notification settings." });
     } finally {
-        // Crucially, re-sync state from browser after any operation
         await syncPushSubscriptionState();
     }
   };
@@ -250,15 +251,22 @@ export function AccountPageClient() {
                             <p className="text-xs text-muted-foreground">Recibe actualizaciones de pedidos y soporte.</p>
                         </div>
                     </div>
-                    <Switch
-                        checked={isNotificationsEnabled}
-                        onCheckedChange={handleNotificationToggle}
-                        disabled={isNotificationProcessing || notificationPermission === 'denied'}
-                    />
+                    {isApiSupported ? (
+                      <Switch
+                          checked={isNotificationsEnabled}
+                          onCheckedChange={handleNotificationToggle}
+                          disabled={isNotificationProcessing || notificationPermission === 'denied'}
+                      />
+                    ) : null}
                 </div>
-                 {notificationPermission === 'denied' && (
+                 {notificationPermission === 'denied' && isApiSupported && (
                     <div className="px-4 pb-3 -mt-2 border-t pt-3">
                       <p className="text-xs text-destructive">{t('notifications_blocked')}</p>
+                    </div>
+                 )}
+                 {!isApiSupported && (
+                    <div className="px-4 pb-3 -mt-2 border-t pt-3">
+                      <p className="text-xs text-destructive">{t('notifications_not_supported')}</p>
                     </div>
                  )}
             </div>

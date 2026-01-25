@@ -1,3 +1,4 @@
+
 {
   "title": "Mi Cuenta",
   "preferred_client": "Cliente Preferencial",
@@ -42,5 +43,6 @@
   "toast_permission_denied_desc": "Necesitas otorgar permiso para activar las notificaciones.",
   "toast_notifications_disabled_title": "Notificaciones Desactivadas",
   "toast_notifications_disabled_desc": "Ya no recibirás notificaciones push en este dispositivo.",
-  "notifications_blocked": "Has bloqueado las notificaciones. Para activarlas, debes cambiar los permisos en la configuración de tu navegador."
+  "notifications_blocked": "Has bloqueado las notificaciones. Para activarlas, debes cambiar los permisos en la configuración de tu navegador.",
+  "notifications_not_supported": "Las notificaciones no son soportadas en este navegador o entorno."
 }
