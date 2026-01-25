@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -26,7 +27,7 @@ import { subscribeToPushNotifications, unsubscribeFromPushNotifications, getPush
 export function AccountPageClient() {
   const t = useTranslations('ClientAccountPage');
   const router = useRouter();
-  const { user, userProfile, loading: authLoading } = useAuth();
+  const { user, userProfile, role, loading: authLoading } = useAuth();
   const { branches, loading: branchesLoading } = useBranches();
   const { toast } = useToast();
 
@@ -41,23 +42,31 @@ export function AccountPageClient() {
   const loading = authLoading || branchesLoading;
   
   const syncPushSubscriptionState = async () => {
+    setIsNotificationProcessing(true);
     if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) {
-        setIsApiSupported(false);
-        setIsNotificationProcessing(false);
-        return;
+      setIsApiSupported(false);
+      setIsNotificationProcessing(false);
+      return;
     }
     setIsApiSupported(true);
-    setIsNotificationProcessing(true);
+    
+    // Use serviceWorker.ready to ensure the SW is active
+    try {
+      await navigator.serviceWorker.ready;
+      setNotificationPermission(Notification.permission);
 
-    setNotificationPermission(Notification.permission);
-
-    if (Notification.permission === 'granted') {
+      if (Notification.permission === 'granted') {
         const sub = await getPushSubscription();
         setIsNotificationsEnabled(!!sub);
-    } else {
+      } else {
         setIsNotificationsEnabled(false);
+      }
+    } catch (error) {
+        console.error("Service worker not ready, notifications unavailable.", error);
+        setIsApiSupported(false);
+    } finally {
+      setIsNotificationProcessing(false);
     }
-    setIsNotificationProcessing(false);
   };
   
   // Sync on mount
@@ -93,28 +102,21 @@ export function AccountPageClient() {
     try {
       if (checked) {
         const permission = await Notification.requestPermission();
-        setNotificationPermission(permission);
-        
         if (permission === 'granted') {
           await subscribeToPushNotifications(user.uid);
-          setIsNotificationsEnabled(true); // Set directly
           toast({ title: t('toast_notifications_enabled_title'), description: t('toast_notifications_enabled_desc') });
         } else {
-          setIsNotificationsEnabled(false);
           toast({ variant: 'destructive', title: t('toast_permission_denied_title'), description: t('toast_permission_denied_desc') });
         }
       } else {
         await unsubscribeFromPushNotifications(user.uid);
-        setIsNotificationsEnabled(false); // Set directly
         toast({ title: t('toast_notifications_disabled_title'), description: t('toast_notifications_disabled_desc') });
       }
     } catch (error) {
         console.error("Error toggling notifications", error);
         toast({ variant: "destructive", title: "Error", description: "Could not change notification settings." });
-        // Only resync on error
-        await syncPushSubscriptionState();
     } finally {
-        setIsNotificationProcessing(false);
+        await syncPushSubscriptionState(); // Always re-sync state after action
     }
   };
 
@@ -174,35 +176,39 @@ export function AccountPageClient() {
             </div>
             <div>
               <h4 className="font-bold text-xl">{loading ? <Skeleton className="h-6 w-40" /> : userProfile?.businessName}</h4>
-              <div className="text-xs bg-green-500/90 text-white font-semibold inline-flex items-center gap-1 px-2 py-0.5 rounded-full mt-1">
-                <Crown className="h-3 w-3" /> {t('preferred_client')}
-              </div>
+              {role === 'client' && (
+                <div className="text-xs bg-green-500/90 text-white font-semibold inline-flex items-center gap-1 px-2 py-0.5 rounded-full mt-1">
+                  <Crown className="h-3 w-3" /> {t('preferred_client')}
+                </div>
+              )}
               <div className="text-xs mt-1 opacity-75">{loading ? <Skeleton className="h-4 w-24 mt-1" /> : `ID: ${user?.uid.substring(0, 8).toUpperCase()}`}</div>
             </div>
           </div>
         </div>
 
-        {/* Finance Card */}
-        <div className="relative z-[2] mx-5 p-5 bg-card rounded-2xl shadow-lg">
-           <div className="grid grid-cols-2 gap-4 items-end">
-              <div>
-                <div className="text-xs text-muted-foreground uppercase font-semibold">{t('available_credit')}</div>
-                <div className="text-2xl font-extrabold text-primary leading-tight">{loading ? <Skeleton className="h-8 w-32 mt-1"/> : formatCurrency(availableCredit)}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-muted-foreground uppercase font-semibold">{t('pending_balance')}</div>
-                <div className="font-bold text-foreground">{loading ? <Skeleton className="h-5 w-24 ml-auto mt-1" /> : formatCurrency(creditData.creditUsed)}</div>
-              </div>
-           </div>
-           <Progress value={creditPercentage} className="h-2 my-3"/>
-            <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{t('credit_limit', { limit: formatCurrency(creditData.creditLimit)})}</span>
-                <span>{t('used_credit', { percent: Math.round(creditPercentage) })}</span>
+        {/* Finance Card (Client Only) */}
+        {role === 'client' && (
+          <div className="relative z-[2] mx-5 p-5 bg-card rounded-2xl shadow-lg">
+            <div className="grid grid-cols-2 gap-4 items-end">
+                <div>
+                  <div className="text-xs text-muted-foreground uppercase font-semibold">{t('available_credit')}</div>
+                  <div className="text-2xl font-extrabold text-primary leading-tight">{loading ? <Skeleton className="h-8 w-32 mt-1"/> : formatCurrency(availableCredit)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-muted-foreground uppercase font-semibold">{t('pending_balance')}</div>
+                  <div className="font-bold text-foreground">{loading ? <Skeleton className="h-5 w-24 ml-auto mt-1" /> : formatCurrency(creditData.creditUsed)}</div>
+                </div>
             </div>
-        </div>
+            <Progress value={creditPercentage} className="h-2 my-3"/>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{t('credit_limit', { limit: formatCurrency(creditData.creditLimit)})}</span>
+                  <span>{t('used_credit', { percent: Math.round(creditPercentage) })}</span>
+              </div>
+          </div>
+        )}
         
         {/* Menu Sections */}
-        <div className="mt-6 px-5">
+        <div className={cn("mt-6 px-5", role !== 'client' && 'md:mt-[-40px]')}>
             <div className="text-xs font-bold text-muted-foreground uppercase mb-2">{t('account_section_title')}</div>
             <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
                 <div className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/50">
@@ -213,56 +219,61 @@ export function AccountPageClient() {
                     <Pencil className="h-4 w-4 text-muted-foreground" />
                 </div>
                 
-                <div className="h-2.5 bg-muted border-y"></div>
+                {/* Branches Section (Client Only) */}
+                {role === 'client' && (
+                  <>
+                    <div className="h-2.5 bg-muted border-y"></div>
 
-                <div className="p-4 bg-card flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-green-100 text-green-600"><MapPin className="h-5 w-5"/></div>
-                        <span className="font-semibold text-sm">{t('branches_section_title')}</span>
+                    <div className="p-4 bg-card flex justify-between items-center">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-green-100 text-green-600"><MapPin className="h-5 w-5"/></div>
+                            <span className="font-semibold text-sm">{t('branches_section_title')}</span>
+                        </div>
+                        <Button size="icon" className="h-8 w-8 rounded-full" onClick={handleAddBranch}><Plus className="h-4 w-4" /></Button>
                     </div>
-                    <Button size="icon" className="h-8 w-8 rounded-full" onClick={handleAddBranch}><Plus className="h-4 w-4" /></Button>
-                </div>
 
-                <div className="px-4 pb-2">
-                    {loading ? (
-                        <div className="space-y-2 py-2"><Skeleton className="h-12 w-full"/><Skeleton className="h-12 w-full"/></div>
-                    ) : branches.length > 0 ? (
-                        branches.map((branch, index) => (
-                           <div key={branch.id} className="py-3 flex items-start justify-between border-b last:border-0">
-                                <div>
-                                    <h6 className="font-semibold text-sm">{branch.alias}</h6>
-                                    <p className="text-xs text-muted-foreground">{branch.address}, {branch.city}</p>
-                                    {index === 0 && <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-semibold mt-1 inline-block">{t('primary_branch_tag')}</span>}
-                                </div>
-                                <AlertDialog>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2"><MoreVertical className="h-4 w-4 text-muted-foreground"/></Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onSelect={() => handleEditBranch(branch)}>{t('edit')}</DropdownMenuItem>
-                                            <AlertDialogTrigger asChild>
-                                                <DropdownMenuItem className="text-destructive">{t('delete')}</DropdownMenuItem>
-                                            </AlertDialogTrigger>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>{t('delete_branch_confirm')}</AlertDialogTitle>
-                                            <AlertDialogDescription>This will permanently delete the branch "{branch.alias}".</AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteBranch(branch.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                           </div>
-                        ))
-                    ) : (
-                        <p className="text-center text-sm text-muted-foreground py-4">No branches added yet.</p>
-                    )}
-                </div>
+                    <div className="px-4 pb-2">
+                        {loading ? (
+                            <div className="space-y-2 py-2"><Skeleton className="h-12 w-full"/><Skeleton className="h-12 w-full"/></div>
+                        ) : branches.length > 0 ? (
+                            branches.map((branch, index) => (
+                              <div key={branch.id} className="py-3 flex items-start justify-between border-b last:border-0">
+                                    <div>
+                                        <h6 className="font-semibold text-sm">{branch.alias}</h6>
+                                        <p className="text-xs text-muted-foreground">{branch.address}, {branch.city}</p>
+                                        {index === 0 && <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-semibold mt-1 inline-block">{t('primary_branch_tag')}</span>}
+                                    </div>
+                                    <AlertDialog>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2"><MoreVertical className="h-4 w-4 text-muted-foreground"/></Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onSelect={() => handleEditBranch(branch)}>{t('edit')}</DropdownMenuItem>
+                                                <AlertDialogTrigger asChild>
+                                                    <DropdownMenuItem className="text-destructive">{t('delete')}</DropdownMenuItem>
+                                                </AlertDialogTrigger>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>{t('delete_branch_confirm')}</AlertDialogTitle>
+                                                <AlertDialogDescription>This will permanently delete the branch "{branch.alias}".</AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteBranch(branch.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                              </div>
+                            ))
+                        ) : (
+                            <p className="text-center text-sm text-muted-foreground py-4">No branches added yet.</p>
+                        )}
+                    </div>
+                  </>
+                )}
             </div>
 
             <div className="text-xs font-bold text-muted-foreground uppercase mt-6 mb-2">Ajustes</div>
@@ -333,3 +344,5 @@ export function AccountPageClient() {
     </>
   );
 }
+
+    
