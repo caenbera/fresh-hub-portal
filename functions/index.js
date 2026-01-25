@@ -6,7 +6,7 @@ admin.initializeApp();
 
 // Set up VAPID keys for web push.
 const VAPID_PUBLIC_KEY = "BPhgGfH_TCI66-3o7kXQ2S2G4iO4-dJkYx9A3C2A1Z1E4W4zY2zJ4J8L4zX3w5H_k3K9J6n3L1oY8E";
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
+const VAPID_PRIVATE_KEY = functions.config().vapid?.private_key;
 const NOTIFICATION_ICON = "https://i.postimg.cc/sxBVGnMp/icon.png";
 
 if (VAPID_PRIVATE_KEY) {
