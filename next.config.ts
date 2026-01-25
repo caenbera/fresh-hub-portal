@@ -6,7 +6,7 @@ const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
 
 const withPWA = withPWAInit({
   dest: 'public',
-  register: true,
+  register: false,
   skipWaiting: true,
   swSrc: 'src/app/sw.ts', // Use our custom service worker
   disable: process.env.NODE_ENV === 'development',

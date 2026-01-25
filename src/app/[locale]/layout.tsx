@@ -7,6 +7,7 @@ import { AuthProvider } from '@/context/auth-context';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { NotificationProvider } from '@/context/notification-context';
+import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
 
 export default async function RootLayout({
   children,
@@ -57,6 +58,7 @@ export default async function RootLayout({
             </NotificationProvider>
           </AuthProvider>
         </NextIntlClientProvider>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
