@@ -1,31 +1,28 @@
 /// <reference lib="webworker" />
 
-declare const self: ServiceWorkerGlobalScope;
-
 self.addEventListener('push', function(event) {
   if (!event.data) return;
 
   try {
     const data = event.data.json();
     const title = data.title || 'Fresh Hub';
-    const options: NotificationOptions = {
+    const options = {
       body: data.body || '',
       icon: '/icon-512.png',
       badge: '/icon-512.png',
-       {},
       requireInteraction: false,
       silent: false
     };
 
     if (data.data && data.data.url) {
-      options.data.url = data.data.url;
+      options.data = { url: data.data.url };
     }
 
     event.waitUntil(
       self.registration.showNotification(title, options)
     );
   } catch (error) {
-    console.error('Error parsing push ', error);
+    console.error('Error parsing push notification:', error);
     event.waitUntil(
       self.registration.showNotification('Fresh Hub', {
         body: 'Tienes una nueva notificación',
@@ -45,7 +42,7 @@ self.addEventListener('notificationclick', function(event) {
   }
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window' }).then(windowClients => {
+    self.clients.matchAll({ type: 'window' }).then(function(windowClients) {
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
         if (client.url.includes(urlToOpen) && 'focus' in client) {

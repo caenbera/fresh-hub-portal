@@ -8,33 +8,16 @@ const withNextIntl = createNextIntlPlugin('./src/i18n.ts');
 const withPWA = withPWAInit({
   dest: 'public',
   register: true,
-  skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  manifest: {
-    name: 'Fresh Hub Portal',
-    short_name: 'Fresh Hub',
-    description: "Wholesale fresh produce for Chicago's latin businesses.",
-    background_color: '#ffffff',
-    theme_color: '#27ae60',
-    icons: [
-      {
-        src: '/icon-512.png',
-        sizes: '192x192',
-        type: 'image/png',
-        purpose: 'any',
-      },
-      {
-        src: '/icon-512.png',
-        sizes: '512x512',
-        type: 'image/png',
-        purpose: 'any',
-      },
-    ],
+  workboxOptions: {
+    skipWaiting: true,
+    clientsClaim: true,
   },
+  // ⚠️ NADA de manifest, pwa, etc.
 });
 
 const nextConfig: NextConfig = {
-   typescript: {
+  typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
