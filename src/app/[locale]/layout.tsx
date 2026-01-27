@@ -1,4 +1,3 @@
-// src/app/[locale]/layout.tsx
 import type { ReactNode } from 'react';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
@@ -8,9 +7,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { NotificationProvider } from '@/context/notification-context';
 import { routing } from '@/i18n/routing';
-import { BadgeHandler } from '@/components/BadgeHandler';
 
-// 👇 generateStaticParams debe estar en un layout del servidor (sin "use client")
+// 👇 AGREGA ESTA FUNCIÓN
 export async function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
@@ -58,11 +56,9 @@ export default async function RootLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <AuthProvider>
             <NotificationProvider>
-              <BadgeHandler>
-                <FirebaseErrorListener />
-                {children}
-                <Toaster />
-              </BadgeHandler>
+              <FirebaseErrorListener />
+              {children}
+              <Toaster />
             </NotificationProvider>
           </AuthProvider>
         </NextIntlClientProvider>
