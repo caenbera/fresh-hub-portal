@@ -1,4 +1,3 @@
-
 {
   "title": "Mi Cuenta",
   "preferred_client": "Cliente Preferencial",
@@ -51,5 +50,6 @@
   "business_name_placeholder": "El nombre de tu negocio",
   "main_contact_label": "Nombre del Contacto Principal",
   "phone_label": "Número de Teléfono",
-  "save_changes_button": "Guardar Cambios"
+  "save_changes_button": "Guardar Cambios",
+  "coming_soon": "Próximamente"
 }

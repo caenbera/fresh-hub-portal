@@ -15,14 +15,14 @@ import type { Branch } from '@/types';
 import { AddBranchDialog } from './add-branch-dialog';
 import { BusinessDetailsDialog } from './business-details-dialog';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Crown, Pencil, Plus, MapPin, Store, Tag, Headset, FileText, LogOut, ChevronRight, MoreVertical, Bell, BellOff, Loader2 } from 'lucide-react';
+import { Crown, Pencil, Plus, MapPin, Store, Tag, Headset, FileText, LogOut, ChevronRight, MoreVertical, BellOff, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { subscribeToPushNotifications, unsubscribeFromPushNotifications, getPushSubscription } from '@/lib/notifications';
 
 
 export function AccountPageClient() {
@@ -37,11 +37,6 @@ export function AccountPageClient() {
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   
-  const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(false);
-  const [isNotificationProcessing, setIsNotificationProcessing] = useState(true);
-  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | null>(null);
-  const [isApiSupported, setIsApiSupported] = useState(true);
-
   const loading = authLoading || branchesLoading || invoicesLoading;
 
   const { creditUsed, creditLimit, creditPercentage, availableCredit } = useMemo(() => {
@@ -61,95 +56,6 @@ export function AccountPageClient() {
     };
   }, [invoices, userProfile, loading]);
   
-  const syncPushSubscriptionState = async () => {
-    setIsNotificationProcessing(true);
-    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) {
-      setIsApiSupported(false);
-      setIsNotificationProcessing(false);
-      return;
-    }
-    setIsApiSupported(true);
-    
-    try {
-      // Safeguard: Wait for the service worker for a max of 5 seconds
-      await Promise.race([
-        navigator.serviceWorker.ready,
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Service worker registration timed out")), 5000))
-      ]);
-      
-      setNotificationPermission(Notification.permission);
-
-      if (Notification.permission === 'granted') {
-        const sub = await getPushSubscription();
-        setIsNotificationsEnabled(!!sub);
-      } else {
-        setIsNotificationsEnabled(false);
-      }
-    } catch (error) {
-        console.error("Service worker not ready or timed out, notifications unavailable.", error);
-        toast({
-            variant: "destructive",
-            title: "Service Worker Error",
-            description: "Offline capabilities and notifications might not work. Please try refreshing.",
-        });
-        setIsApiSupported(false);
-    } finally {
-      setIsNotificationProcessing(false);
-    }
-  };
-  
-  // Sync on mount
-  useEffect(() => {
-    syncPushSubscriptionState();
-  }, []);
-
-  // Listen for permission changes
-  useEffect(() => {
-    const checkPermissionChange = async () => {
-      if (!isApiSupported || !user) return;
-      await syncPushSubscriptionState();
-    };
-
-    if (typeof window !== 'undefined' && 'permissions' in navigator) {
-      navigator.permissions.query({ name: 'notifications' as PermissionName })
-        .then((permissionStatus) => {
-          permissionStatus.onchange = () => {
-            checkPermissionChange();
-          };
-        })
-        .catch(() => {
-          // Fallback
-          checkPermissionChange();
-        });
-    }
-  }, [isApiSupported, user]);
-
-  const handleNotificationToggle = async (checked: boolean) => {
-    if (!user) return;
-    setIsNotificationProcessing(true);
-
-    try {
-      if (checked) {
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-          await subscribeToPushNotifications(user.uid);
-          toast({ title: t('toast_notifications_enabled_title'), description: t('toast_notifications_enabled_desc') });
-        } else {
-          toast({ variant: 'destructive', title: t('toast_permission_denied_title'), description: t('toast_permission_denied_desc') });
-        }
-      } else {
-        await unsubscribeFromPushNotifications(user.uid);
-        toast({ title: t('toast_notifications_disabled_title'), description: t('toast_notifications_disabled_desc') });
-      }
-    } catch (error) {
-        console.error("Error toggling notifications", error);
-        toast({ variant: "destructive", title: "Error", description: "Could not change notification settings." });
-    } finally {
-        await syncPushSubscriptionState(); // Always re-sync state after action
-    }
-  };
-
-
   const handleSignOut = async () => {
     if (confirm(t('logout_confirm'))) {
       try {
@@ -303,31 +209,21 @@ export function AccountPageClient() {
             <div className="bg-card rounded-2xl shadow-sm overflow-hidden">
                 <div className="p-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center", isNotificationsEnabled ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500')}>
-                            {isNotificationProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : isNotificationsEnabled ? <Bell className="h-5 w-5"/> : <BellOff className="h-5 w-5"/>}
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-gray-100 text-gray-500">
+                           <BellOff className="h-5 w-5"/>
                         </div>
                         <div>
-                            <span className="font-semibold text-sm">Notificaciones Push</span>
+                             <div className="flex items-center gap-2">
+                                <span className="font-semibold text-sm">Notificaciones Push</span>
+                                <Badge variant="outline">{t('coming_soon')}</Badge>
+                            </div>
                             <p className="text-xs text-muted-foreground">Recibe actualizaciones de pedidos y soporte.</p>
                         </div>
                     </div>
-                    {isApiSupported && (
-                      <Switch
-                          checked={isNotificationsEnabled}
-                          onCheckedChange={handleNotificationToggle}
-                          disabled={isNotificationProcessing || notificationPermission === 'denied'}
-                      />
-                    )}
+                    <Switch
+                        disabled={true}
+                    />
                 </div>
-                 {!isApiSupported ? (
-                    <div className="px-4 pb-3 -mt-2 border-t pt-3">
-                      <p className="text-xs text-destructive">{t('notifications_not_supported')}</p>
-                    </div>
-                 ) : notificationPermission === 'denied' && (
-                    <div className="px-4 pb-3 -mt-2 border-t pt-3">
-                      <p className="text-xs text-destructive">{t('notifications_blocked')}</p>
-                    </div>
-                 )}
             </div>
 
             <div className="text-xs font-bold text-muted-foreground uppercase mt-6 mb-2">{t('more_services_section_title')}</div>
