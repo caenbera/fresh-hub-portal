@@ -1,24 +1,10 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, getRequestConfig } from 'next-intl/server';
+import { getMessages } from 'next-intl/server';
+import { routing } from '@/i18n/routing';
+import { locales } from '@/i18n-config';
 import { notFound } from 'next/navigation';
-import { routing } from '@/src/i18n/routing';
-import { locales } from '@/src/i18n-config';
-import { ThemeProvider } from '@/src/components/ThemeProvider';
-import { Toaster } from '@/src/components/ui/sonner';
-import { cn } from '@/src/lib/utils';
-import { headers } from 'next/headers';
-import { Inter as FontSans } from 'next/font/google';
-import { RegisterServiceWorker } from '@/src/components/RegisterServiceWorker';
-
-import '@/src/styles/globals.css';
-
-const inter = Inter({ subsets: ['latin'] });
-const fontSans = FontSans({
-  subsets: ['latin'],
-  variable: '--font-sans',
-});
+import { RegisterServiceWorker } from '@/components/RegisterServiceWorker';
 
 export async function generateStaticParams() {
   return locales.map((locale) => ({ locale }));
@@ -60,18 +46,10 @@ export default async function RootLayout({
         <meta name="theme-color" content="#27ae60" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
-      <body className={cn('min-h-screen bg-background font-sans antialiased', fontSans.variable)}>
+      <body>
         <NextIntlClientProvider messages={messages}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-            <Toaster />
-            <RegisterServiceWorker />
-          </ThemeProvider>
+          {children}
+          <RegisterServiceWorker />
         </NextIntlClientProvider>
       </body>
     </html>
