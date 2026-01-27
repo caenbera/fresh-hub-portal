@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter, Link } from '@/navigation';
 import { useAuth } from '@/context/auth-context';
 import { useBranches } from '@/hooks/use-branches';
-import { useInvoices } from '@/hooks/use-invoices'; // Import useInvoices
+import { useInvoices } from '@/hooks/use-invoices';
 import { useToast } from '@/hooks/use-toast';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
@@ -13,7 +13,7 @@ import { deleteBranch } from '@/lib/firestore/branches';
 import type { Branch } from '@/types';
 
 import { AddBranchDialog } from './add-branch-dialog';
-import { BusinessDetailsDialog } from './business-details-dialog'; // Import new dialog
+import { BusinessDetailsDialog } from './business-details-dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -30,11 +30,11 @@ export function AccountPageClient() {
   const router = useRouter();
   const { user, userProfile, role, loading: authLoading } = useAuth();
   const { branches, loading: branchesLoading } = useBranches();
-  const { invoices, loading: invoicesLoading } = useInvoices(); // Use the invoices hook
+  const { invoices, loading: invoicesLoading } = useInvoices();
   const { toast } = useToast();
 
   const [isBranchDialogOpen, setIsBranchDialogOpen] = useState(false);
-  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false); // State for new dialog
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
   
   const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(false);
@@ -70,9 +70,13 @@ export function AccountPageClient() {
     }
     setIsApiSupported(true);
     
-    // Use serviceWorker.ready to ensure the SW is active
     try {
-      await navigator.serviceWorker.ready;
+      // Safeguard: Wait for the service worker for a max of 5 seconds
+      await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Service worker registration timed out")), 5000))
+      ]);
+      
       setNotificationPermission(Notification.permission);
 
       if (Notification.permission === 'granted') {
@@ -82,7 +86,12 @@ export function AccountPageClient() {
         setIsNotificationsEnabled(false);
       }
     } catch (error) {
-        console.error("Service worker not ready, notifications unavailable.", error);
+        console.error("Service worker not ready or timed out, notifications unavailable.", error);
+        toast({
+            variant: "destructive",
+            title: "Service Worker Error",
+            description: "Offline capabilities and notifications might not work. Please try refreshing.",
+        });
         setIsApiSupported(false);
     } finally {
       setIsNotificationProcessing(false);
