@@ -146,6 +146,35 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
       }
   };
 
+  const handleSalePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newSalePrice = e.target.valueAsNumber;
+    form.setValue('salePrice', isNaN(newSalePrice) ? 0 : newSalePrice, { shouldValidate: true });
+
+    if (isNaN(newSalePrice) || newSalePrice <= 0) return;
+
+    const primaryIndex = watchedSuppliers.findIndex(s => s.isPrimary);
+    if (primaryIndex === -1) return;
+
+    let newCost = 0;
+    
+    if (priceCalculationMethod === 'margin') {
+        const marginValue = parseFloat(margin);
+        if (!isNaN(marginValue) && marginValue < 100) {
+            newCost = newSalePrice * (1 - (marginValue / 100));
+        }
+    } else { // markup
+        const markupValue = parseFloat(markup);
+        if (!isNaN(markupValue)) {
+            newCost = newSalePrice / (1 + (markupValue / 100));
+        }
+    }
+    
+    if (newCost > 0) {
+        form.setValue(`suppliers.${primaryIndex}.cost`, parseFloat(newCost.toFixed(2)), { shouldValidate: true });
+    }
+  };
+
+
   const getInitialFormData = (): ProductFormValues => {
     if (product) {
        // This is an existing product, handle both old and new data structures
@@ -412,7 +441,29 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
                     </FormControl>
                 </div>
 
-                <FormField control={form.control} name="salePrice" render={({ field }) => (<FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_price')}</FormLabel><FormControl><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 font-bold text-sm">$</span><Input type="number" className="pl-6 h-10 font-bold text-lg text-right bg-green-50" placeholder="0.00" step="0.01" {...field} onChange={e => field.onChange(e.target.valueAsNumber)} /></div></FormControl><FormMessage /></FormItem>)}/>
+                <FormField
+                  control={form.control}
+                  name="salePrice"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_price')}</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-800 font-bold text-sm">$</span>
+                          <Input
+                            type="number"
+                            className="pl-6 h-10 font-bold text-lg text-right bg-green-50"
+                            placeholder="0.00"
+                            step="0.01"
+                            {...field}
+                            onChange={handleSalePriceChange}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-end">
                 <FormField control={form.control} name="stock" render={({ field }) => (<FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_stock')}</FormLabel><FormControl><Input type="number" className="h-10" placeholder="0" {...field} /></FormControl><FormMessage /></FormItem>)}/>
