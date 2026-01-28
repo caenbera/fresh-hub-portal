@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -90,8 +90,9 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const esUnitInputRef = useRef<HTMLInputElement>(null);
   const enUnitInputRef = useRef<HTMLInputElement>(null);
   
-  const [priceCalculationMethod, setPriceCalculationMethod] = useState<'margin' | 'markup'>('margin');
   const [calculationDirection, setCalculationDirection] = useState<'costToPrice' | 'priceToCost'>('costToPrice');
+  const [marginInput, setMarginInput] = useState('');
+  const [markupInput, setMarkupInput] = useState('');
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
@@ -108,94 +109,74 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   
   const watchedSuppliers = form.watch('suppliers');
   const watchedSalePrice = form.watch('salePrice');
-  const primarySupplierCost = useMemo(() => form.watch('suppliers')?.find(s => s.isPrimary)?.cost || 0, [watchedSuppliers]);
-  
-  const { margin, markup } = useMemo(() => {
-    const price = watchedSalePrice;
-    const cost = primarySupplierCost;
+
+  const updatePercentageInputs = () => {
+    const primarySupplier = form.getValues('suppliers').find(s => s.isPrimary);
+    const cost = primarySupplier?.cost || 0;
+    const price = form.getValues('salePrice') || 0;
 
     if (!price || !cost || price <= 0 || cost <= 0) {
-        return { margin: '', markup: '' };
+        setMarginInput('');
+        setMarkupInput('');
+        return;
     }
 
-    const marginValue = (((price - cost) / price) * 100).toFixed(1);
-    const markupValue = (((price - cost) / cost) * 100).toFixed(1);
+    const margin = ((price - cost) / price) * 100;
+    const markup = ((price - cost) / cost) * 100;
     
-    const formatValue = (value: string) => value.endsWith('.0') ? value.slice(0, -2) : value;
+    const formatValue = (val: number) => isNaN(val) || !isFinite(val) ? '' : val.toFixed(1);
 
-    return { 
-        margin: formatValue(marginValue),
-        markup: formatValue(markupValue),
-    };
-  }, [watchedSalePrice, primarySupplierCost]);
+    setMarginInput(formatValue(margin));
+    setMarkupInput(formatValue(markup));
+  }
+  
+  const handleMarginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newMarginStr = e.target.value;
+    setMarginInput(newMarginStr);
+    const newMargin = parseFloat(newMarginStr);
+    if(isNaN(newMargin)) return;
 
-  const updateFromPercentage = (percentageInput: string) => {
-    const primarySupplierIndex = form.getValues('suppliers').findIndex(s => s.isPrimary);
-    if (primarySupplierIndex === -1) return;
-
-    const percentage = parseFloat(percentageInput);
-    if (isNaN(percentage)) return;
-
-    if (calculationDirection === 'costToPrice') {
-      const cost = form.getValues('suppliers')[primarySupplierIndex].cost;
-      if (cost > 0) {
-        let newSalePrice = 0;
-        if (priceCalculationMethod === 'margin') {
-          if (percentage < 100) newSalePrice = cost / (1 - (percentage / 100));
-        } else {
-          newSalePrice = cost * (1 + (percentage / 100));
+    if(calculationDirection === 'costToPrice') {
+        const cost = form.getValues('suppliers').find(s => s.isPrimary)?.cost || 0;
+        if(cost > 0 && newMargin < 100) {
+            const newSalePrice = cost / (1 - (newMargin / 100));
+            form.setValue('salePrice', parseFloat(newSalePrice.toFixed(2)));
+            updatePercentageInputs();
         }
-        if (newSalePrice > 0) form.setValue('salePrice', parseFloat(newSalePrice.toFixed(2)), { shouldValidate: true });
-      }
     } else { // priceToCost
-      const salePrice = form.getValues('salePrice');
-      if (salePrice > 0) {
-        let newCost = 0;
-        if (priceCalculationMethod === 'margin') {
-          if (percentage < 100) newCost = salePrice * (1 - (percentage / 100));
-        } else {
-          newCost = salePrice / (1 + (percentage / 100));
+        const salePrice = form.getValues('salePrice');
+        const primarySupplierIndex = form.getValues('suppliers').findIndex(s => s.isPrimary);
+        if(salePrice > 0 && newMargin < 100 && primarySupplierIndex !== -1) {
+            const newCost = salePrice * (1 - (newMargin / 100));
+            form.setValue(`suppliers.${primarySupplierIndex}.cost`, parseFloat(newCost.toFixed(2)));
+            updatePercentageInputs();
         }
-        if (newCost > 0) form.setValue(`suppliers.${primarySupplierIndex}.cost`, parseFloat(newCost.toFixed(2)), { shouldValidate: true });
-      }
     }
-  };
-
-  const updateFromCost = (costInput: string) => {
-      const cost = parseFloat(costInput);
-      if (isNaN(cost)) return;
-      
-      const percentage = parseFloat(priceCalculationMethod === 'margin' ? margin : markup);
-      if(isNaN(percentage)) return;
-
-      let newSalePrice = 0;
-      if(priceCalculationMethod === 'margin') {
-          if(percentage < 100 && cost > 0) newSalePrice = cost / (1 - (percentage/100));
-      } else {
-          if(cost > 0) newSalePrice = cost * (1 + (percentage/100));
-      }
-      form.setValue('salePrice', parseFloat(newSalePrice.toFixed(2)), { shouldValidate: true });
   }
 
-  const updateFromSalePrice = (priceInput: string) => {
-      const salePrice = parseFloat(priceInput);
-      if (isNaN(salePrice)) return;
-      
-      const primarySupplierIndex = form.getValues('suppliers').findIndex(s => s.isPrimary);
-      if (primarySupplierIndex === -1) return;
-      
-      const percentage = parseFloat(priceCalculationMethod === 'margin' ? margin : markup);
-      if(isNaN(percentage)) return;
+  const handleMarkupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newMarkupStr = e.target.value;
+      setMarkupInput(newMarkupStr);
+      const newMarkup = parseFloat(newMarkupStr);
+      if(isNaN(newMarkup)) return;
 
-      let newCost = 0;
-      if(priceCalculationMethod === 'margin') {
-          if(percentage < 100 && salePrice > 0) newCost = salePrice * (1 - (percentage/100));
-      } else {
-          if(salePrice > 0) newCost = salePrice / (1 + (percentage/100));
+      if(calculationDirection === 'costToPrice') {
+          const cost = form.getValues('suppliers').find(s => s.isPrimary)?.cost || 0;
+          if(cost > 0) {
+              const newSalePrice = cost * (1 + (newMarkup / 100));
+              form.setValue('salePrice', parseFloat(newSalePrice.toFixed(2)));
+              updatePercentageInputs();
+          }
+      } else { // priceToCost
+          const salePrice = form.getValues('salePrice');
+          const primarySupplierIndex = form.getValues('suppliers').findIndex(s => s.isPrimary);
+          if(salePrice > 0 && primarySupplierIndex !== -1) {
+              const newCost = salePrice / (1 + (newMarkup / 100));
+              form.setValue(`suppliers.${primarySupplierIndex}.cost`, parseFloat(newCost.toFixed(2)));
+              updatePercentageInputs();
+          }
       }
-      form.setValue(`suppliers.${primarySupplierIndex}.cost`, parseFloat(newCost.toFixed(2)), { shouldValidate: true });
   }
-
 
   const getInitialFormData = (): ProductFormValues => {
     if (product) {
@@ -224,9 +205,17 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     if (suppliersLoading || categoriesLoading || unitsLoading) return;
     const initialData = getInitialFormData();
     form.reset(initialData);
-    setPriceCalculationMethod(initialData.pricingMethod || 'margin');
     setEditingProduct(product);
     setImgUrlInputValue(initialData.photoUrl || '');
+    // Initial calculation for percentages
+    const cost = initialData.suppliers.find(s => s.isPrimary)?.cost || 0;
+    const price = initialData.salePrice;
+     if (!price || !cost || price <= 0 || cost <= 0) {
+        setMarginInput(''); setMarkupInput('');
+    } else {
+        setMarginInput((((price - cost) / price) * 100).toFixed(1));
+        setMarkupInput((((price - cost) / cost) * 100).toFixed(1));
+    }
   }, [product, defaultSupplierId, pathname, suppliersLoading, categoriesLoading, unitsLoading]);
 
 
@@ -250,14 +239,15 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
         }
         
         form.reset({ ...existingProduct, suppliers: finalSuppliers, photoUrl: existingProduct.photoUrl || '', pricingMethod: existingProduct.pricingMethod || 'margin' });
-        setPriceCalculationMethod(existingProduct.pricingMethod || 'margin');
         setImgUrlInputValue(existingProduct.photoUrl || '');
+        updatePercentageInputs();
       } else {
           setEditingProduct(null);
           const currentValues = form.getValues();
           const supplierContextId = pathname.includes('/suppliers/') ? pathname.split('/suppliers/')[1].split('/')[0] : defaultSupplierId;
           const newSuppliers = supplierContextId ? [{ supplierId: supplierContextId, cost: 0, isPrimary: true }] : [];
           replace(newSuppliers);
+          updatePercentageInputs();
       }
     } catch (error) {
       console.error("Error in handleSkuBlur:", error);
@@ -274,6 +264,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
       isPrimary: index === indexToSet
     }));
     replace(newSuppliers);
+    updatePercentageInputs();
   };
 
   const photoUrl = form.watch('photoUrl');
@@ -387,10 +378,13 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
                                 step="0.01"
                                 {...field}
                                 onChange={(e) => {
-                                    field.onChange(e);
-                                    if(calculationDirection === 'costToPrice') updateFromCost(e.target.value);
+                                    field.onChange(e.target.valueAsNumber || 0);
+                                    if(calculationDirection === 'costToPrice' && field.name === `suppliers.${watchedSuppliers.findIndex(s=>s.isPrimary)}.cost`) {
+                                      updatePercentageInputs();
+                                    }
                                 }}
-                                disabled={calculationDirection === 'priceToCost' && field.isPrimary}
+                                onBlur={updatePercentageInputs}
+                                disabled={calculationDirection === 'priceToCost' && field.name === `suppliers.${watchedSuppliers.findIndex(s=>s.isPrimary)}.cost`}
                             />
                             </div></FormControl><FormMessage /></FormItem>
                         )}/>
@@ -432,14 +426,14 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
                 <div className="space-y-2">
                     <div className="flex justify-between items-center">
                         <FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">
-                            {priceCalculationMethod === 'margin' ? "Margen (%)" : "Recargo (Markup) (%)"}
+                            {form.getValues('pricingMethod') === 'margin' ? "Margen (%)" : "Recargo (Markup) (%)"}
                         </FormLabel>
                         <div className="flex items-center gap-2">
-                            <Label htmlFor="price-calc-switch" className={cn("text-xs font-medium", priceCalculationMethod === 'margin' ? 'text-primary' : 'text-muted-foreground')}>
+                            <Label htmlFor="price-calc-switch" className={cn("text-xs font-medium", form.getValues('pricingMethod') === 'margin' ? 'text-primary' : 'text-muted-foreground')}>
                                 Margen
                             </Label>
-                            <FormField control={form.control} name="pricingMethod" render={({ field }) => ( <Switch id="price-calc-switch" checked={priceCalculationMethod === 'markup'} onCheckedChange={(checked) => { const newMethod = checked ? 'markup' : 'margin'; setPriceCalculationMethod(newMethod); field.onChange(newMethod); }} /> )}/>
-                            <Label htmlFor="price-calc-switch" className={cn("text-xs font-medium", priceCalculationMethod === 'markup' ? 'text-primary' : 'text-muted-foreground')}>
+                            <FormField control={form.control} name="pricingMethod" render={({ field }) => ( <Switch id="price-calc-switch" checked={field.value === 'markup'} onCheckedChange={(checked) => { const newMethod = checked ? 'markup' : 'margin'; field.onChange(newMethod); }} /> )}/>
+                            <Label htmlFor="price-calc-switch" className={cn("text-xs font-medium", form.getValues('pricingMethod') === 'markup' ? 'text-primary' : 'text-muted-foreground')}>
                                 Recargo
                             </Label>
                         </div>
@@ -447,11 +441,11 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
                     <FormControl>
                         <div className="grid grid-cols-2 gap-2">
                              <div className="relative">
-                                <Input type="number" value={margin} onChange={(e) => updateFromPercentage(e.target.value)} className="pl-3 pr-8 h-10 text-right font-bold disabled:bg-muted/30" placeholder={t('form_placeholder_margin')} disabled={priceCalculationMethod === 'markup'}/>
+                                <Input type="number" value={marginInput} onChange={handleMarginChange} className="pl-3 pr-8 h-10 text-right font-bold disabled:bg-muted/30" placeholder={t('form_placeholder_margin')} disabled={form.getValues('pricingMethod') === 'markup'}/>
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
                             </div>
                             <div className="relative">
-                                <Input type="number" value={markup} onChange={(e) => updateFromPercentage(e.target.value)} className="pl-3 pr-8 h-10 text-right font-bold disabled:bg-muted/30" placeholder="e.g., 42.9" disabled={priceCalculationMethod === 'margin'}/>
+                                <Input type="number" value={markupInput} onChange={handleMarkupChange} className="pl-3 pr-8 h-10 text-right font-bold disabled:bg-muted/30" placeholder="e.g., 42.9" disabled={form.getValues('pricingMethod') === 'margin'}/>
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
                             </div>
                         </div>
@@ -474,9 +468,9 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
                             step="0.01"
                             {...field}
                             onChange={(e) => {
-                                field.onChange(e);
-                                if(calculationDirection === 'priceToCost') updateFromSalePrice(e.target.value);
+                                field.onChange(e.target.valueAsNumber || 0);
                             }}
+                            onBlur={updatePercentageInputs}
                             disabled={calculationDirection === 'costToPrice'}
                           />
                         </div>
