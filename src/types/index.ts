@@ -105,6 +105,15 @@ export interface SupplierContact {
   isWhatsapp: boolean;
 }
 
+export interface SupplierDiscount {
+  id: string; // For react key
+  type: 'amount' | 'quantity' | 'monthlyVolume';
+  scope: 'order' | 'product';
+  productId?: string;
+  from: number;
+  discount: number;
+}
+
 export interface Supplier {
   id: string;
   name: string;
@@ -124,6 +133,7 @@ export interface Supplier {
     fillRate: number;
     onTimeDelivery: boolean;
   };
+  volumeDiscounts?: SupplierDiscount[];
 }
 
 export interface SupplierProduct {
