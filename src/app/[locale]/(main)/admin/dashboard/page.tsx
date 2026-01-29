@@ -36,6 +36,7 @@ import {
   Eye,
   AlertTriangle,
   PiggyBank,
+  Tag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -126,6 +127,7 @@ export default function DashboardPage() {
     const totalOrders = filteredOrders.length;
     const newClientsThisPeriod = filteredUsers.length;
     const totalSavings = filteredPOs.reduce((acc, po) => acc + (po.discountInfo?.appliedDiscount?.amount || 0), 0);
+    const totalDiscounts = filteredOrders.reduce((acc, order) => acc + (order.discountApplied || 0), 0);
     
     const newOrdersCount = filteredOrders.filter(o => o.status === 'pending').length;
 
@@ -134,6 +136,7 @@ export default function DashboardPage() {
       orders: { val: totalOrders, trend: t('orders_trend', { count: newOrdersCount }), trendType: "up" },
       clients: { val: newClientsThisPeriod, trend: t('clients_trend', { count: `+${newClientsThisPeriod}` }), trendType: "up" },
       savings: { val: formatCurrency(totalSavings), trend: t('savings_trend'), trendType: "up" },
+      discounts: { val: formatCurrency(totalDiscounts), trend: "Total Given" }
     };
   }, [loading, orders, users, purchaseOrders, period, t]);
 
@@ -227,6 +230,7 @@ export default function DashboardPage() {
     { metric: 'orders', label: t('kpi_orders_label'), icon: <ShoppingBasket />, iconBg: 'bg-blue-100 text-blue-600' },
     { metric: 'clients', label: t('kpi_clients_label'), icon: <UserPlus />, iconBg: 'bg-purple-100 text-purple-600' },
     { metric: 'savings', label: t('kpi_savings_label'), icon: <PiggyBank />, iconBg: 'bg-indigo-100 text-indigo-600' },
+    { metric: 'discounts', label: t('kpi_discounts_label'), icon: <Tag />, iconBg: 'bg-red-100 text-red-600' },
   ];
 
   return (
@@ -250,8 +254,8 @@ export default function DashboardPage() {
         </Select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {loading ? Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-2xl" />) :
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        {loading ? Array.from({length: 5}).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-2xl" />) :
           kpiCardsConfig.map(({ metric, label, icon, iconBg }) => (
           <Card key={metric} className="shadow-sm hover:shadow-md transition-shadow duration-200 rounded-2xl">
             <CardHeader className="pb-2">

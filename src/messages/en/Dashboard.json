@@ -21,6 +21,7 @@
     "kpi_orders_label": "Orders",
     "kpi_clients_label": "New Clients",
     "kpi_savings_label": "Savings (Purchases)",
+    "kpi_discounts_label": "Discounts (Sales)",
     "period_week": "This Week",
     "period_month": "This Month",
     "period_quarter": "This Quarter",
