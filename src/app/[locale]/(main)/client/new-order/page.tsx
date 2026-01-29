@@ -112,6 +112,7 @@ export default function NewOrderPage() {
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [currentProductForNote, setCurrentProductForNote] = useState<ProductType | null>(null);
   const [currentNote, setCurrentNote] = useState('');
+  const [imageToView, setImageToView] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generalObservations, setGeneralObservations] = useState("");
 
@@ -367,13 +368,15 @@ export default function NewOrderPage() {
             const unitText = typeof p.unit === 'object' && p.unit?.[locale] ? p.unit[locale] : (p.unit as any);
             return (
               <div key={p.id} className="bg-background border-b p-2 flex items-center gap-2">
-                <Image
-                  src={p.photoUrl || '/placeholder.svg'}
-                  alt={p.name[locale]}
-                  width={50}
-                  height={50}
-                  className="rounded-lg object-cover bg-gray-100 shrink-0"
-                />
+                <button type="button" onClick={() => setImageToView(p.photoUrl || '/placeholder.svg')} className="shrink-0 rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                  <Image
+                    src={p.photoUrl || '/placeholder.svg'}
+                    alt={p.name[locale]}
+                    width={50}
+                    height={50}
+                    className="rounded-lg object-cover bg-gray-100"
+                  />
+                </button>
                 <div className="flex-grow min-w-0">
                   <p className="font-medium text-sm leading-tight truncate">{p.name[locale]}</p>
                   <div className="text-xs text-muted-foreground flex items-center mt-0.5">
@@ -439,6 +442,21 @@ export default function NewOrderPage() {
           <DialogFooter>
             <Button onClick={handleSaveNote} size="sm">{t('saveNote')}</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Image Zoom Modal */}
+      <Dialog open={!!imageToView} onOpenChange={(isOpen) => !isOpen && setImageToView(null)}>
+        <DialogContent className="p-0 border-none bg-transparent shadow-none w-auto max-w-[90vw] sm:max-w-lg">
+          {imageToView && (
+            <Image
+              src={imageToView}
+              alt="Product image zoom"
+              width={500}
+              height={500}
+              className="rounded-lg object-contain w-full h-auto"
+            />
+          )}
         </DialogContent>
       </Dialog>
 
