@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -447,7 +448,7 @@ export default function NewOrderPage() {
 
       {/* Image Zoom Modal */}
       <Dialog open={!!imageToView} onOpenChange={(isOpen) => !isOpen && setImageToView(null)}>
-        <DialogContent className="p-0 border-none bg-transparent shadow-none w-auto max-w-[90vw] sm:max-w-lg">
+        <DialogContent className="p-0 border-none bg-transparent shadow-none w-auto max-w-[90vw] sm:max-w-xl">
           {imageToView && (
             <Image
               src={imageToView}
