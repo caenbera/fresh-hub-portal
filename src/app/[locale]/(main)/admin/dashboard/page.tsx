@@ -52,6 +52,7 @@ import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, star
 import { es } from 'date-fns/locale';
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/navigation';
+import { Product } from '@/types';
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
@@ -125,14 +126,16 @@ export default function DashboardPage() {
     const totalOrders = filteredOrders.length;
     const newClientsThisPeriod = filteredUsers.length;
     const totalSavings = filteredPOs.reduce((acc, po) => acc + (po.discountInfo?.appliedDiscount?.amount || 0), 0);
+    
+    const newOrdersCount = filteredOrders.filter(o => o.status === 'pending').length;
 
     return {
-      sales: { val: formatCurrency(totalSales), trend: "+20% YTD", trendType: "up" },
-      orders: { val: totalOrders, trend: `${filteredOrders.filter(o => o.status === 'pending').length} nuevos`, trendType: "up" },
-      clients: { val: newClientsThisPeriod, trend: `+${newClientsThisPeriod} este periodo`, trendType: "up" },
-      savings: { val: formatCurrency(totalSavings), trend: "Buen trabajo!", trendType: "up" },
+      sales: { val: formatCurrency(totalSales), trend: t('sales_trend'), trendType: "up" },
+      orders: { val: totalOrders, trend: t('orders_trend', { count: newOrdersCount }), trendType: "up" },
+      clients: { val: newClientsThisPeriod, trend: t('clients_trend', { count: `+${newClientsThisPeriod}` }), trendType: "up" },
+      savings: { val: formatCurrency(totalSavings), trend: t('savings_trend'), trendType: "up" },
     };
-  }, [loading, orders, users, purchaseOrders, period]);
+  }, [loading, orders, users, purchaseOrders, period, t]);
 
   const salesChartData = useMemo(() => {
       if (loading) return [];
@@ -220,10 +223,10 @@ export default function DashboardPage() {
   }
 
   const kpiCardsConfig = [
-    { metric: 'sales', labelKey: 'kpi_sales_label', icon: <DollarSign />, iconBg: 'bg-green-100 text-green-600' },
-    { metric: 'orders', labelKey: 'kpi_orders_label', icon: <ShoppingBasket />, iconBg: 'bg-blue-100 text-blue-600' },
-    { metric: 'clients', labelKey: 'kpi_clients_label', icon: <UserPlus />, iconBg: 'bg-purple-100 text-purple-600' },
-    { metric: 'savings', labelKey: 'kpi_savings_label', icon: <PiggyBank />, iconBg: 'bg-indigo-100 text-indigo-600' },
+    { metric: 'sales', label: t('kpi_sales_label'), icon: <DollarSign />, iconBg: 'bg-green-100 text-green-600' },
+    { metric: 'orders', label: t('kpi_orders_label'), icon: <ShoppingBasket />, iconBg: 'bg-blue-100 text-blue-600' },
+    { metric: 'clients', label: t('kpi_clients_label'), icon: <UserPlus />, iconBg: 'bg-purple-100 text-purple-600' },
+    { metric: 'savings', label: t('kpi_savings_label'), icon: <PiggyBank />, iconBg: 'bg-indigo-100 text-indigo-600' },
   ];
 
   return (
@@ -235,7 +238,7 @@ export default function DashboardPage() {
         </div>
         <Select value={period} onValueChange={setPeriod}>
             <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue />
+                <SelectValue placeholder={t('select_period_placeholder')} />
             </SelectTrigger>
             <SelectContent>
                 <SelectItem value="week">{t('period_week')}</SelectItem>
@@ -249,11 +252,11 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {loading ? Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-2xl" />) :
-          kpiCardsConfig.map(({ metric, labelKey, icon, iconBg }) => (
+          kpiCardsConfig.map(({ metric, label, icon, iconBg }) => (
           <Card key={metric} className="shadow-sm hover:shadow-md transition-shadow duration-200 rounded-2xl">
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
-                <span className="text-sm font-semibold text-gray-500 uppercase">{t(labelKey as any)} ({periodLabels[period]})</span>
+                <span className="text-sm font-semibold text-gray-500 uppercase">{label} ({periodLabels[period]})</span>
               </div>
             </CardHeader>
             <CardContent>

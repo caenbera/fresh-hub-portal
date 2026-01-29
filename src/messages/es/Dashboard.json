@@ -1,4 +1,3 @@
-
 {
     "sidebar_new_order": "Nuevo Pedido",
     "sidebar_order_history": "Historial de Pedidos",
@@ -15,20 +14,6 @@
     "dashboard_card_new_orders_desc": "+1 desde ayer",
     "dashboard_card_sales_month_desc": "+15.2% del mes pasado",
     "dashboard_card_low_stock_desc": "Productos necesitan reabastecimiento",
-    "orders_title": "Gestionar Pedidos",
-    "orders_card_title": "Todos los Pedidos de Clientes",
-    "orders_card_desc": "Ver, rastrear y actualizar el estado de los pedidos.",
-    "products_title": "Gestionar Productos",
-    "products_add_button": "Añadir Producto",
-    "products_card_title": "Catálogo de Productos",
-    "products_card_desc": "Añada, edite y gestione el inventario de sus productos.",
-    "users_title": "Gestionar Usuarios",
-    "users_card_title": "Todos los Usuarios",
-    "users_card_desc": "Asignar y remover roles de administrador para los usuarios.",
-    "portal_title": "Realizar un Nuevo Pedido",
-    "history_title": "Su Historial de Pedidos",
-    "history_card_title": "Pedidos Anteriores",
-    "history_card_desc": "Aquí puede encontrar todos sus pedidos anteriores y sus estados.",
     "header_settings": "Configuración",
     "header_support": "Soporte",
     "header_logout": "Cerrar Sesión",
@@ -40,5 +25,10 @@
     "period_month": "Este Mes",
     "period_quarter": "Este Trimestre",
     "period_semester": "Este Semestre",
-    "period_year": "Este Año"
+    "period_year": "Este Año",
+    "sales_trend": "+20% acumulado anual",
+    "orders_trend": "{count} nuevos",
+    "clients_trend": "{count} este periodo",
+    "savings_trend": "¡Buen trabajo!",
+    "select_period_placeholder": "Seleccionar período"
 }
