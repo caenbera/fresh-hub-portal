@@ -1,3 +1,4 @@
+
 {
     "sidebar_new_order": "Nuevo Pedido",
     "sidebar_order_history": "Historial de Pedidos",
@@ -30,5 +31,14 @@
     "history_card_desc": "Aquí puede encontrar todos sus pedidos anteriores y sus estados.",
     "header_settings": "Configuración",
     "header_support": "Soporte",
-    "header_logout": "Cerrar Sesión"
+    "header_logout": "Cerrar Sesión",
+    "kpi_sales_label": "Ventas",
+    "kpi_orders_label": "Pedidos",
+    "kpi_clients_label": "Clientes Nuevos",
+    "kpi_savings_label": "Ahorros (Compras)",
+    "period_week": "Esta Semana",
+    "period_month": "Este Mes",
+    "period_quarter": "Este Trimestre",
+    "period_semester": "Este Semestre",
+    "period_year": "Este Año"
 }

@@ -1,3 +1,4 @@
+
 {
     "sidebar_new_order": "New Order",
     "sidebar_order_history": "Order History",
@@ -30,5 +31,14 @@
     "history_card_desc": "Here you can find all your previous orders and their statuses.",
     "header_settings": "Settings",
     "header_support": "Support",
-    "header_logout": "Logout"
+    "header_logout": "Logout",
+    "kpi_sales_label": "Sales",
+    "kpi_orders_label": "Orders",
+    "kpi_clients_label": "New Clients",
+    "kpi_savings_label": "Savings (Purchases)",
+    "period_week": "This Week",
+    "period_month": "This Month",
+    "period_quarter": "This Quarter",
+    "period_semester": "This Semester",
+    "period_year": "This Year"
 }

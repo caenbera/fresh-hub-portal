@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -32,39 +32,55 @@ import {
   DollarSign,
   ShoppingBasket,
   UserPlus,
-  Receipt,
   ArrowUp,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  PiggyBank,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import { useAllOrders } from '@/hooks/use-all-orders';
 import { useUsers } from '@/hooks/use-users';
 import { useProducts } from '@/hooks/use-products';
+import { usePurchaseOrders } from '@/hooks/use-purchase-orders';
 
-import { format, subDays } from 'date-fns';
+import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from '@/navigation';
 
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
 };
 
+const getSemesterDetails = (date: Date) => {
+  const month = date.getMonth();
+  const year = date.getFullYear();
+  if (month < 6) { // First semester (Jan - Jun)
+    return { start: new Date(year, 0, 1), end: new Date(year, 5, 30, 23, 59, 59, 999) };
+  } else { // Second semester (Jul - Dec)
+    return { start: new Date(year, 6, 1), end: new Date(year, 11, 31, 23, 59, 59, 999) };
+  }
+};
+
 
 export default function DashboardPage() {
   const router = useRouter();
   const locale = useLocale();
+  const t = useTranslations('Dashboard');
+
+  const [period, setPeriod] = useState('month');
 
   const { orders, loading: ordersLoading } = useAllOrders();
   const { users, loading: usersLoading } = useUsers();
   const { products, loading: productsLoading } = useProducts();
+  const { purchaseOrders, loading: poLoading } = usePurchaseOrders();
 
-  const loading = ordersLoading || usersLoading || productsLoading;
+  const loading = ordersLoading || usersLoading || productsLoading || poLoading;
   
   const now = new Date();
   const currentDate = now.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
@@ -73,20 +89,50 @@ export default function DashboardPage() {
   const kpiData = useMemo(() => {
     if (loading) return null;
 
-    const totalSales = orders.reduce((acc, order) => acc + order.total, 0);
-    const totalOrders = orders.length;
-    const averageTicket = totalOrders > 0 ? totalSales / totalOrders : 0;
+    let startDate, endDate;
+    const now = new Date();
+
+    switch (period) {
+        case 'week':
+            startDate = startOfWeek(now);
+            endDate = endOfWeek(now);
+            break;
+        case 'quarter':
+            startDate = startOfQuarter(now);
+            endDate = endOfQuarter(now);
+            break;
+        case 'semester':
+            const sem = getSemesterDetails(now);
+            startDate = sem.start;
+            endDate = sem.end;
+            break;
+        case 'year':
+            startDate = startOfYear(now);
+            endDate = endOfYear(now);
+            break;
+        case 'month':
+        default:
+            startDate = startOfMonth(now);
+            endDate = endOfMonth(now);
+            break;
+    }
     
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const newClientsThisMonth = users.filter(user => user.createdAt?.toDate() >= startOfMonth).length;
+    const filteredOrders = orders.filter(o => o.createdAt.toDate() >= startDate && o.createdAt.toDate() <= endDate);
+    const filteredUsers = users.filter(u => u.createdAt?.toDate() >= startDate && u.createdAt?.toDate() <= endDate);
+    const filteredPOs = purchaseOrders.filter(po => po.status === 'completed' && po.completedAt && po.completedAt.toDate() >= startDate && po.completedAt.toDate() <= endDate);
+
+    const totalSales = filteredOrders.reduce((acc, order) => acc + order.total, 0);
+    const totalOrders = filteredOrders.length;
+    const newClientsThisPeriod = filteredUsers.length;
+    const totalSavings = filteredPOs.reduce((acc, po) => acc + (po.discountInfo?.appliedDiscount?.amount || 0), 0);
 
     return {
       sales: { val: formatCurrency(totalSales), trend: "+20% YTD", trendType: "up" },
-      orders: { val: totalOrders, trend: `${orders.filter(o => o.status === 'pending').length} nuevos`, trendType: "up" },
-      clients: { val: newClientsThisMonth, trend: `+${newClientsThisMonth} este mes`, trendType: "up" },
-      ticket: { val: formatCurrency(averageTicket), trend: "+8%", trendType: "up" },
+      orders: { val: totalOrders, trend: `${filteredOrders.filter(o => o.status === 'pending').length} nuevos`, trendType: "up" },
+      clients: { val: newClientsThisPeriod, trend: `+${newClientsThisPeriod} este periodo`, trendType: "up" },
+      savings: { val: formatCurrency(totalSavings), trend: "Buen trabajo!", trendType: "up" },
     };
-  }, [loading, orders, users]);
+  }, [loading, orders, users, purchaseOrders, period]);
 
   const salesChartData = useMemo(() => {
       if (loading) return [];
@@ -165,27 +211,49 @@ export default function DashboardPage() {
     }
   };
 
+  const periodLabels: Record<string, string> = {
+      week: t('period_week'),
+      month: t('period_month'),
+      quarter: t('period_quarter'),
+      semester: t('period_semester'),
+      year: t('period_year'),
+  }
+
   const kpiCardsConfig = [
-    { metric: 'sales', label: 'Ventas (Total)', icon: <DollarSign />, iconBg: 'bg-green-100 text-green-600' },
-    { metric: 'orders', label: 'Pedidos (Total)', icon: <ShoppingBasket />, iconBg: 'bg-blue-100 text-blue-600' },
-    { metric: 'clients', label: 'Clientes Nuevos (Mes)', icon: <UserPlus />, iconBg: 'bg-purple-100 text-purple-600' },
-    { metric: 'ticket', label: 'Ticket Prom.', icon: <Receipt />, iconBg: 'bg-orange-100 text-orange-600' },
+    { metric: 'sales', labelKey: 'kpi_sales_label', icon: <DollarSign />, iconBg: 'bg-green-100 text-green-600' },
+    { metric: 'orders', labelKey: 'kpi_orders_label', icon: <ShoppingBasket />, iconBg: 'bg-blue-100 text-blue-600' },
+    { metric: 'clients', labelKey: 'kpi_clients_label', icon: <UserPlus />, iconBg: 'bg-purple-100 text-purple-600' },
+    { metric: 'savings', labelKey: 'kpi_savings_label', icon: <PiggyBank />, iconBg: 'bg-indigo-100 text-indigo-600' },
   ];
 
   return (
     <div className="flex flex-col gap-8 bg-gray-50/50 p-4 sm:p-6 lg:p-8 rounded-xl">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">Hola, Administrador 👋</h1>
-        <p className="text-muted-foreground">Resumen de actividad, <span id="currentDate">{currentDate}</span></p>
+      <div className="flex justify-between items-start flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Hola, Administrador 👋</h1>
+          <p className="text-muted-foreground">Resumen de actividad, <span id="currentDate">{currentDate}</span></p>
+        </div>
+        <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="week">{t('period_week')}</SelectItem>
+                <SelectItem value="month">{t('period_month')}</SelectItem>
+                <SelectItem value="quarter">{t('period_quarter')}</SelectItem>
+                <SelectItem value="semester">{t('period_semester')}</SelectItem>
+                <SelectItem value="year">{t('period_year')}</SelectItem>
+            </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {loading ? Array.from({length: 4}).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-2xl" />) :
-          kpiCardsConfig.map(({ metric, label, icon, iconBg }) => (
+          kpiCardsConfig.map(({ metric, labelKey, icon, iconBg }) => (
           <Card key={metric} className="shadow-sm hover:shadow-md transition-shadow duration-200 rounded-2xl">
             <CardHeader className="pb-2">
               <div className="flex justify-between items-start">
-                <span className="text-sm font-semibold text-gray-500 uppercase">{label}</span>
+                <span className="text-sm font-semibold text-gray-500 uppercase">{t(labelKey as any)} ({periodLabels[period]})</span>
               </div>
             </CardHeader>
             <CardContent>
