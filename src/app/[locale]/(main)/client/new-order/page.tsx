@@ -373,7 +373,7 @@ export default function NewOrderPage() {
                 key="all"
                 variant={activeSubcategory === 'all' ? 'secondary' : 'ghost'}
                 size="sm"
-                className="rounded-full h-7 px-2.5 text-xs flex-shrink-0 whitespace-nowrap bg-blue-50 hover:bg-blue-100 text-blue-800"
+                className="border rounded-full h-7 px-2.5 text-xs flex-shrink-0 whitespace-nowrap bg-blue-50 hover:bg-blue-100 text-blue-800"
                 onClick={() => setActiveSubcategory('all')}
               >
                 Todos
@@ -383,7 +383,7 @@ export default function NewOrderPage() {
                   key={subcat.es}
                   variant={activeSubcategory === subcat.es ? 'secondary' : 'ghost'}
                   size="sm"
-                  className="rounded-full h-7 px-2.5 text-xs flex-shrink-0 whitespace-nowrap bg-blue-50 hover:bg-blue-100 text-blue-800"
+                  className="border rounded-full h-7 px-2.5 text-xs flex-shrink-0 whitespace-nowrap bg-blue-50 hover:bg-blue-100 text-blue-800"
                   onClick={() => setActiveSubcategory(subcat.es)}
                 >
                   {subcat[locale] || subcat.es}
@@ -414,6 +414,8 @@ export default function NewOrderPage() {
             const quantity = cart[p.id]?.quantity || 0;
             const hasNote = !!notes[p.id];
             const unitText = typeof p.unit === 'object' && p.unit?.[locale] ? p.unit[locale] : (p.unit as any);
+            const categoryText = typeof p.category === 'object' && p.category?.[locale] ? p.category[locale] : (p.category as any);
+            const subCategoryText = typeof p.subcategory === 'object' && p.subcategory?.[locale] ? p.subcategory[locale] : (p.subcategory as any);
             return (
               <div key={p.id} className="bg-background border-b p-2 flex items-center gap-2">
                 <button type="button" onClick={() => setImageToView(p.photoUrl || '/placeholder.svg')} className="shrink-0 rounded-lg overflow-hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
@@ -495,7 +497,7 @@ export default function NewOrderPage() {
 
       {/* Image Zoom Modal */}
       <Dialog open={!!imageToView} onOpenChange={(isOpen) => !isOpen && setImageToView(null)}>
-        <DialogContent className="p-0 border-none bg-transparent shadow-none w-auto max-w-[90vw] sm:max-w-xl">
+        <DialogContent className="p-0 border-none bg-transparent shadow-none max-w-xl">
           {imageToView && (
             <Image
               src={imageToView}
