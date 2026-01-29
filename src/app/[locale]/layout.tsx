@@ -41,14 +41,14 @@ export default async function RootLayout({
         <link rel="icon" href={iconUrl} type="image/png" />
         <link rel="apple-touch-icon" href={iconUrl}></link>
         <meta name="theme-color" content="#27ae60" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.googleapis.com  " />
         <link
           rel="preconnect"
-          href="https://fonts.gstatic.com"
+          href="https://fonts.gstatic.com  "
           crossOrigin="anonymous"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@400;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter  :wght@300;400;600;700&family=Poppins:wght@400;600;700&display=swap"
           rel="stylesheet"
         />
       </head>
