@@ -1,0 +1,16 @@
+{
+  "title": "Purchase Orders",
+  "subtitle": "Manage and confirm the reception of your purchase orders.",
+  "pending_tab": "Pending",
+  "completed_tab": "Completed",
+  "po_id_header": "PO ID",
+  "supplier_header": "Supplier",
+  "date_sent_header": "Date Sent",
+  "total_header": "Total",
+  "action_header": "Action",
+  "confirm_reception_button": "Confirm Reception",
+  "no_pending_pos": "No purchase orders pending reception.",
+  "date_completed_header": "Date Completed",
+  "final_total_header": "Final Total",
+  "no_completed_pos": "No completed purchase orders yet."
+}

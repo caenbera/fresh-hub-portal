@@ -25,6 +25,7 @@ async function getMessages(locale: string) {
     const clientNewOrderPageMessages = (await import(`./messages/${locale}/ClientNewOrderPage.json`)).default;
     const suppliersPageMessages = (await import(`./messages/${locale}/SuppliersPage.json`)).default;
     const purchasingPageMessages = (await import(`./messages/${locale}/PurchasingPage.json`)).default;
+    const purchaseOrdersPageMessages = (await import(`./messages/${locale}/PurchaseOrdersPage.json`)).default;
     const clientsPageMessages = (await import(`./messages/${locale}/ClientsPage.json`)).default;
     const ordersPageMessages = (await import(`./messages/${locale}/OrdersPage.json`)).default;
     const pickingPageMessages = (await import(`./messages/${locale}/PickingPage.json`)).default;
@@ -61,6 +62,7 @@ async function getMessages(locale: string) {
       ClientNewOrderPage: clientNewOrderPageMessages,
       SuppliersPage: suppliersPageMessages,
       PurchasingPage: purchasingPageMessages,
+      PurchaseOrdersPage: purchaseOrdersPageMessages,
       ClientsPage: clientsPageMessages,
       OrdersPage: ordersPageMessages,
       PickingPage: pickingPageMessages,

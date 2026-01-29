@@ -64,6 +64,7 @@ export function AppSidebar() {
         { href: '/admin/products', label: t('manageProducts'), icon: Package },
         { href: '/admin/clients', label: t('manageClients'), icon: Users },
         { href: '/admin/purchasing', label: t('purchasing'), icon: ShoppingBag },
+        { href: '/admin/purchase-orders', label: t('purchaseOrders'), icon: ClipboardList },
         { href: '/admin/suppliers', label: t('suppliers'), icon: Truck },
         { href: '/admin/rewards', label: t('rewards'), icon: Trophy },
         { href: '/admin/support', label: t('support'), icon: Headset },
@@ -76,6 +77,7 @@ export function AppSidebar() {
       ],
       purchaser: [
         { href: '/admin/purchasing', label: t('purchasing'), icon: ShoppingBag },
+        { href: '/admin/purchase-orders', label: t('purchaseOrders'), icon: ClipboardList },
         { href: '/admin/products', label: t('manageProducts'), icon: Package },
       ]
     },
@@ -92,6 +94,7 @@ export function AppSidebar() {
         { href: '/admin/products', label: t('manageProducts'), icon: Package },
         { href: '/admin/clients', label: t('manageClients'), icon: Users },
         { href: '/admin/purchasing', label: t('purchasing'), icon: ShoppingBag },
+        { href: '/admin/purchase-orders', label: t('purchaseOrders'), icon: ClipboardList },
         { href: '/admin/suppliers', label: t('suppliers'), icon: Truck },
         { href: '/admin/rewards', label: t('rewards'), icon: Trophy },
         { href: '/admin/support', label: t('support'), icon: Headset },
@@ -101,6 +104,7 @@ export function AppSidebar() {
       ],
       purchaser: [
         { href: '/admin/purchasing', label: t('purchasing'), icon: ShoppingBag },
+        { href: '/admin/purchase-orders', label: t('purchaseOrders'), icon: ClipboardList },
         { href: '/admin/products', label: t('manageProducts'), icon: Package },
       ]
     }

@@ -1,4 +1,3 @@
-
 {
     "title": "Purchasing Center",
     "subtitle": "Restocking and supplier management",
@@ -53,15 +52,6 @@
     "po_saved_success_desc": "Purchase Order {poId} has been saved. You can now confirm its reception.",
     "po_saved_error_title": "Error Saving PO",
     "po_saved_error_desc": "There was a problem saving the purchase order. Please try again.",
-    "pending_receptions_title": "Pending Receptions",
-    "pending_receptions_subtitle": "Confirm the merchandise received to finalize the purchase orders.",
-    "reception_id_header": "PO ID",
-    "reception_supplier_header": "Supplier",
-    "reception_date_header": "Date Sent",
-    "reception_confirm_button": "Confirm Reception",
-    "no_pending_receptions": "No purchase orders pending reception.",
-    "confirm_reception_title": "Confirm Goods Reception",
-    "confirm_reception_desc": "Verify the quantities received for PO {poId} from {supplierName}. Adjust if necessary.",
     "reception_ordered_qty": "Ordered",
     "reception_received_qty": "Received",
     "final_discount_note": "Final discount will be recalculated upon confirmation.",

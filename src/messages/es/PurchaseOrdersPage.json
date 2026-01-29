@@ -1,0 +1,16 @@
+{
+  "title": "Órdenes de Compra",
+  "subtitle": "Gestiona y confirma la recepción de tus órdenes de compra.",
+  "pending_tab": "Pendientes",
+  "completed_tab": "Completadas",
+  "po_id_header": "ID de OC",
+  "supplier_header": "Proveedor",
+  "date_sent_header": "Fecha de Envío",
+  "total_header": "Total",
+  "action_header": "Acción",
+  "confirm_reception_button": "Confirmar Recepción",
+  "no_pending_pos": "No hay órdenes de compra pendientes de recepción.",
+  "date_completed_header": "Fecha de Finalización",
+  "final_total_header": "Total Final",
+  "no_completed_pos": "Aún no hay órdenes de compra completadas."
+}
