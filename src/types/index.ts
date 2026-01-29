@@ -55,6 +55,10 @@ export interface Product {
   description?: string;
   photoUrl?: string;
   category: ProductCategory;
+  subcategory?: {
+    es: string;
+    en: string;
+  };
   unit: {
     es: string;
     en: string;

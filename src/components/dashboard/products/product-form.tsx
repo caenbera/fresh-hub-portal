@@ -44,6 +44,10 @@ const formSchema = z.object({
     es: z.string().min(1, 'La categoría en español es requerida.'),
     en: z.string().min(1, 'The category in English is required.'),
   }),
+  subcategory: z.object({
+    es: z.string().optional(),
+    en: z.string().optional(),
+  }).partial().optional(),
   unit: z.object({
     es: z.string().min(1, 'La unidad en español es requerida.'),
     en: z.string().min(1, 'The unit in English is required.'),
@@ -97,7 +101,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      sku: '', name: { es: '', en: '' }, category: { es: '', en: '' }, unit: { es: '', en: '' },
+      sku: '', name: { es: '', en: '' }, category: { es: '', en: '' }, subcategory: { es: '', en: '' }, unit: { es: '', en: '' },
       suppliers: [], salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '', pricingMethod: 'margin'
     },
   });
@@ -189,13 +193,14 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
       return {
         ...product,
         photoUrl: product.photoUrl || '',
+        subcategory: product.subcategory || { es: '', en: '' },
         suppliers: suppliersArray,
         pricingMethod: product.pricingMethod || 'margin',
       };
     }
     const supplierContextId = pathname.includes('/suppliers/') ? pathname.split('/suppliers/')[1].split('/')[0] : defaultSupplierId;
     return {
-      sku: '', name: { es: '', en: '' }, category: { es: '', en: '' }, unit: { es: '', en: '' },
+      sku: '', name: { es: '', en: '' }, category: { es: '', en: '' }, subcategory: { es: '', en: '' }, unit: { es: '', en: '' },
       suppliers: supplierContextId ? [{ supplierId: supplierContextId, cost: 0, isPrimary: true }] : [],
       salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '', pricingMethod: 'margin',
     };
@@ -238,7 +243,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
           finalSuppliers.push({ supplierId: supplierContextId, cost: 0, isPrimary: finalSuppliers.length === 0 });
         }
         
-        form.reset({ ...existingProduct, suppliers: finalSuppliers, photoUrl: existingProduct.photoUrl || '', pricingMethod: existingProduct.pricingMethod || 'margin' });
+        form.reset({ ...existingProduct, suppliers: finalSuppliers, photoUrl: existingProduct.photoUrl || '', pricingMethod: existingProduct.pricingMethod || 'margin', subcategory: existingProduct.subcategory || { es: '', en: '' } });
         setImgUrlInputValue(existingProduct.photoUrl || '');
         updatePercentageInputs();
       } else {
@@ -294,7 +299,12 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
 
   async function onSubmit(values: ProductFormValues) {
     setIsLoading(true);
-    const finalValues = { ...values, suppliers: values.suppliers.filter(s => s.supplierId) };
+    const finalValues: any = { ...values, suppliers: values.suppliers.filter(s => s.supplierId) };
+
+    if (!finalValues.subcategory?.es || !finalValues.subcategory?.en) {
+      delete finalValues.subcategory;
+    }
+
     if (finalValues.suppliers.length === 0) {
         form.setError("suppliers", { type: "manual", message: "At least one complete supplier entry is required." });
         setIsLoading(false);
@@ -353,6 +363,11 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField control={form.control} name="category" render={({ field }) => (<FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_category')}</FormLabel><div className="flex items-center gap-2">{isCategoryInputMode ? (<div className="flex-grow grid grid-cols-2 gap-2 animate-in fade-in zoom-in-95 duration-200"><Input ref={esCategoryInputRef} placeholder="Nombre en Español" className="border-primary/50 ring-2 ring-primary/10" /><Input ref={enCategoryInputRef} placeholder="Name in English" className="border-primary/50 ring-2 ring-primary/10" /><Button type="button" size="icon" className="bg-green-600 hover:bg-green-700 h-10 w-10" onClick={handleSaveCategory} title={t('save')}><Check className="h-4 w-4" /></Button><Button type="button" size="icon" variant="ghost" className="text-muted-foreground h-10 w-10" onClick={cancelCategoryInput} title={t('cancel')}><Undo2 className="h-4 w-4" /></Button></div>) : (<><Select onValueChange={(value) => { if (!value) return; try { const parsedValue = JSON.parse(value); field.onChange(parsedValue); } catch (e) { console.error("Failed to parse category value", e); } }} value={field.value?.es ? JSON.stringify(field.value) : ""}><FormControl><SelectTrigger className="h-10 bg-white flex-grow"><SelectValue placeholder={t('form_placeholder_select_category')}>{field.value?.es || t('form_placeholder_select_category')}</SelectValue></SelectTrigger></FormControl><SelectContent>{categories.map(c => <SelectItem key={c.id} value={JSON.stringify(c)}>{c.es}</SelectItem>)}</SelectContent></Select><div className="flex gap-1 shrink-0 bg-gray-50 p-1 rounded-md border border-gray-200"><Button type="button" variant="ghost" size="icon" className="h-8 w-8" disabled={!currentCategory?.es} onClick={startEditingCategory}><Pencil className="h-3.5 w-3.5" /></Button><Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled={!currentCategory?.es} onClick={handleDeleteCategory}><Trash2 className="h-3.5 w-3.5" /></Button><Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={startCreatingCategory}><Plus className="h-4 w-4" /></Button></div></>)}</div><FormMessage /></FormItem>)}/>
                 <FormField control={form.control} name="unit" render={({ field }) => (<FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_unit')}</FormLabel><div className="flex items-center gap-2">{isUnitInputMode ? (<div className="flex-grow grid grid-cols-2 gap-2 animate-in fade-in zoom-in-95 duration-200"><Input ref={esUnitInputRef} placeholder="Unidad en Español" className="border-primary/50 ring-2 ring-primary/10" /><Input ref={enUnitInputRef} placeholder="Unit in English" className="border-primary/50 ring-2 ring-primary/10" /><Button type="button" size="icon" className="bg-green-600 hover:bg-green-700 h-10 w-10" onClick={handleSaveUnit} title={t('save')}><Check className="h-4 w-4" /></Button><Button type="button" size="icon" variant="ghost" className="text-muted-foreground h-10 w-10" onClick={cancelUnitInput} title={t('cancel')}><Undo2 className="h-4 w-4" /></Button></div>) : (<><Select onValueChange={(value) => { if (!value) return; try { const parsedValue = JSON.parse(value); field.onChange(parsedValue); } catch (e) { console.error("Failed to parse unit value", e); } }} value={field.value?.es ? JSON.stringify(field.value) : ""}><FormControl><SelectTrigger className="h-10 bg-white flex-grow"><SelectValue placeholder="Selecciona una unidad">{field.value?.es || "Selecciona una unidad"}</SelectValue></SelectTrigger></FormControl><SelectContent>{units.map(u => <SelectItem key={u.id} value={JSON.stringify(u)}>{u.es}</SelectItem>)}</SelectContent></Select><div className="flex gap-1 shrink-0 bg-gray-50 p-1 rounded-md border border-gray-200"><Button type="button" variant="ghost" size="icon" className="h-8 w-8" disabled={!currentUnit?.es} onClick={startEditingUnit}><Pencil className="h-3.5 w-3.5" /></Button><Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-destructive" disabled={!currentUnit?.es} onClick={handleDeleteUnit}><Trash2 className="h-3.5 w-3.5" /></Button><Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-primary" onClick={startCreatingUnit}><Plus className="h-4 w-4" /></Button></div></>)}</div><FormMessage /></FormItem>)}/>
+            </div>
+
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField control={form.control} name="subcategory.es" render={({ field }) => ( <FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Subcategoría (Opcional)</FormLabel><FormControl><Input placeholder="Ej: Vasos, Platos" className="h-10 bg-white" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="subcategory.en" render={({ field }) => ( <FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">Subcategory (Optional)</FormLabel><FormControl><Input placeholder="e.g., Cups, Plates" className="h-10 bg-white" {...field} /></FormControl><FormMessage /></FormItem> )} />
             </div>
             
             <hr className="my-2 border-dashed border-gray-200" />

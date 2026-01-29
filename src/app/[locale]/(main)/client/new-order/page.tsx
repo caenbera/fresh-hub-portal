@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo, useEffect } from 'react';
@@ -108,6 +109,7 @@ export default function NewOrderPage() {
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>(addDays(new Date(), 1));
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
+  const [activeSubcategory, setActiveSubcategory] = useState('all');
 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
@@ -166,6 +168,18 @@ export default function NewOrderPage() {
     }
   }, [allCategories, activeCategory]);
 
+  const subcategories = useMemo(() => {
+    if (!activeCategory || loading) return [];
+    const productsInCategory = unifiedProductsForClient.filter(p => p.category.es === activeCategory);
+    const uniqueSubcats = new Map<string, { es: string; en: string }>();
+    productsInCategory.forEach(p => {
+      if (p.subcategory?.es) {
+        uniqueSubcats.set(p.subcategory.es, p.subcategory);
+      }
+    });
+    return Array.from(uniqueSubcats.values()).sort((a, b) => a.es.localeCompare(b.es));
+  }, [activeCategory, unifiedProductsForClient, loading]);
+
   const filteredProducts = useMemo(() => {
     if (loading) return [];
 
@@ -177,6 +191,10 @@ export default function NewOrderPage() {
       productList = unifiedProductsForClient.filter(p => p.category.es === activeCategory);
     }
     
+    if (activeSubcategory !== 'all') {
+      productList = productList.filter(p => p.subcategory?.es === activeSubcategory);
+    }
+    
     if (searchTerm) {
       productList = productList.filter(p => p.name[locale].toLowerCase().includes(searchTerm.toLowerCase()));
     }
@@ -184,7 +202,7 @@ export default function NewOrderPage() {
     // Sort the resulting list alphabetically by name based on the current locale
     return productList.sort((a, b) => a.name[locale].localeCompare(b.name[locale]));
     
-  }, [activeCategory, searchTerm, unifiedProductsForClient, loading, favoriteProductIds, t, locale]);
+  }, [activeCategory, activeSubcategory, searchTerm, unifiedProductsForClient, loading, favoriteProductIds, t, locale]);
 
   const { orderItems, subtotal, discountAmount, total, totalItems, priceListName, discountPercentage } = useMemo(() => {
     if (loading) return { orderItems: [], subtotal: 0, discountAmount: 0, total: 0, totalItems: 0, priceListName: '', discountPercentage: 0 };
@@ -337,7 +355,10 @@ export default function NewOrderPage() {
                 variant={activeCategory === cat.es ? 'default' : 'outline'}
                 size="sm"
                 className="rounded-full h-7 px-2.5 text-xs flex-shrink-0 whitespace-nowrap"
-                onClick={() => setActiveCategory(cat.es)}
+                onClick={() => {
+                  setActiveCategory(cat.es);
+                  setActiveSubcategory('all');
+                }}
               >
                 {cat.isFavorite && <Star className="h-3.5 w-3.5 mr-1 text-yellow-400" />}
                 {cat[locale] || cat.es}
@@ -345,6 +366,32 @@ export default function NewOrderPage() {
             ))}
           </div>
         </div>
+        {subcategories.length > 0 && (
+          <div className="relative h-9 overflow-x-auto hide-scrollbar mt-1">
+            <div className="absolute left-0 top-0 flex items-center gap-1.5 px-3 min-w-full">
+              <Button
+                key="all"
+                variant={activeSubcategory === 'all' ? 'secondary' : 'ghost'}
+                size="sm"
+                className="rounded-full h-7 px-2.5 text-xs flex-shrink-0 whitespace-nowrap bg-blue-50 hover:bg-blue-100 text-blue-800"
+                onClick={() => setActiveSubcategory('all')}
+              >
+                Todos
+              </Button>
+              {subcategories.map((subcat: any) => (
+                <Button
+                  key={subcat.es}
+                  variant={activeSubcategory === subcat.es ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="rounded-full h-7 px-2.5 text-xs flex-shrink-0 whitespace-nowrap bg-blue-50 hover:bg-blue-100 text-blue-800"
+                  onClick={() => setActiveSubcategory(subcat.es)}
+                >
+                  {subcat[locale] || subcat.es}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Product List */}
@@ -379,7 +426,7 @@ export default function NewOrderPage() {
                   />
                 </button>
                 <div className="flex-grow min-w-0">
-                  <p className="font-medium text-sm leading-tight truncate">{p.name[locale]}</p>
+                  <p className="font-medium text-sm leading-tight">{p.name[locale]}</p>
                   <div className="text-xs text-muted-foreground flex items-center mt-0.5">
                     <span>{formatCurrency(p.salePrice)} / {unitText}</span>
                     <Button
