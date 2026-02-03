@@ -38,7 +38,8 @@ const CSV_TEMPLATE_HEADERS = [
   'subcategoria_en',
   'unidad_es',
   'unidad_en',
-  'es_caja' // VERDADERO o FALSO
+  'es_caja', // VERDADERO o FALSO
+  'calculationDirection' // 'costToPrice' or 'priceToCost'
 ];
 
 export function ProductImportDialog({ open, onOpenChange, supplierId, supplierName, products }: ProductImportDialogProps) {
@@ -112,6 +113,7 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
           product.unit.es,
           product.unit.en,
           product.isBox,
+          product.calculationDirection ?? 'costToPrice',
         ].map(formatForCsv);
         
         csvRows.push(row.join(','));
@@ -168,29 +170,40 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
             const margen = rowData.margen && !isNaN(parseFloat(rowData.margen)) ? parseFloat(rowData.margen) : null;
             const markup = rowData.markup && !isNaN(parseFloat(rowData.markup)) ? parseFloat(rowData.markup) : null;
             let metodo_precios = rowData.metodo_precios === 'markup' ? 'markup' : 'margin';
-            let calculationDirection: 'costToPrice' | 'priceToCost' = 'costToPrice';
+            let calculationDirection: 'costToPrice' | 'priceToCost' = rowData.calculationDirection === 'priceToCost' ? 'priceToCost' : 'costToPrice';
 
-            if (costo_proveedor === null && precio_venta !== null && (margen !== null || markup !== null)) {
-              calculationDirection = 'priceToCost';
+            if (calculationDirection === 'priceToCost' && precio_venta !== null && (margen !== null || markup !== null)) {
               if (metodo_precios === 'margin' && margen !== null && margen < 100) {
                 costo_proveedor = precio_venta * (1 - (margen / 100));
               } else if (metodo_precios === 'markup' && markup !== null) {
                 costo_proveedor = precio_venta / (1 + (markup / 100));
               }
-            } else if (precio_venta === null && costo_proveedor !== null && (margen !== null || markup !== null)) {
-              calculationDirection = 'costToPrice';
+            } else if (calculationDirection === 'costToPrice' && costo_proveedor !== null && (margen !== null || markup !== null)) {
               if (metodo_precios === 'margin' && margen !== null && margen < 100) {
                 precio_venta = costo_proveedor / (1 - (margen / 100));
               } else if (metodo_precios === 'markup' && markup !== null) {
                 precio_venta = costo_proveedor * (1 + (markup / 100));
               }
             }
-
+            
             const existingProduct = await getProductBySku(sku);
 
             if (existingProduct) {
               // UPDATE logic
-              const updatePayload: any = {};
+              const updatePayload: Partial<ProductInput> = {};
+              
+              updatePayload.name = { es: rowData.nombre_interno_es, en: rowData.nombre_interno_en };
+              updatePayload.category = { es: rowData.categoria_es, en: rowData.categoria_en };
+              updatePayload.subcategory = { es: rowData.subcategoria_es, en: rowData.subcategoria_en };
+              updatePayload.unit = { es: rowData.unidad_es, en: rowData.unidad_en };
+              updatePayload.salePrice = precio_venta ?? existingProduct.salePrice;
+              updatePayload.stock = parseInt(rowData.stock_actual) || existingProduct.stock;
+              updatePayload.minStock = parseInt(rowData.stock_minimo) || existingProduct.minStock;
+              updatePayload.isBox = rowData.es_caja?.toUpperCase() === 'VERDADERO';
+              updatePayload.photoUrl = rowData.foto_url || '';
+              updatePayload.pricingMethod = metodo_precios;
+              updatePayload.calculationDirection = calculationDirection;
+
               const suppliers = [...existingProduct.suppliers];
               let supplierEntry = suppliers.find(s => s.supplierId === supplierId);
 
@@ -201,17 +214,6 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
                 suppliers.push({ supplierId, cost: costo_proveedor ?? 0, isPrimary: suppliers.length === 0, supplierProductName: rowData.nombre_producto_proveedor ?? '' });
               }
               updatePayload.suppliers = suppliers;
-
-              if (precio_venta !== null) updatePayload.salePrice = precio_venta;
-              updatePayload.photoUrl = rowData.foto_url || '';
-              updatePayload.pricingMethod = metodo_precios;
-              updatePayload.calculationDirection = calculationDirection;
-              if (rowData.stock_actual) updatePayload.stock = parseInt(rowData.stock_actual);
-              if (rowData.stock_minimo) updatePayload.minStock = parseInt(rowData.stock_minimo);
-              updatePayload.isBox = rowData.es_caja?.toUpperCase() === 'VERDADERO';
-              
-              if (rowData.nombre_interno_es) updatePayload.name = { ...existingProduct.name, es: rowData.nombre_interno_es };
-              if (rowData.nombre_interno_en) updatePayload.name = { ...(updatePayload.name || existingProduct.name), en: rowData.nombre_interno_en };
 
 
               await updateProduct(existingProduct.id, updatePayload);
