@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { addProduct, updateProduct, getProductBySku } from '@/lib/firestore/products';
 import type { Product, ProductCategory, ProductSupplier } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Camera, Plus, Check, Undo2, Pencil, Trash2, Loader2 } from 'lucide-react'; 
+import { Camera, Plus, Check, Undo2, Pencil, Trash2, Loader2, Package } from 'lucide-react'; 
 import { cn } from '@/lib/utils';
 import { useSuppliers } from '@/hooks/use-suppliers';
 
@@ -59,6 +59,7 @@ const formSchema = z.object({
   stock: z.coerce.number().int().min(0),
   minStock: z.coerce.number().int().min(0),
   active: z.boolean(),
+  isBox: z.boolean().optional(),
   photoUrl: z.string().optional(),
 });
 
@@ -103,7 +104,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
     resolver: zodResolver(formSchema),
     defaultValues: {
       sku: '', name: { es: '', en: '' }, category: { es: '', en: '' }, subcategory: { es: '', en: '' }, unit: { es: '', en: '' },
-      suppliers: [], salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '', pricingMethod: 'margin'
+      suppliers: [], salePrice: 0, stock: 0, minStock: 10, active: true, isBox: false, photoUrl: '', pricingMethod: 'margin'
     },
   });
 
@@ -197,13 +198,14 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
         subcategory: product.subcategory || { es: '', en: '' },
         suppliers: suppliersArray,
         pricingMethod: product.pricingMethod || 'margin',
+        isBox: product.isBox || false,
       };
     }
     const supplierContextId = pathname.includes('/suppliers/') ? pathname.split('/suppliers/')[1].split('/')[0] : defaultSupplierId;
     return {
       sku: '', name: { es: '', en: '' }, category: { es: '', en: '' }, subcategory: { es: '', en: '' }, unit: { es: '', en: '' },
       suppliers: supplierContextId ? [{ supplierId: supplierContextId, cost: 0, isPrimary: true, supplierProductName: '' }] : [],
-      salePrice: 0, stock: 0, minStock: 10, active: true, photoUrl: '', pricingMethod: 'margin',
+      salePrice: 0, stock: 0, minStock: 10, active: true, isBox: false, photoUrl: '', pricingMethod: 'margin',
     };
   };
   
@@ -499,10 +501,20 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
                   )}
                 />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField control={form.control} name="stock" render={({ field }) => (<FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_stock')}</FormLabel><FormControl><Input type="number" className="h-10" placeholder="0" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                 <FormField control={form.control} name="minStock" render={({ field }) => (<FormItem><FormLabel className="text-muted-foreground text-xs font-bold uppercase tracking-wider">{t('form_label_min_stock')}</FormLabel><FormControl><Input type="number" className="h-10 border-orange-200 focus:border-orange-400" placeholder="10" {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                <FormField control={form.control} name="active" render={({ field }) => (<FormItem className="flex items-center gap-3 p-2.5 border rounded-lg bg-gray-50 h-10 mt-6 md:mt-0"><FormControl><Switch id="prodActive" checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel htmlFor="prodActive" className="!m-0 text-sm font-medium cursor-pointer">{field.value ? t('form_label_active_true') : t('form_label_active_false')}</FormLabel></FormItem>)}/>
+            </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                 <FormField control={form.control} name="isBox" render={({ field }) => (
+                    <FormItem className="flex items-center gap-3 p-2.5 border rounded-lg bg-gray-50 h-10 mt-0">
+                        <FormControl><Switch id="isBox" checked={!!field.value} onCheckedChange={field.onChange} /></FormControl>
+                        <FormLabel htmlFor="isBox" className="!m-0 text-sm font-medium cursor-pointer flex items-center gap-2">
+                           <Package className="h-4 w-4 text-muted-foreground"/> {t('form_label_is_box')}
+                        </FormLabel>
+                    </FormItem>
+                )}/>
+                <FormField control={form.control} name="active" render={({ field }) => (<FormItem className="flex items-center gap-3 p-2.5 border rounded-lg bg-gray-50 h-10 mt-0"><FormControl><Switch id="prodActive" checked={field.value} onCheckedChange={field.onChange} /></FormControl><FormLabel htmlFor="prodActive" className="!m-0 text-sm font-medium cursor-pointer">{field.value ? t('form_label_active_true') : t('form_label_active_false')}</FormLabel></FormItem>)}/>
             </div>
             <div className="flex justify-end gap-3 pt-6 border-t mt-4">
               <Button type="button" variant="outline" size="lg" onClick={onSuccess}>{t('dialog_cancel')}</Button>

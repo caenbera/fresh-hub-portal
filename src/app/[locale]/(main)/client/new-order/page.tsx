@@ -231,6 +231,7 @@ export default function NewOrderPage() {
             quantity: cartItem.quantity,
             price: finalPrice, // Use the final price after the best discount
             photoUrl: product.photoUrl || '',
+            isBox: product.isBox || false,
         });
     }
 

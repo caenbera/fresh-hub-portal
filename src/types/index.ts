@@ -64,6 +64,7 @@ export interface Product {
     es: string;
     en: string;
   };
+  isBox?: boolean;
   suppliers: ProductSupplier[];
   salePrice: number;
   pricingMethod?: 'margin' | 'markup';
@@ -83,6 +84,7 @@ export interface OrderItem {
   };
   quantity: number;
   price: number; // This is the price at the time of order
+  isBox?: boolean;
 }
 
 export interface Order {

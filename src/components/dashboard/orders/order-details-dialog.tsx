@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocale } from 'next-intl';
 import {
   Dialog,
@@ -57,6 +58,16 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
   };
   
   if (!order) return null;
+
+  const totalBoxes = useMemo(() => {
+    if (!order?.items) return 0;
+    return order.items.reduce((acc, item) => {
+      if (item.isBox) {
+        return acc + item.quantity;
+      }
+      return acc;
+    }, 0);
+  }, [order]);
 
   const client = { // Placeholder data from prototype
     address: order.shippingAddress,
@@ -144,6 +155,12 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                   <TableCell colSpan={3} className="text-right">{t('details_total_header').toUpperCase()}</TableCell>
                   <TableCell className="text-right text-green-600">{formatCurrency(order.total)}</TableCell>
                 </TableRow>
+                 {totalBoxes > 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-right font-medium text-muted-foreground pt-3">{t('total_boxes_label')}</TableCell>
+                    <TableCell className="text-right font-bold pt-3">{totalBoxes}</TableCell>
+                  </TableRow>
+                )}
               </TableFoot>
             </Table>
           </ScrollArea>

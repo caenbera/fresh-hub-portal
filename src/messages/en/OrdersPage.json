@@ -1,3 +1,4 @@
+
 {
     "title": "Orders",
     "subtitle": "Manage and dispatch incoming orders",
@@ -28,6 +29,7 @@
     "details_client_note": "Client Note:",
     "details_print_button": "Print",
     "details_update_button": "Mark as {status}",
+    "total_boxes_label": "Total Packages",
     "status_new": "New",
     "status_preparing": "Preparing",
     "status_in_route": "In Route",
