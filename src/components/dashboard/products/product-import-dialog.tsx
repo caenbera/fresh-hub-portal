@@ -25,7 +25,6 @@ const CSV_TEMPLATE_HEADERS = [
   'precio_venta',
   'margen',
   'markup',
-  'metodo_precios', // 'margin' or 'markup'
   'foto_url',
   'stock_actual',
   'stock_minimo',
@@ -98,7 +97,6 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
           price,
           typeof margin === 'number' ? margin.toFixed(1) : '',
           typeof markup === 'number' ? markup.toFixed(1) : '',
-          product.pricingMethod ?? 'margin',
           product.photoUrl ?? '',
           product.stock,
           product.minStock,
@@ -150,28 +148,29 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
     setIsProcessing(true);
 
     const parseCsvRow = (row: string): string[] => {
-        const values: string[] = [];
-        let currentVal = '';
-        let inQuotes = false;
-        for (let i = 0; i < row.length; i++) {
-            const char = row[i];
-            if (char === '"') {
-                if (inQuotes && i + 1 < row.length && row[i + 1] === '"') {
-                    currentVal += '"';
-                    i++; 
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            } else if (char === ',' && !inQuotes) {
-                values.push(currentVal);
-                currentVal = '';
-            } else {
-                currentVal += char;
-            }
+      const values: string[] = [];
+      let currentVal = '';
+      let inQuotes = false;
+      for (let i = 0; i < row.length; i++) {
+        const char = row[i];
+        if (char === '"') {
+          if (inQuotes && i + 1 < row.length && row[i + 1] === '"') {
+            currentVal += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          values.push(currentVal.trim());
+          currentVal = '';
+        } else {
+          currentVal += char;
         }
-        values.push(currentVal);
-        return values;
+      }
+      values.push(currentVal.trim());
+      return values;
     };
+
 
     try {
         const text = await selectedFile.text();
@@ -179,7 +178,7 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
         const headerLine = rows.shift();
         if (!headerLine) throw new Error("CSV file is empty or has no header.");
 
-        const headers = parseCsvRow(headerLine).map(h => h.trim());
+        const headers = parseCsvRow(headerLine);
         
         let updatedCount = 0;
         let createdCount = 0;
@@ -193,33 +192,36 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
             }
             
             const rowData: any = headers.reduce((obj, header, index) => {
-                obj[header] = values[index]?.trim() || '';
+                obj[header] = values[index] || '';
                 return obj;
             }, {} as any);
 
               const sku = rowData.sku;
               if (!sku) continue;
 
-              let finalCost = rowData.costo_proveedor ? parseFloat(rowData.costo_proveedor) : null;
-              let finalSalePrice = rowData.precio_venta ? parseFloat(rowData.precio_venta) : null;
+              let costo_proveedor = rowData.costo_proveedor ? parseFloat(rowData.costo_proveedor) : null;
+              let precio_venta = rowData.precio_venta ? parseFloat(rowData.precio_venta) : null;
               const margen = rowData.margen ? parseFloat(rowData.margen) : null;
               const markup = rowData.markup ? parseFloat(rowData.markup) : null;
-              const metodo_precios = rowData.metodo_precios === 'markup' ? 'markup' : 'margin';
+              
+              let calculationDirection: 'costToPrice' | 'priceToCost' = 'costToPrice';
 
-              if (finalCost !== null && finalSalePrice === null) {
-                  if (metodo_precios === 'margin' && margen !== null && margen < 100) {
-                      finalSalePrice = finalCost / (1 - (margen / 100));
-                  } else if (metodo_precios === 'markup' && markup !== null) {
-                      finalSalePrice = finalCost * (1 + (markup / 100));
+              if (costo_proveedor === null && precio_venta !== null && (margen !== null || markup !== null)) {
+                  calculationDirection = 'priceToCost';
+                  if (margen !== null && margen < 100) {
+                      costo_proveedor = precio_venta * (1 - (margen / 100));
+                  } else if (markup !== null) {
+                      costo_proveedor = precio_venta / (1 + (markup / 100));
                   }
-              } else if (finalSalePrice !== null && finalCost === null) {
-                  if (metodo_precios === 'margin' && margen !== null && margen < 100) {
-                      finalCost = finalSalePrice * (1 - (margen / 100));
-                  } else if (metodo_precios === 'markup' && markup !== null) {
-                      finalCost = finalSalePrice / (1 + (markup / 100));
+              } else if (precio_venta === null && costo_proveedor !== null && (margen !== null || markup !== null)) {
+                  calculationDirection = 'costToPrice';
+                  if (margen !== null && margen < 100) {
+                      precio_venta = costo_proveedor / (1 - (margen / 100));
+                  } else if (markup !== null) {
+                      precio_venta = costo_proveedor * (1 + (markup / 100));
                   }
               }
-
+              
               const existingProduct = await getProductBySku(sku);
 
               if (existingProduct) {
@@ -229,30 +231,21 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
                   let supplierEntry = suppliers.find(s => s.supplierId === supplierId);
 
                   if (supplierEntry) {
-                      if (finalCost !== null) supplierEntry.cost = finalCost;
+                      if (costo_proveedor !== null) supplierEntry.cost = costo_proveedor;
                       if (rowData.nombre_producto_proveedor) supplierEntry.supplierProductName = rowData.nombre_producto_proveedor;
                   } else {
-                      suppliers.push({ supplierId, cost: finalCost ?? 0, isPrimary: suppliers.length === 0, supplierProductName: rowData.nombre_producto_proveedor ?? '' });
+                      suppliers.push({ supplierId, cost: costo_proveedor ?? 0, isPrimary: suppliers.length === 0, supplierProductName: rowData.nombre_producto_proveedor ?? '' });
                   }
                   updatePayload.suppliers = suppliers;
 
-                  if (finalSalePrice !== null) updatePayload.salePrice = finalSalePrice;
+                  if (precio_venta !== null) updatePayload.salePrice = precio_venta;
                   if (rowData.foto_url) updatePayload.photoUrl = rowData.foto_url;
-
-                  if (rowData.metodo_precios) {
-                      updatePayload.pricingMethod = rowData.metodo_precios;
-                  } else if (rowData.margen) {
-                      updatePayload.pricingMethod = 'margin';
-                  } else if (rowData.markup) {
-                      updatePayload.pricingMethod = 'markup';
-                  }
-                  
-                  if (rowData.nombre_interno_es) updatePayload.name = { ...existingProduct.name, es: rowData.nombre_interno_es };
-                  if (rowData.nombre_interno_en) updatePayload.name = { ...(updatePayload.name || existingProduct.name), en: rowData.nombre_interno_en };
+                  if (margen !== null) updatePayload.pricingMethod = 'margin';
+                  if (markup !== null) updatePayload.pricingMethod = 'markup';
                   if (rowData.stock_actual) updatePayload.stock = parseInt(rowData.stock_actual);
                   if (rowData.stock_minimo) updatePayload.minStock = parseInt(rowData.stock_minimo);
                   if (rowData.es_caja) updatePayload.isBox = rowData.es_caja.toUpperCase() === 'VERDADERO';
-
+                  if (calculationDirection) updatePayload.calculationDirection = calculationDirection;
 
                   await updateProduct(existingProduct.id, updatePayload);
                   updatedCount++;
@@ -264,14 +257,15 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
                       category: { es: rowData.categoria_es, en: rowData.categoria_en },
                       subcategory: { es: rowData.subcategoria_es, en: rowData.subcategoria_en },
                       unit: { es: rowData.unidad_es, en: rowData.unidad_en },
-                      salePrice: finalSalePrice ?? 0,
+                      salePrice: precio_venta ?? 0,
                       stock: parseInt(rowData.stock_actual) || 0,
                       minStock: parseInt(rowData.stock_minimo) || 10,
                       active: true,
                       isBox: rowData.es_caja?.toUpperCase() === 'VERDADERO',
-                      suppliers: [{ supplierId, cost: finalCost ?? 0, isPrimary: true, supplierProductName: rowData.nombre_producto_proveedor || '' }],
+                      suppliers: [{ supplierId, cost: costo_proveedor ?? 0, isPrimary: true, supplierProductName: rowData.nombre_producto_proveedor || '' }],
                       photoUrl: rowData.foto_url || '',
-                      pricingMethod: metodo_precios,
+                      pricingMethod: (margen !== null ? 'margin' : (markup !== null ? 'markup' : 'margin')),
+                      calculationDirection: calculationDirection,
                   };
 
                   if (!createPayload.name.es || !createPayload.category.es || !createPayload.unit.es || createPayload.salePrice <= 0) {
@@ -361,9 +355,3 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
     </Dialog>
   );
 }
-    
-
-      
-
-
-      

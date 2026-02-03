@@ -68,6 +68,7 @@ export interface Product {
   suppliers: ProductSupplier[];
   salePrice: number;
   pricingMethod?: 'margin' | 'markup';
+  calculationDirection?: 'costToPrice' | 'priceToCost';
   stock: number;
   minStock: number;
   active: boolean;
@@ -336,5 +337,3 @@ export interface PurchaseOrder {
 
 // Exporting Firebase User type for components
 export type { User };
-
-      
