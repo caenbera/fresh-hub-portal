@@ -41,6 +41,7 @@ async function getMessages(locale: string) {
     const adminSupportPageMessages = (await import(`./messages/${locale}/AdminSupportPage.json`)).default;
     const adminUsersPageMessages = (await import(`./messages/${locale}/AdminUsersPage.json`)).default;
     const notificationsMessages = (await import(`./messages/${locale}/Notifications.json`)).default;
+    const metadataMessages = (await import(`./messages/${locale}/Metadata.json`)).default;
 
 
     return {
@@ -78,6 +79,7 @@ async function getMessages(locale: string) {
       AdminSupportPage: adminSupportPageMessages,
       AdminUsersPage: adminUsersPageMessages,
       Notifications: notificationsMessages,
+      Metadata: metadataMessages,
     };
   } catch (error) {
     notFound();

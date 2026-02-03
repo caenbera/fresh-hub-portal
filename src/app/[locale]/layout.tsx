@@ -1,17 +1,54 @@
 import type { ReactNode } from 'react';
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server';
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import '../globals.css';
 import { AuthProvider } from '@/context/auth-context';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 import { NotificationProvider } from '@/context/notification-context';
 import { routing } from '@/i18n/routing';
+import type { Metadata } from 'next';
 
-// 👇 AGREGA ESTA FUNCIÓN
 export async function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
+
+export async function generateMetadata({
+  params: { locale },
+}: {
+  params: { locale: string };
+}): Promise<Metadata> {
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+  const iconUrl = "https://i.postimg.cc/sxBVGnMp/icon.png?v=2";
+
+  return {
+    title: t('title'),
+    description: t('description'),
+    openGraph: {
+      title: t('title'),
+      description: t('description'),
+      url: 'https://the-fresh-hub.com', // A placeholder URL is fine
+      siteName: 'Fresh Hub Portal',
+      images: [
+        {
+          url: iconUrl,
+          width: 512,
+          height: 512,
+          alt: 'Fresh Hub Logo',
+        },
+      ],
+      locale: locale === 'es' ? 'es_ES' : 'en_US',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title: t('title'),
+      description: t('description'),
+      images: [iconUrl],
+    },
+  };
+}
+
 
 export default async function RootLayout({
   children,
@@ -28,11 +65,6 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
-        <title>Fresh Hub Portal</title>
-        <meta
-          name="description"
-          content="Wholesale fresh produce for Chicago's latin businesses."
-        />
         <meta
           name="viewport"
           content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
