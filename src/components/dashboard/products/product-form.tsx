@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { addProduct, updateProduct, getProductBySku } from '@/lib/firestore/products';
 import type { Product, ProductCategory, ProductSupplier } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Camera, Plus, Check, Undo2, Pencil, Trash2, Loader2, Package } from 'lucide-react'; 
+import { Camera, Plus, Check, Undo2, Pencil, Trash2, Loader2, Box } from 'lucide-react'; 
 import { cn } from '@/lib/utils';
 import { useSuppliers } from '@/hooks/use-suppliers';
 
@@ -510,7 +510,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
                     <FormItem className="flex items-center gap-3 p-2.5 border rounded-lg bg-gray-50 h-10 mt-0">
                         <FormControl><Switch id="isBox" checked={!!field.value} onCheckedChange={field.onChange} /></FormControl>
                         <FormLabel htmlFor="isBox" className="!m-0 text-sm font-medium cursor-pointer flex items-center gap-2">
-                           <Package className="h-4 w-4 text-muted-foreground"/> {t('form_label_is_box')}
+                           <Box className="h-4 w-4 text-muted-foreground"/> {t('form_label_is_box')}
                         </FormLabel>
                     </FormItem>
                 )}/>
@@ -525,7 +525,20 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
         </form>
       </Form>
       <Dialog open={isUrlModalOpen} onOpenChange={setIsUrlModalOpen}>
-        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>{t('form_label_image_url_modal_title')}</DialogTitle></DialogHeader><div className="space-y-4 py-2"><Input value={imgUrlInputValue} onChange={(e) => setImgUrlInputValue(e.target.value)} placeholder="https://..." className="h-11"/><div className="h-40 bg-gray-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-200">{imgUrlInputValue ? (<Image src={imgUrlInputValue} alt="Preview" width={150} height={150} className="object-contain h-full w-full rounded-lg" />) : (<span className="text-sm text-muted-foreground">{t('form_label_image_url_modal_preview')}</span>)}</div></div><DialogFooter><Button onClick={handleApplyImageUrl} className="w-full">{t('form_button_apply_image')}</Button></DialogFooter></DialogContent>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('form_label_image_url_modal_title')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Input value={imgUrlInputValue} onChange={(e) => setImgUrlInputValue(e.target.value)} placeholder="https://..." className="h-11"/>
+            <div className="h-40 bg-gray-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-200">
+              {imgUrlInputValue ? (<Image src={imgUrlInputValue} alt="Preview" width={150} height={150} className="object-contain h-full w-full rounded-lg" />) : (<span className="text-sm text-muted-foreground">{t('form_label_image_url_modal_preview')}</span>)}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={handleApplyImageUrl} className="w-full">{t('form_button_apply_image')}</Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </>
   );
