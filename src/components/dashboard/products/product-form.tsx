@@ -276,6 +276,9 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
   };
 
   const photoUrl = form.watch('photoUrl');
+  const safePhotoUrl = photoUrl && (photoUrl.startsWith('http') || photoUrl.startsWith('/')) ? photoUrl : null;
+  const safeImgUrlInputValue = imgUrlInputValue && (imgUrlInputValue.startsWith('http') || imgUrlInputValue.startsWith('/')) ? imgUrlInputValue : null;
+
   const currentCategory = form.watch('category');
   const currentUnit = form.watch('unit');
 
@@ -340,7 +343,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
             <div className="flex flex-col md:flex-row gap-5 items-start">
                 <div className={cn("w-24 h-24 rounded-xl border-2 border-dashed flex items-center justify-center cursor-pointer overflow-hidden shrink-0 transition-all", photoUrl ? "border-transparent bg-muted" : "border-gray-300 bg-gray-50 hover:border-primary hover:text-primary hover:bg-green-50")} onClick={handleOpenUrlModal} title={t('form_label_change_image')}>
-                    {photoUrl ? <Image src={photoUrl} alt="Preview" width={96} height={96} className="object-cover w-full h-full" /> : <Camera className="h-8 w-8 text-muted-foreground/50" />}
+                    {safePhotoUrl ? <Image src={safePhotoUrl} alt="Preview" width={96} height={96} className="object-cover w-full h-full" /> : <Camera className="h-8 w-8 text-muted-foreground/50" />}
                 </div>
 
                 <div className="flex-grow w-full space-y-4">
@@ -532,7 +535,7 @@ export function ProductForm({ product, onSuccess, defaultSupplierId }: ProductFo
           <div className="space-y-4 py-2">
             <Input value={imgUrlInputValue} onChange={(e) => setImgUrlInputValue(e.target.value)} placeholder="https://..." className="h-11"/>
             <div className="h-40 bg-gray-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-200">
-              {imgUrlInputValue ? (<Image src={imgUrlInputValue} alt="Preview" width={150} height={150} className="object-contain h-full w-full rounded-lg" />) : (<span className="text-sm text-muted-foreground">{t('form_label_image_url_modal_preview')}</span>)}
+              {safeImgUrlInputValue ? (<Image src={safeImgUrlInputValue} alt="Preview" width={150} height={150} className="object-contain h-full w-full rounded-lg" />) : (<span className="text-sm text-muted-foreground">{t('form_label_image_url_modal_preview')}</span>)}
             </div>
           </div>
           <DialogFooter>
