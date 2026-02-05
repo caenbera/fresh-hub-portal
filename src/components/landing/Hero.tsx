@@ -27,27 +27,35 @@ export function Hero() {
     let scrollTarget = 0;
     const smoothFactor = 0.1;
 
+    // --- Corrected Loading Logic ---
     const onVideoLoaded = () => {
-      setVideoDuration(video.duration || 7);
-      preloader.classList.add('loaded');
-      video.pause();
-      video.currentTime = 0;
-      startAnimationLoop();
-    };
-    
-    const onVideoError = () => {
-      console.error('Error loading video');
-      preloader.classList.add('loaded');
-    };
-
-    const initVideo = () => {
-      if (video.readyState >= 2) {
-        onVideoLoaded();
-      } else {
-        video.addEventListener('loadeddata', onVideoLoaded);
-        video.addEventListener('error', onVideoError);
+      // Ensure this only runs once
+      if (video.duration) {
+        setVideoDuration(video.duration);
+        preloader.classList.add('loaded');
+        video.pause();
+        video.currentTime = 0;
+        startAnimationLoop();
+        // Remove listener after it has done its job
+        video.removeEventListener('loadeddata', onVideoLoaded);
+        video.removeEventListener('error', onVideoError);
       }
     };
+    
+    const onVideoError = (e: Event) => {
+      console.error('Error loading video:', e);
+      preloader.classList.add('loaded'); // Hide preloader even on error
+    };
+
+    // Check if video is already loaded (from cache)
+    if (video.readyState >= 2) { // HAVE_CURRENT_DATA or more
+      onVideoLoaded();
+    } else {
+      // Otherwise, add listeners
+      video.addEventListener('loadeddata', onVideoLoaded);
+      video.addEventListener('error', onVideoError);
+    }
+    // --- End of Corrected Logic ---
     
     const getScrollProgress = () => {
       const rect = heroContainer.getBoundingClientRect();
@@ -87,13 +95,13 @@ export function Hero() {
       scrollTarget = getScrollProgress();
     };
 
-    initVideo();
     window.addEventListener('scroll', onScroll, { passive: true });
     
-    video.muted = true;
+    // Initial setup
     video.pause();
     onScroll();
 
+    // Cleanup function
     return () => {
       video.removeEventListener('loadeddata', onVideoLoaded);
       video.removeEventListener('error', onVideoError);
@@ -102,7 +110,7 @@ export function Hero() {
         cancelAnimationFrame(rafId);
       }
     };
-  }, [videoDuration]);
+  }, [videoDuration]); // Keep videoDuration as a dependency to react to its change
 
   return (
     <>
@@ -116,10 +124,13 @@ export function Hero() {
             ref={videoRef}
             className="scroll-video"
             preload="auto"
-            muted
+            muted // Muted is critical for autoplay
             playsInline
             disablePictureInPicture
+            disableRemotePlayback // Added for more control
           >
+            {/* Provide multiple sources for better browser compatibility */}
+            <source src="/hero-video.webm" type="video/webm" />
             <source src="/hero-video.mp4" type="video/mp4" />
           </video>
           
