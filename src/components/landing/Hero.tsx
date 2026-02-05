@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -14,36 +15,38 @@ export function Hero() {
 
   useEffect(() => {
     const video = videoRef.current;
-    const container = containerRef.current;
-    if (!video || !container) return;
+    if (!video) return;
 
-    let videoDuration = 0;
+    let isReady = false;
 
     const handleVideoReady = () => {
-      if (video.duration) {
-        videoDuration = video.duration;
-        setIsLoading(false);
-        video.pause();
-        video.currentTime = 0;
-      }
+      if (isReady) return;
+      isReady = true;
+      setIsLoading(false);
+      video.pause();
+      video.currentTime = 0;
     };
-    
+
+    // Fallback timer
     const loadingFallback = setTimeout(() => {
-        setIsLoading(false);
+      if (!isReady) {
+        handleVideoReady();
+      }
     }, 5000);
 
-    // Use 'loadedmetadata' as it's sufficient and fires earlier
-    video.addEventListener('loadedmetadata', handleVideoReady);
-    // In some cases, especially with cached videos, the event might have already fired.
-    if (video.readyState >= 1) { // HAVE_METADATA
-        handleVideoReady();
+    // Check readyState immediately in case the video is cached
+    if (video.readyState >= 2) { // HAVE_CURRENT_DATA or more
+      handleVideoReady();
+    } else {
+      video.addEventListener('loadedmetadata', handleVideoReady);
     }
 
-
     const handleScroll = () => {
-      if (videoDuration === 0) return;
+      const videoEl = videoRef.current;
+      const containerEl = containerRef.current;
+      if (!videoEl || !containerEl || !videoEl.duration) return;
 
-      const rect = container.getBoundingClientRect();
+      const rect = containerEl.getBoundingClientRect();
       const windowHeight = window.innerHeight;
       
       if (rect.bottom < 0 || rect.top > windowHeight) {
@@ -51,11 +54,10 @@ export function Hero() {
       }
       
       const scrollTop = -rect.top;
-      const maxScroll = container.scrollHeight - windowHeight;
+      const maxScroll = containerEl.scrollHeight - windowHeight;
       const progress = Math.max(0, Math.min(1, scrollTop / maxScroll));
-
-      // Direct manipulation for performance
-      video.currentTime = progress * videoDuration;
+      
+      videoEl.currentTime = progress * videoEl.duration;
       
       const scrollIndicator = scrollIndicatorRef.current;
       if (scrollIndicator) {
@@ -70,9 +72,9 @@ export function Hero() {
     window.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      video.removeEventListener('loadedmetadata', handleVideoReady);
       clearTimeout(loadingFallback);
+      video.removeEventListener('loadedmetadata', handleVideoReady);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
@@ -97,20 +99,20 @@ export function Hero() {
             <source src="/hero-video.mp4" type="video/mp4" />
           </video>
           
-          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-white text-center bg-black/40">
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-white text-center">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <h1 className="text-3xl sm:text-5xl font-bold mb-6" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+              <h1 className="text-3xl sm:text-5xl font-bold mb-6" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>
                 {t.rich('hero_title_html', {
                   yellow: (chunks) => <span className="text-yellow-300">{chunks}</span>
                 })}
               </h1>
-              <p className="text-base sm:text-xl mb-8" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.5)' }}>
+              <p className="text-base sm:text-xl mb-8" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>
                 {t.rich('hero_subtitle_html', {
                   br: () => <br className="hidden md:block" />,
                   lightYellow: (chunks) => <span className="text-yellow-200">{chunks}</span>
                 })}
               </p>
-              <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-6 mb-12">
+              <div className="flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-6 mb-12" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.5)' }}>
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="text-yellow-300" />
                   <span>{t('hero_feature1')}</span>
