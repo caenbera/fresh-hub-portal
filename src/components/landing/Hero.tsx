@@ -59,7 +59,7 @@ export function Hero() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    // Trigger inicial
+    // Trigger inicial para establecer el frame 0
     handleScroll();
 
     return () => {
