@@ -3,102 +3,91 @@
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Truck, Handshake, Calculator, Gift } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 
 export function Hero() {
   const t = useTranslations('LandingPageHero');
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const scrollIndicatorRef = useRef<HTMLDivElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    let isReady = false;
-
-    const handleVideoReady = () => {
-      if (isReady) return;
-      isReady = true;
-      setIsLoading(false);
-      video.pause();
-      video.currentTime = 0;
-    };
-
-    const loadingFallback = setTimeout(() => {
-      if (!isReady) handleVideoReady();
-    }, 5000);
-
-    if (video.readyState >= 2) {
-      handleVideoReady();
-    } else {
-      video.addEventListener('loadeddata', handleVideoReady);
-    }
-
-    const handleScroll = () => {
-      const videoEl = videoRef.current;
-      const containerEl = containerRef.current;
-      if (!videoEl || !containerEl || !videoEl.duration) return;
-
-      const rect = containerEl.getBoundingClientRect();
-      const windowHeight = window.innerHeight;
-      
-      if (rect.bottom < 0 || rect.top > windowHeight) return;
-      
-      const scrollTop = -rect.top;
-      const maxScroll = containerEl.scrollHeight - windowHeight;
-      const progress = Math.max(0, Math.min(1, scrollTop / maxScroll));
-      
-      videoEl.currentTime = progress * videoEl.duration;
-      
-      const scrollIndicator = scrollIndicatorRef.current;
-      if (scrollIndicator) {
-        scrollIndicator.style.opacity = progress > 0.05 ? '0' : '1';
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    // Trigger inicial para establecer el frame 0
-    handleScroll();
-
-    return () => {
-      clearTimeout(loadingFallback);
-      if (video) {
-        video.removeEventListener('loadeddata', handleVideoReady);
-      }
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
 
   return (
-    <>
-      <div className={`preloader ${!isLoading ? 'loaded' : ''}`}>
-        <div className="loader-text">Cargando experiencia...</div>
-      </div>
+    <section className="relative h-[85vh] flex items-center justify-center text-white overflow-hidden">
+      {/* Video de Fondo */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute z-0 w-auto min-w-full min-h-full max-w-none"
+      >
+        <source src="/hero-video.webm" type="video/webm" />
+        <source src="/hero-video.mp4" type="video/mp4" />
+        Tu navegador no soporta el video.
+      </video>
 
-      <div ref={containerRef} className="hero-scroll-container">
-        <div className="scroll-video-wrapper">
-          <video
-            ref={videoRef}
-            className="scroll-video"
-            preload="auto"
-            muted
-            playsInline
-            disablePictureInPicture
-            disableRemotePlayback
+      {/* Capa Oscura Superpuesta */}
+      <div className="absolute inset-0 bg-black opacity-50 z-10"></div>
+
+      {/* Contenido del Hero */}
+      <div className="relative z-20 flex flex-col items-center justify-center px-4 text-center">
+        <div className="mx-auto max-w-4xl">
+          <h1
+            className="mb-6 text-4xl font-bold sm:text-5xl lg:text-6xl"
+            style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.7)' }}
           >
-            <source src="/hero-video.webm" type="video/webm" />
-          </video>
-          
-          <div ref={scrollIndicatorRef} className="scroll-indicator">
-            <span>Desplázate</span>
-            <svg className="scroll-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 5v14M19 12l-7 7-7-7" />
-            </svg>
+            {t.rich('hero_title_html', {
+              yellow: (chunks) => <span className="text-yellow-400">{chunks}</span>,
+            })}
+          </h1>
+
+          <p
+            className="mb-8 text-lg sm:text-xl lg:text-2xl"
+            style={{ textShadow: '2px 2px 6px rgba(0,0,0,0.7)' }}
+          >
+            {t.rich('hero_subtitle_html', {
+              br: () => <br />,
+              lightYellow: (chunks) => <span className="text-yellow-200">{chunks}</span>,
+            })}
+          </p>
+
+          <div
+            className="mb-10 flex flex-wrap items-center justify-center gap-6 text-sm sm:text-base"
+            style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.7)' }}
+          >
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-yellow-400" />
+              <span>{t('hero_feature1')}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Truck className="h-5 w-5 text-yellow-400" />
+              <span>{t('hero_feature2')}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Handshake className="h-5 w-5 text-yellow-400" />
+              <span>{t('hero_feature3')}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
+            <Button
+              asChild
+              className="bg-accent px-8 py-3 text-base font-bold text-white hover:bg-orange-600 animate-pulse"
+            >
+              <a href="#cotizacion">
+                <Calculator className="mr-2 h-5 w-5" />
+                {t('hero_cta_quote')}
+              </a>
+            </Button>
+            <Button
+              asChild
+              className="bg-yellow-400 px-8 py-3 text-base font-bold text-gray-900 hover:bg-yellow-300"
+            >
+              <a href="#muestra">
+                <Gift className="mr-2 h-5 w-5" />
+                {t('hero_cta_sample')}
+              </a>
+            </Button>
           </div>
         </div>
       </div>
-    </>
+    </section>
   );
 }
