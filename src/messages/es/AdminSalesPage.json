@@ -14,5 +14,10 @@
     "action_route": "Ruta",
     "action_visit": "Visitar",
     "error_loading": "Error al cargar los prospectos. Por favor, intenta de nuevo.",
-    "no_prospects_found": "No se encontraron prospectos para el filtro actual."
+    "no_prospects_found": "No se encontraron prospectos para el filtro actual.",
+    "status_pending": "Pendiente",
+    "status_contacted": "Contactado",
+    "status_visited": "Visitado",
+    "status_client": "Cliente",
+    "status_not_interested": "No Interesado"
 }
