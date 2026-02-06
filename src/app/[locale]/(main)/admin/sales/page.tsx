@@ -37,7 +37,7 @@ const MapView = () => {
 };
 
 
-export default function SalesPageClient() {
+export default function SalesPage() {
   const t = useTranslations('AdminSalesPage');
   const { prospects, loading, error } = useProspects();
   const { role } = useAuth();
@@ -124,7 +124,7 @@ export default function SalesPageClient() {
     });
   };
   
-  const handleSelectAllInDistrict = (prospectIds: string[], select: boolean) => {
+  const handleBulkSelect = (prospectIds: string[], select: boolean) => {
     setSelectedProspects(prev => {
       const newSelected = new Set(prev);
       if (select) {
@@ -233,7 +233,14 @@ export default function SalesPageClient() {
                         <div className="text-center py-10 text-destructive">{t('error_loading')}</div>
                     ) : Object.keys(prospectsByDistrict).length > 0 ? (
                       Object.entries(prospectsByDistrict).map(([districtCode, { name, prospects: districtProspects }]) => (
-                        <DistrictCard key={districtCode} districtCode={districtCode} districtName={name} prospects={districtProspects} onEdit={handleEditProspect} onCheckIn={handleCheckIn} isSelectionMode={isSelectionMode} selectedProspects={selectedProspects} onSelectionChange={handleProspectSelectionChange} onSelectAll={handleSelectAllInDistrict} />
+                        <DistrictCard
+                            key={districtCode}
+                            districtCode={districtCode}
+                            districtName={name}
+                            prospects={districtProspects}
+                            onBulkSelect={handleBulkSelect}
+                            selectedProspects={selectedProspects}
+                        />
                       ))
                     ) : (
                       <div className="text-center py-10 text-muted-foreground">{t('no_prospects_found')}</div>

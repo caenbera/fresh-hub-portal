@@ -1,116 +1,123 @@
 'use client';
 
-import { ProspectCard } from './prospect-card';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import type { Prospect } from '@/types';
 import { useTranslations } from 'next-intl';
-import { useMemo } from 'react';
+import { cn } from '@/lib/utils';
+import { MapPin } from 'lucide-react';
 
 interface DistrictCardProps {
   districtCode: string;
   districtName: string;
   prospects: Prospect[];
-  onEdit: (prospect: Prospect) => void;
-  onCheckIn: (prospect: Prospect) => void;
-  isSelectionMode: boolean;
+  onBulkSelect: (prospectIds: string[], select: boolean) => void;
   selectedProspects: string[];
-  onSelectionChange: (prospectId: string, isSelected: boolean) => void;
-  onSelectAll: (prospectIds: string[], select: boolean) => void;
 }
 
 export function DistrictCard({
   districtCode,
   districtName,
   prospects,
-  onEdit,
-  onCheckIn,
-  isSelectionMode,
+  onBulkSelect,
   selectedProspects,
-  onSelectionChange,
-  onSelectAll,
 }: DistrictCardProps) {
   const t = useTranslations('AdminSalesPage');
 
-  const allProspectIdsInDistrict = prospects.map(p => p.id);
-  const areAllSelected = allProspectIdsInDistrict.length > 0 && allProspectIdsInDistrict.every(id => selectedProspects.includes(id));
-
   const subZones = useMemo(() => {
     return prospects.reduce((acc, prospect) => {
-        const subZoneCode = prospect.zone;
-        if (!subZoneCode) return acc;
-        if (!acc[subZoneCode]) {
-            acc[subZoneCode] = { code: subZoneCode, count: 0, prospectIds: [] };
-        }
-        acc[subZoneCode].count++;
-        acc[subZoneCode].prospectIds.push(prospect.id);
-        return acc;
-    }, {} as Record<string, { code: string; count: number; prospectIds: string[] }>);
+      const subZoneCode = prospect.zone || 'Uncategorized';
+      if (!acc[subZoneCode]) {
+        // A better name would come from a data source, but this is a good fallback.
+        const subZoneName = subZoneCode.includes('-') ? `Sub-zona ${subZoneCode.split('-').pop()}` : 'General';
+        acc[subZoneCode] = { code: subZoneCode, name: subZoneName, prospects: [] };
+      }
+      acc[subZoneCode].prospects.push(prospect);
+      return acc;
+    }, {} as Record<string, { code: string; name: string; prospects: Prospect[] }>);
   }, [prospects]);
 
-  const handleSelectAllInDistrict = () => {
-    onSelectAll(allProspectIdsInDistrict, !areAllSelected);
+  const handleSubZoneClick = (subZoneProspects: Prospect[]) => {
+    const prospectIds = subZoneProspects.map(p => p.id);
+    const areAllSelected = prospectIds.length > 0 && prospectIds.every(id => selectedProspects.includes(id));
+    onBulkSelect(prospectIds, !areAllSelected);
   };
-
-  const handleSubZoneClick = (subZoneProspectIds: string[]) => {
-    if (!isSelectionMode) return;
-    const areAllInSubZoneSelected = subZoneProspectIds.every(id => selectedProspects.includes(id));
-    onSelectAll(subZoneProspectIds, !areAllInSubZoneSelected);
-  }
+  
+  const totalProspects = prospects.length;
+  // A rough estimate of area, not geographically accurate.
+  const areaKm = totalProspects > 0 ? (totalProspects * 0.2).toFixed(1) : 0;
+  
+  const miniMapGridCells = useMemo(() => {
+    const cells = Array(12).fill(null);
+    const subZoneEntries = Object.values(subZones);
+    subZoneEntries.forEach((sz, index) => {
+      if (index < cells.length) {
+        const prospectIds = sz.prospects.map(p => p.id);
+        const areAllSelected = prospectIds.length > 0 && prospectIds.every(id => selectedProspects.includes(id));
+        cells[index] = {
+          code: sz.code.split('-').pop() || '??',
+          hasClients: true,
+          selected: areAllSelected
+        };
+      }
+    });
+    return cells;
+  }, [subZones, selectedProspects]);
 
   return (
-    <Card className="shadow-lg border-l-4 border-primary">
-      <CardHeader className="flex flex-row items-center justify-between bg-primary/5 p-4">
-        <div>
-          <CardTitle className="text-lg">{districtName}</CardTitle>
-          <CardDescription>{t('district_prospects', { count: prospects.length })}</CardDescription>
-        </div>
-        {isSelectionMode && (
-          <div className="flex items-center space-x-2 p-2 rounded-md hover:bg-primary/10">
-            <Checkbox
-              id={`select-all-${districtCode}`}
-              checked={areAllSelected}
-              onCheckedChange={handleSelectAllInDistrict}
-              className="h-5 w-5"
-            />
-            <label htmlFor={`select-all-${districtCode}`} className="text-sm font-medium cursor-pointer">{t('select_all')}</label>
-          </div>
-        )}
-      </CardHeader>
-      <CardContent className="p-4 space-y-3">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {Object.values(subZones).map(subZone => {
-                const isSubZoneSelected = subZone.prospectIds.every(id => selectedProspects.includes(id));
-                return (
-                    <button 
-                        key={subZone.code} 
-                        className={`p-2 rounded-lg text-left transition-all disabled:cursor-not-allowed ${isSubZoneSelected ? 'bg-primary/10 border-primary border' : 'bg-muted/60 border-transparent border'} ${isSelectionMode ? 'hover:bg-primary/10' : ''}`}
-                        onClick={() => handleSubZoneClick(subZone.prospectIds)}
-                        disabled={!isSelectionMode}
-                    >
-                        <div className="flex justify-between items-center">
-                            <span className="font-mono text-xs font-bold text-primary">{subZone.code}</span>
-                            <span className="text-xs bg-primary/20 text-primary font-bold px-2 py-0.5 rounded-full">{subZone.count}</span>
+    <Card className="shadow-lg border-l-4 border-primary overflow-hidden">
+        <CardHeader className="bg-primary/10 p-4">
+            <div className="flex justify-between items-center">
+                <div>
+                    <CardTitle className="font-mono text-xl md:text-2xl text-primary">{districtCode}</CardTitle>
+                    <CardDescription className="font-semibold text-sm md:text-base">{districtName}</CardDescription>
+                </div>
+                <div className="text-right">
+                     <div className="text-xl md:text-2xl font-bold">{totalProspects}</div>
+                     <div className="text-xs text-muted-foreground">{t('district_prospects', { count: totalProspects })}</div>
+                </div>
+            </div>
+        </CardHeader>
+        <CardContent className="p-4 space-y-4">
+            <div className="h-28 bg-muted rounded-lg p-2 border">
+                <div className="grid grid-cols-4 grid-rows-3 gap-1 h-full w-full">
+                    {miniMapGridCells.map((cell, index) => (
+                        <div key={index} className={cn(
+                            "rounded flex items-center justify-center text-xs font-bold",
+                            cell ? (cell.selected ? "bg-accent text-accent-foreground animate-pulse" : "bg-primary/20 text-primary") : "bg-muted-foreground/10"
+                        )}>
+                            {cell?.code}
                         </div>
-                    </button>
-                )
-            })}
-        </div>
-        
-        <div className="space-y-3">
-            {prospects.map(prospect => (
-            <ProspectCard
-                key={prospect.id}
-                prospect={prospect}
-                onEdit={onEdit}
-                onCheckIn={onCheckIn}
-                isSelectionMode={isSelectionMode}
-                isSelected={selectedProspects.includes(prospect.id)}
-                onSelectionChange={onSelectionChange}
-            />
-            ))}
-        </div>
-      </CardContent>
+                    ))}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {Object.entries(subZones).map(([code, { name, prospects: subZoneProspects }]) => {
+                    const prospectIds = subZoneProspects.map(p => p.id);
+                    const areAllInSubZoneSelected = prospectIds.length > 0 && prospectIds.every(id => selectedProspects.includes(id));
+
+                    return (
+                        <button 
+                            key={code}
+                            onClick={() => handleSubZoneClick(subZoneProspects)}
+                            className={cn(
+                                "p-2 rounded-lg text-left transition-all border-2",
+                                areAllInSubZoneSelected ? 'bg-primary/10 border-primary' : 'bg-muted/60 border-transparent hover:bg-primary/5'
+                            )}
+                        >
+                            <div className="flex justify-between items-center">
+                                <span className="font-mono text-xs font-bold text-primary">{code}</span>
+                                <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", areAllInSubZoneSelected ? 'bg-primary text-primary-foreground' : 'bg-primary/20 text-primary')}>
+                                    {subZoneProspects.length}
+                                </span>
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1 truncate">{name}</div>
+                        </button>
+                    );
+                })}
+            </div>
+        </CardContent>
     </Card>
   );
 }
