@@ -24,17 +24,17 @@ export function useProspects() {
     let q;
 
     if (role === 'salesperson') {
-      // Salespeople can only see their own prospects
+      // Salespeople can only see their own prospects.
+      // The orderBy was removed to prevent a composite index requirement.
       q = query(
         prospectsCollection,
-        where('salespersonId', '==', user.uid),
-        orderBy('createdAt', 'desc')
+        where('salespersonId', '==', user.uid)
       );
     } else if (role === 'admin' || role === 'superadmin') {
-      // Admins can see all prospects
+      // Admins can see all prospects, ordered by creation date.
       q = query(prospectsCollection, orderBy('createdAt', 'desc'));
     } else {
-      // Other roles shouldn't see any prospects
+      // Other roles shouldn't see any prospects.
       setProspects([]);
       setLoading(false);
       return;
@@ -47,6 +47,16 @@ export function useProspects() {
         querySnapshot.forEach((doc) => {
           prospectsData.push({ id: doc.id, ...doc.data() } as Prospect);
         });
+
+        // If we didn't sort in the query (for salespeople), sort here on the client-side.
+        if (role === 'salesperson') {
+          prospectsData.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis() || 0;
+            const timeB = b.createdAt?.toMillis() || 0;
+            return timeB - timeA;
+          });
+        }
+
         setProspects(prospectsData);
         setLoading(false);
       },
