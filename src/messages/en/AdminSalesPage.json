@@ -1,0 +1,18 @@
+{
+    "title": "My Prospects",
+    "new_prospect_button": "New Prospect",
+    "kpi_total": "Total",
+    "kpi_visited": "Visited",
+    "kpi_conversion": "Conversion",
+    "search_placeholder": "Search by name, address...",
+    "filter_all": "All",
+    "filter_restaurants": "Restaurants",
+    "filter_supermarkets": "Supermarkets",
+    "filter_butchers": "Butchers",
+    "no_phone": "No phone available",
+    "action_call": "Call",
+    "action_route": "Route",
+    "action_visit": "Visit",
+    "error_loading": "Error loading prospects. Please try again.",
+    "no_prospects_found": "No prospects found for the current filter."
+}

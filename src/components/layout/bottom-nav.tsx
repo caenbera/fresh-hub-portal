@@ -25,8 +25,16 @@ export function BottomNavBar({ navConfig }: { navConfig: NavDefinition }) {
   const { role } = useAuth();
   const { unreadCount, markAllAsRead } = useNotifications();
 
-  let baseNavItems = role === 'client' ? navConfig.mobile.client : navConfig.mobile.admin;
-  if (!role) baseNavItems = [];
+  let baseNavItems;
+  if (role === 'client') {
+    baseNavItems = navConfig.mobile.client;
+  } else if (role === 'admin' || role === 'superadmin') {
+    baseNavItems = navConfig.mobile.admin;
+  } else if (role === 'salesperson') {
+    baseNavItems = navConfig.mobile.salesperson;
+  } else {
+    baseNavItems = [];
+  }
 
   const navItems = baseNavItems.slice(0, 3);
 

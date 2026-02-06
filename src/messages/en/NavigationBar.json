@@ -32,5 +32,7 @@
   "group_catalog": "Catalog",
   "group_procurement": "Procurement",
   "group_warehouse": "Warehouse",
-  "group_administration": "Administration"
+  "group_administration": "Administration",
+  "group_sales": "Sales",
+  "prospects": "Prospects"
 }

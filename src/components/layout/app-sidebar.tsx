@@ -28,6 +28,7 @@ export interface NavDefinition {
     admin: NavItem[];
     picker: NavItem[];
     purchaser: NavItem[];
+    salesperson: NavItem[];
   }
 }
 
@@ -75,6 +76,9 @@ export function AppSidebar() {
       ],
       purchaser: [
         { href: '/admin/purchasing', label: t('purchasing'), icon: ShoppingBag },
+      ],
+      salesperson: [
+        { href: '/admin/sales', label: t('prospects'), icon: Users },
       ]
     }
   };
@@ -91,6 +95,9 @@ export function AppSidebar() {
         { href: '/admin/orders', label: t('manageOrders'), icon: ShoppingCart },
         { href: '/admin/clients', label: t('manageClients'), icon: Users },
         { href: '/admin/support', label: t('support'), icon: Headset },
+    ],
+    sales: [
+        { href: '/admin/sales', label: t('prospects'), icon: Users },
     ],
     catalog: [
         { href: '/admin/products', label: t('manageProducts'), icon: Package },
@@ -166,6 +173,10 @@ export function AppSidebar() {
               <SidebarGroupLabel>{t('group_management')}</SidebarGroupLabel>
               <SidebarMenu>{renderNavItems(navItems.management)}</SidebarMenu>
             </SidebarGroup>
+             <SidebarGroup>
+              <SidebarGroupLabel>{t('group_sales')}</SidebarGroupLabel>
+              <SidebarMenu>{renderNavItems(navItems.sales)}</SidebarMenu>
+            </SidebarGroup>
             <SidebarGroup>
               <SidebarGroupLabel>{t('group_catalog')}</SidebarGroupLabel>
               <SidebarMenu>{renderNavItems(navItems.catalog)}</SidebarMenu>
@@ -197,6 +208,10 @@ export function AppSidebar() {
               <SidebarMenu>{renderNavItems(navItems.management)}</SidebarMenu>
             </SidebarGroup>
             <SidebarGroup>
+              <SidebarGroupLabel>{t('group_sales')}</SidebarGroupLabel>
+              <SidebarMenu>{renderNavItems(navItems.sales)}</SidebarMenu>
+            </SidebarGroup>
+            <SidebarGroup>
               <SidebarGroupLabel>{t('group_catalog')}</SidebarGroupLabel>
               <SidebarMenu>{renderNavItems(navItems.catalog)}</SidebarMenu>
             </SidebarGroup>
@@ -205,6 +220,13 @@ export function AppSidebar() {
               <SidebarMenu>{renderNavItems(navItems.procurement)}</SidebarMenu>
             </SidebarGroup>
           </>
+        )}
+        
+        {role === 'salesperson' && (
+          <SidebarGroup>
+            <SidebarGroupLabel>{t('group_sales')}</SidebarGroupLabel>
+            <SidebarMenu>{renderNavItems(navItems.sales)}</SidebarMenu>
+          </SidebarGroup>
         )}
 
         {role === 'purchaser' && (
