@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MapPin, Phone, Check, Navigation, Plus, Minus, Pencil, BotMessageSquare, Clock, CircleDot, UserX } from 'lucide-react';
+import { MapPin, Phone, Check, Navigation, Plus, Minus, Pencil, BotMessageSquare, Clock, CircleDot, UserX, Globe } from 'lucide-react';
 import type { Prospect, ProspectStatus, ProspectVisit } from '@/types';
 import { useTranslations, useLocale } from 'next-intl';
 import { cn } from '@/lib/utils';
@@ -45,7 +45,7 @@ export function ProspectCard({ prospect, onEdit, onCheckIn, isSelectionMode, isS
   const t = useTranslations('AdminSalesPage');
   const locale = useLocale();
   const [isOpen, setIsOpen] = useState(false);
-  const { visits, loading: visitsLoading } = useProspectVisits(isOpen ? prospect.id : null); // Only fetch visits when expanded
+  const { visits, loading: visitsLoading } = useProspectVisits(isOpen ? prospect.id : null);
 
   const statusConfig: Record<ProspectStatus, { label: string; className: string }> = {
     pending: { label: t('status_pending'), className: 'bg-yellow-100 text-yellow-800' },
@@ -57,7 +57,10 @@ export function ProspectCard({ prospect, onEdit, onCheckIn, isSelectionMode, isS
 
   const statusInfo = statusConfig[prospect.status] || statusConfig.pending;
 
-  const handleCardClick = () => {
+  const handleCardClick = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest('button, a')) {
+        return;
+    }
     if (isSelectionMode) {
       onSelectionChange(prospect.id, !isSelected);
     }
@@ -73,13 +76,12 @@ export function ProspectCard({ prospect, onEdit, onCheckIn, isSelectionMode, isS
         className={cn(
           "p-0 shadow-sm group transition-all duration-200 overflow-hidden", 
           prospect.priority && "border-l-4 border-accent",
-          isSelected && "ring-2 ring-primary border-primary"
+          isSelected && "ring-2 ring-primary border-primary bg-primary/5",
+          isSelectionMode && "cursor-pointer"
         )}
+        onClick={handleCardClick}
       >
-        <div 
-          className="flex items-center p-3" // Reduced padding for compactness
-          onClick={handleCardClick}
-        >
+        <div className="flex items-center p-3">
             {isSelectionMode && (
                 <div className="pr-3 self-center">
                     <Checkbox
@@ -90,22 +92,21 @@ export function ProspectCard({ prospect, onEdit, onCheckIn, isSelectionMode, isS
                     />
                 </div>
             )}
-            <div className="flex-grow cursor-pointer">
-                <h3 className="font-bold text-base pr-2">{prospect.name}</h3>
+            <div className="flex-grow min-w-0">
+                <h3 className="font-bold text-base pr-2 truncate">{prospect.name}</h3>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                     <MapPin className="h-4 w-4 shrink-0" />
-                    <span className="line-clamp-1">{prospect.address}</span>
+                    <span className="truncate">{prospect.address}</span>
                 </div>
                 <div className='mt-2'>
                     <Badge variant="outline" className={statusInfo.className}>{statusInfo.label}</Badge>
                 </div>
             </div>
             
-            {/* HORIZONTAL ACTION BUTTONS */}
             <div className="flex items-center gap-1 ml-2">
                 <Button size="sm" className="h-9 px-3" onClick={(e) => { e.stopPropagation(); onCheckIn(prospect); }}>
                     <Check className="mr-2" />
-                    {t('action_visit')}
+                    <span className="hidden md:inline">{t('action_visit')}</span>
                 </Button>
                 <CollapsibleTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => e.stopPropagation()}>
@@ -122,6 +123,10 @@ export function ProspectCard({ prospect, onEdit, onCheckIn, isSelectionMode, isS
                     <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 shrink-0" />
                         <span>{prospect.phone || t('no_phone')}</span>
+                    </div>
+                     <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 shrink-0" />
+                        <a href={prospect.web} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{prospect.web || 'N/A'}</a>
                     </div>
                     <div className="flex gap-2 flex-wrap">
                         <Badge variant="secondary" className="capitalize">{prospect.ethnic}</Badge>

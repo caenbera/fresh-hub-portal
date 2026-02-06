@@ -75,5 +75,13 @@
     "uncategorized": "Sin Categorizar",
     "district_name_pilsen": "Pilsen / Lower West Side",
     "district_name_little_village": "La Villita",
-    "district_name_albany_park": "Albany Park / Lawrence Ave"
+    "district_name_albany_park": "Albany Park / Lawrence Ave",
+    "tab_districts": "Distritos",
+    "tab_map": "Mapa",
+    "tab_list": "Lista",
+    "proximity_from": "Proximidad desde:",
+    "search_address": "Buscar dirección o prospecto...",
+    "radius": "Radio",
+    "map_view_coming_soon_title": "Vista de Mapa Próximamente",
+    "map_view_coming_soon_desc": "Visualiza tus prospectos en un mapa interactivo."
 }

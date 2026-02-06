@@ -97,7 +97,7 @@ export function ProspectImportDialog({ open, onOpenChange }: ProspectImportDialo
               status: STATUS_OPTIONS.includes(rowData.status?.toLowerCase()) ? rowData.status.toLowerCase() : 'pending',
               priority: rowData.priority?.toUpperCase() === 'TRUE' || rowData.priority?.toUpperCase() === 'VERDADERO',
               notes: rowData.notes || '',
-              salespersonId: user.uid, // Assign to the current admin/superadmin
+              salespersonId: user.uid,
             };
 
             await addProspect(prospectData as any);
