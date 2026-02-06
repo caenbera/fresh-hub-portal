@@ -77,11 +77,11 @@ export function ProspectCard({ prospect, onEdit, onCheckIn, isSelectionMode, isS
         )}
       >
         <div 
-          className="flex items-start p-4 cursor-pointer" 
+          className="flex items-center p-3" // Reduced padding for compactness
           onClick={handleCardClick}
         >
             {isSelectionMode && (
-                <div className="p-2 mr-2 self-center">
+                <div className="pr-3 self-center">
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={(checked) => onSelectionChange(prospect.id, !!checked)}
@@ -90,7 +90,7 @@ export function ProspectCard({ prospect, onEdit, onCheckIn, isSelectionMode, isS
                     />
                 </div>
             )}
-            <div className="flex-grow">
+            <div className="flex-grow cursor-pointer">
                 <h3 className="font-bold text-base pr-2">{prospect.name}</h3>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                     <MapPin className="h-4 w-4 shrink-0" />
@@ -100,17 +100,19 @@ export function ProspectCard({ prospect, onEdit, onCheckIn, isSelectionMode, isS
                     <Badge variant="outline" className={statusInfo.className}>{statusInfo.label}</Badge>
                 </div>
             </div>
-            <div className="flex flex-col items-center gap-2 ml-2">
-                <CollapsibleTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-9 w-9" onClick={(e) => e.stopPropagation()}>
-                        {isOpen ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-                        <span className="sr-only">Toggle details</span>
-                    </Button>
-                </CollapsibleTrigger>
+            
+            {/* HORIZONTAL ACTION BUTTONS */}
+            <div className="flex items-center gap-1 ml-2">
                 <Button size="sm" className="h-9 px-3" onClick={(e) => { e.stopPropagation(); onCheckIn(prospect); }}>
                     <Check className="mr-2" />
                     {t('action_visit')}
                 </Button>
+                <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={(e) => e.stopPropagation()}>
+                        {isOpen ? <Minus className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                        <span className="sr-only">Toggle details</span>
+                    </Button>
+                </CollapsibleTrigger>
             </div>
         </div>
 
