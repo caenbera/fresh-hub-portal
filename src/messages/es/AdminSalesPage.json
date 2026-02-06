@@ -61,5 +61,10 @@
     "outcome_followup": "Seguimiento",
     "outcome_noshow": "No se presentó",
     "save_visit_button": "Guardar Visita",
-    "no_visits_yet": "Aún no se han registrado visitas para este prospecto."
+    "no_visits_yet": "Aún no se han registrado visitas para este prospecto.",
+    "select_for_route": "Seleccionar para Ruta",
+    "cancel_selection": "Cancelar Selección",
+    "create_route_button": "Crear Ruta para {count} Prospectos",
+    "toast_no_address_title": "No se Encontraron Direcciones",
+    "toast_no_address_desc": "Ninguno de los prospectos seleccionados tiene una dirección válida para la ruta."
 }

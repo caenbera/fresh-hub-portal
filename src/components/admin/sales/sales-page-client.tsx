@@ -17,7 +17,8 @@ import {
   Store,
   Drumstick,
   Plus,
-  Upload
+  Upload,
+  Map
 } from 'lucide-react';
 import { ProspectCard } from './prospect-card';
 import type { Prospect } from '@/types';
@@ -33,12 +34,17 @@ export function SalesPageClient() {
   const { prospects, loading, error } = useProspects();
   const { role } = useAuth();
   const { toast } = useToast();
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
+
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedProspects, setSelectedProspects] = useState<string[]>([]);
 
   const kpis = useMemo(() => {
     if (loading) return { total: 0, visited: 0, conversion: 0 };
@@ -99,6 +105,39 @@ export function SalesPageClient() {
     setIsDialogOpen(true);
   };
 
+  const handleToggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    setSelectedProspects([]);
+  };
+
+  const handleProspectSelectionChange = (prospectId: string, isSelected: boolean) => {
+    setSelectedProspects(prev => {
+      if (isSelected) {
+        return [...prev, prospectId];
+      } else {
+        return prev.filter(id => id !== prospectId);
+      }
+    });
+  };
+
+  const handleCreateRoute = () => {
+    const selected = prospects.filter(p => selectedProspects.includes(p.id) && p.address);
+    if (selected.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: t('toast_no_address_title'),
+        description: t('toast_no_address_desc'),
+      });
+      return;
+    }
+
+    const baseUrl = 'https://www.google.com/maps/dir/';
+    const addresses = selected.map(p => encodeURIComponent(p.address)).join('/');
+    const url = `${baseUrl}${addresses}`;
+    
+    window.open(url, '_blank');
+  };
+
   return (
     <>
       <ProspectDialog 
@@ -121,6 +160,9 @@ export function SalesPageClient() {
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-xl font-bold">{t('title')}</h1>
             <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleToggleSelectionMode}>
+                    {isSelectionMode ? t('cancel_selection') : t('select_for_route')}
+                </Button>
               {(role === 'admin' || role === 'superadmin') && (
                 <Button variant="secondary" size="sm" onClick={() => setIsImportDialogOpen(true)}>
                   <Upload className="mr-2 h-4 w-4" />
@@ -191,12 +233,28 @@ export function SalesPageClient() {
                   onSelect={handleSelectProspect}
                   onEdit={handleEditProspect}
                   onCheckIn={handleCheckIn}
+                  isSelectionMode={isSelectionMode}
+                  isSelected={selectedProspects.includes(prospect.id)}
+                  onSelectionChange={handleProspectSelectionChange}
                 />
               ))
           ) : (
               <div className="text-center py-10 text-muted-foreground">{t('no_prospects_found')}</div>
           )}
         </div>
+
+         {isSelectionMode && selectedProspects.length > 0 && (
+            <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-30 w-full max-w-sm px-4">
+                <Button
+                size="lg"
+                className="w-full shadow-lg"
+                onClick={handleCreateRoute}
+                >
+                <Map className="mr-2 h-5 w-5" />
+                {t('create_route_button', { count: selectedProspects.length })}
+                </Button>
+            </div>
+        )}
       </div>
     </>
   );

@@ -61,5 +61,10 @@
     "outcome_followup": "Follow-up",
     "outcome_noshow": "No show",
     "save_visit_button": "Save Visit",
-    "no_visits_yet": "No visits have been logged for this prospect yet."
+    "no_visits_yet": "No visits have been logged for this prospect yet.",
+    "select_for_route": "Select for Route",
+    "cancel_selection": "Cancel Selection",
+    "create_route_button": "Create Route for {count} Prospects",
+    "toast_no_address_title": "No Addresses Found",
+    "toast_no_address_desc": "None of the selected prospects have a valid address for routing."
 }
