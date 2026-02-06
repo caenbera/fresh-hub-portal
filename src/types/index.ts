@@ -345,9 +345,9 @@ export interface Prospect {
   state: string;
   phone?: string;
   web?: string;
+  zone?: string;
   category: 'Restaurante' | 'Supermercado' | 'Carnicería' | 'Otro';
   ethnic: 'mexicano' | 'peruano' | 'colombiano' | 'ecuatoriano' | 'venezolano' | 'salvadoreno' | 'guatemalteco' | 'otro';
-  zone?: string;
   status: ProspectStatus;
   priority: boolean;
   salespersonId: string; // ID of the user with 'salesperson' role

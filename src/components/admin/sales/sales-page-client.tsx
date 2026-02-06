@@ -37,7 +37,7 @@ export function SalesPageClient() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
 
@@ -80,7 +80,7 @@ export function SalesPageClient() {
 
   const handleEditProspect = (prospect: Prospect) => {
     setSelectedProspect(prospect);
-    setIsDialogOpen(true);
+    setIsFormDialogOpen(true);
   };
   
   const handleCheckIn = async (prospect: Prospect) => {
@@ -95,7 +95,7 @@ export function SalesPageClient() {
 
   const handleNewProspect = () => {
     setSelectedProspect(null);
-    setIsDialogOpen(true);
+    setIsFormDialogOpen(true);
   };
 
   const handleToggleSelectionMode = () => {
@@ -134,8 +134,8 @@ export function SalesPageClient() {
   return (
     <>
       <ProspectDialog 
-        open={isDialogOpen} 
-        onOpenChange={setIsDialogOpen} 
+        open={isFormDialogOpen} 
+        onOpenChange={setIsFormDialogOpen} 
         prospect={selectedProspect} 
       />
       <ProspectImportDialog
@@ -145,7 +145,7 @@ export function SalesPageClient() {
 
       <div className="flex flex-col h-full bg-slate-50/50">
         <div className="bg-primary text-primary-foreground p-4 sticky top-0 z-20">
-          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-4">
+          <div className="flex flex-col md:flex-row justify-between md:items-center gap-2 mb-4">
             <h1 className="text-xl font-bold">{t('title')}</h1>
             <div className="flex gap-2 flex-wrap">
                 <Button variant="secondary" size="sm" onClick={handleToggleSelectionMode}>
