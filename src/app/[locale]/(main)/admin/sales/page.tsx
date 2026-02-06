@@ -37,7 +37,7 @@ const MapView = () => {
 };
 
 
-export function SalesPageClient() {
+export default function SalesPageClient() {
   const t = useTranslations('AdminSalesPage');
   const { prospects, loading, error } = useProspects();
   const { role } = useAuth();
