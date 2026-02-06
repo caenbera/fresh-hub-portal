@@ -51,38 +51,6 @@ export function AppSidebar() {
   const pathname = usePathname();
   const t = useTranslations('NavigationBar');
 
-  // This object is used by the mobile BottomNavBar, do not remove.
-   const navConfig: NavDefinition = {
-    desktop: {
-      client: [], // Desktop rendering is now handled by groups below
-      admin: [],
-      superadmin: [],
-      picker: [],
-      purchaser: [],
-    },
-    mobile: {
-      client: [
-        { href: '/client/dashboard', label: t('home'), icon: Home },
-        { href: '/client/new-order', label: t('myOrder'), icon: ClipboardList },
-        { href: '/client/history', label: t('history'), icon: History },
-      ],
-       admin: [
-        { href: '/admin/dashboard', label: t('dashboard'), icon: LayoutGrid },
-        { href: '/admin/orders', label: t('manageOrders'), icon: ShoppingCart },
-        { href: '/admin/products', label: t('manageProducts'), icon: Package },
-      ],
-      picker: [
-        { href: '/admin/picking', label: t('picking'), icon: Boxes },
-      ],
-      purchaser: [
-        { href: '/admin/purchasing', label: t('purchasing'), icon: ShoppingBag },
-      ],
-      salesperson: [
-        { href: '/admin/sales', label: t('prospects'), icon: Users },
-      ]
-    }
-  };
-
   const navItems = {
     client: [
       { href: '/client/dashboard', label: t('dashboard'), icon: LayoutGrid },
@@ -116,6 +84,54 @@ export function AppSidebar() {
     ],
   };
 
+  const allSuperAdminItems = [
+    ...navItems.management,
+    ...navItems.sales,
+    ...navItems.catalog,
+    ...navItems.procurement,
+    ...navItems.warehouse,
+    ...navItems.administration,
+  ];
+
+  // This object is used by the mobile BottomNavBar, do not remove.
+   const navConfig: NavDefinition = {
+    desktop: {
+      client: navItems.client,
+      admin: [
+        ...navItems.management,
+        ...navItems.sales,
+        ...navItems.catalog,
+        ...navItems.procurement,
+      ],
+      superadmin: allSuperAdminItems,
+      picker: navItems.warehouse,
+      purchaser: [
+        ...navItems.procurement,
+        ...navItems.catalog.filter(item => item.href.includes('/products')),
+      ]
+    },
+    mobile: {
+      client: [
+        { href: '/client/dashboard', label: t('home'), icon: Home },
+        { href: '/client/new-order', label: t('myOrder'), icon: ClipboardList },
+        { href: '/client/history', label: t('history'), icon: History },
+      ],
+       admin: [
+        { href: '/admin/dashboard', label: t('dashboard'), icon: LayoutGrid },
+        { href: '/admin/orders', label: t('manageOrders'), icon: ShoppingCart },
+        { href: '/admin/products', label: t('manageProducts'), icon: Package },
+      ],
+      picker: [
+        { href: '/admin/picking', label: t('picking'), icon: Boxes },
+      ],
+      purchaser: [
+        { href: '/admin/purchasing', label: t('purchasing'), icon: ShoppingBag },
+      ],
+      salesperson: [
+        { href: '/admin/sales', label: t('prospects'), icon: Users },
+      ]
+    }
+  };
   
   if (loading && isMobile) {
     return null; // On mobile, we show a full-screen loader from the layout, so we don't need a skeleton here.
