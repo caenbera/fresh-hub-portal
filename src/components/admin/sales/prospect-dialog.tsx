@@ -172,13 +172,13 @@ export function ProspectDialog({ open, onOpenChange, prospect }: ProspectDialogP
                 <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>{t('label_city')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
                 <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>{t('label_state')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
              </div>
+             <FormField control={form.control} name="zone" render={({ field }) => (
+              <FormItem><FormLabel>{t('label_zone')}</FormLabel><FormControl><Input placeholder="e.g., CHI-PIL-06" {...field} /></FormControl><FormMessage /></FormItem>
+            )}/>
              <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>{t('label_phone')}</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem>)}/>
                 <FormField control={form.control} name="web" render={({ field }) => (<FormItem><FormLabel>{t('label_web')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
              </div>
-             <FormField control={form.control} name="zone" render={({ field }) => (
-              <FormItem><FormLabel>{t('label_zone')}</FormLabel><FormControl><Input placeholder="e.g., CHI-PIL-06" {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
             <FormField control={form.control} name="notes" render={({ field }) => (
               <FormItem><FormLabel>{t('label_notes')}</FormLabel><FormControl><Textarea placeholder={t('notes_placeholder')} {...field} /></FormControl><FormMessage /></FormItem>
             )}/>
