@@ -15,6 +15,7 @@ interface MapComponentProps {
   activeTab: string;
 }
 
+
 // Icono personalizado
 const createCustomIcon = (isSelected: boolean, status: string, category: string) => {
   const color = {
@@ -59,113 +60,97 @@ const createCustomIcon = (isSelected: boolean, status: string, category: string)
   });
 };
 
-// --- SOLUCIÓN DEFINITIVA ---
 
-// 1. Componente que ajusta el tamaño del mapa cuando la pestaña se activa
-function MapResizer({ activeTab }: { activeTab: string }) {
+// Este componente se encarga de toda la lógica dinámica DENTRO del mapa
+function MapController({ prospects, selectedProspects, onToggleSelection, onMarkerClick, activeTab }: MapComponentProps) {
   const map = useMap();
+
+  // Efecto para redimensionar el mapa cuando la pestaña se activa
   useEffect(() => {
     if (activeTab === 'map') {
-      // Damos un pequeño respiro para que el DOM se asiente antes de invalidar
       const timer = setTimeout(() => {
         map.invalidateSize();
       }, 100);
       return () => clearTimeout(timer);
     }
   }, [activeTab, map]);
-  return null;
-}
 
-// 2. Componente que renderiza los marcadores y popups
-function MapMarkers({ prospects, selectedProspects, onToggleSelection, onMarkerClick }: Omit<MapComponentProps, 'activeTab'>) {
-    const map = useMap();
+  // Efecto para ajustar la vista a los marcadores cuando los prospectos cambian
+  useEffect(() => {
+    if (prospects.length > 0) {
+        const bounds = L.latLngBounds(prospects.map(p => [p.lat, p.lng]));
+        map.fitBounds(bounds.pad(0.1));
+    }
+  }, [prospects, map]);
 
-    useEffect(() => {
-        if (prospects.length > 0) {
-            const bounds = L.latLngBounds(prospects.map(p => [p.lat, p.lng]));
-            map.fitBounds(bounds.pad(0.1));
-        }
-    }, [map, prospects]);
-
-    return (
-        <>
-        {prospects.map((prospect) => {
-            const isSelected = selectedProspects.includes(prospect.id);
-            return (
-            <Marker
-                key={prospect.id}
-                position={[prospect.lat, prospect.lng]}
-                icon={createCustomIcon(isSelected, prospect.status, prospect.category)}
-                eventHandlers={{ click: () => onMarkerClick(prospect) }}
-            >
-                <Popup>
-                <div className="p-2 min-w-[200px]">
-                    <h3 className="font-bold text-base mb-1 text-gray-900">
-                    {prospect.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-2 leading-snug">
-                    {prospect.address}
-                    </p>
-                    <div className="font-mono text-sm font-bold text-green-700 bg-green-50 inline-block px-2 py-1 rounded mb-2">
-                    {prospect.zone || 'SIN-ZONA'}
-                    </div>
-                    <div className="flex gap-1 mb-3">
-                    <span className="text-xs bg-gray-100 px-2 py-1 rounded capitalize">
-                        {prospect.ethnic}
-                    </span>
-                    <span className="text-xs bg-gray-100 px-2 py-1 rounded">
-                        {prospect.category}
-                    </span>
-                    </div>
-                    <button
-                    onClick={() => onToggleSelection(prospect.id)}
-                    className={`w-full py-2 px-3 rounded font-semibold text-sm transition-colors ${
-                        isSelected 
-                        ? 'bg-red-600 text-white hover:bg-red-700' 
-                        : 'bg-green-600 text-white hover:bg-green-700'
-                    }`}
-                    >
-                    {isSelected ? 'Quitar de ruta' : 'Agregar a ruta'}
-                    </button>
+  // Renderiza los marcadores
+  return (
+    <>
+      {prospects.map((prospect) => {
+        const isSelected = selectedProspects.includes(prospect.id);
+        return (
+          <Marker
+            key={prospect.id}
+            position={[prospect.lat, prospect.lng]}
+            icon={createCustomIcon(isSelected, prospect.status, prospect.category)}
+            eventHandlers={{ click: () => onMarkerClick(prospect) }}
+          >
+            <Popup>
+              <div className="p-2 min-w-[200px]">
+                <h3 className="font-bold text-base mb-1 text-gray-900">
+                  {prospect.name}
+                </h3>
+                <p className="text-sm text-gray-600 mb-2 leading-snug">
+                  {prospect.address}
+                </p>
+                <div className="font-mono text-sm font-bold text-green-700 bg-green-50 inline-block px-2 py-1 rounded mb-2">
+                  {prospect.zone || 'SIN-ZONA'}
                 </div>
-                </Popup>
-            </Marker>
-            );
-        })}
-        </>
-    );
+                <div className="flex gap-1 mb-3">
+                  <span className="text-xs bg-gray-100 px-2 py-1 rounded capitalize">
+                    {prospect.ethnic}
+                  </span>
+                  <span className="text-xs bg-gray-100 px-2 py-1 rounded">
+                    {prospect.category}
+                  </span>
+                </div>
+                <button
+                  onClick={() => onToggleSelection(prospect.id)}
+                  className={`w-full py-2 px-3 rounded font-semibold text-sm transition-colors ${
+                    isSelected 
+                    ? 'bg-red-600 text-white hover:bg-red-700' 
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                >
+                  {isSelected ? 'Quitar de ruta' : 'Agregar a ruta'}
+                </button>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
+    </>
+  );
 }
 
-// 3. El componente principal ahora solo renderiza el contenedor y los componentes hijos
-export function MapComponent({ 
-  prospects, 
-  selectedProspects, 
-  onToggleSelection,
-  onMarkerClick,
-  activeTab
-}: MapComponentProps) {
-  
+// El componente principal ahora solo renderiza el contenedor del mapa estático
+export function MapComponent(props: MapComponentProps) {
   const center: [number, number] = [41.8781, -87.6298]; // Default Chicago center
 
   return (
-      <MapContainer
-        center={center}
-        zoom={12}
-        scrollWheelZoom={true}
-        style={{ height: '100%', width: '100%' }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{y}.png"
-          maxZoom={19}
-        />
-        <MapMarkers 
-          prospects={prospects} 
-          selectedProspects={selectedProspects}
-          onToggleSelection={onToggleSelection}
-          onMarkerClick={onMarkerClick}
-        />
-        <MapResizer activeTab={activeTab} />
-      </MapContainer>
+    <MapContainer
+      center={center}
+      zoom={12}
+      scrollWheelZoom={true}
+      style={{ height: '100%', width: '100%' }}
+    >
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        url="https://{s}.tile.openstreetmap.org/{z}/{y}.png"
+        maxZoom={19}
+      />
+      {/* El controlador se encarga de todo lo dinámico */}
+      <MapController {...props} />
+    </MapContainer>
   );
 }
