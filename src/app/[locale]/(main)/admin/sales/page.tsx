@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useProspects } from '@/hooks/use-prospects';
 import { useAuth } from '@/context/auth-context';
@@ -23,13 +23,17 @@ import { useToast } from '@/hooks/use-toast';
 import { updateProspect, addProspectVisit } from '@/lib/firestore/prospects';
 import dynamic from 'next/dynamic';
 
+// Carga dinámica del MapView SIN SSR
 const MapView = dynamic(
   () => import('@/components/admin/sales/map-view').then((mod) => mod.MapView),
   { 
     ssr: false,
     loading: () => (
-      <div className="flex h-full w-full items-center justify-center bg-gray-50">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex h-[500px] w-full items-center justify-center bg-gray-50 rounded-xl">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-green-600 mx-auto mb-3" />
+          <p className="text-gray-600 font-medium">Cargando mapa...</p>
+        </div>
       </div>
     )
   }
@@ -50,6 +54,9 @@ export default function SalesPage() {
   
   const [proximityRadius, setProximityRadius] = useState(5);
   const [activeTab, setActiveTab] = useState('districts');
+  
+  // Key dinámica para forzar remount del mapa cuando sea necesario
+  const [mapKey, setMapKey] = useState(0);
 
   const kpis = useMemo(() => {
     if (loading) return { total: 0, visited: 0, conversion: 0 };
@@ -70,7 +77,6 @@ export default function SalesPage() {
     "Unzoned": t('uncategorized')
   };
 
-  // This will be filtered by proximity later
   const filteredProspects = prospects; 
 
   const prospectsByDistrict = useMemo(() => {
@@ -85,7 +91,7 @@ export default function SalesPage() {
         acc[districtCode].prospects.push(prospect);
         return acc;
     }, {} as Record<string, { name: string; prospects: Prospect[] }>);
-  }, [filteredProspects, t]);
+  }, [filteredProspects, districtNames]);
 
   const handleEditProspect = (prospect: Prospect) => {
     setSelectedProspect(prospect);
@@ -152,6 +158,15 @@ export default function SalesPage() {
     window.open(url, '_blank');
   };
 
+  // Manejar cambio de tab con key dinámica para el mapa
+  const handleTabChange = useCallback((value: string) => {
+    setActiveTab(value);
+    if (value === 'map') {
+      // Incrementar la key para forzar remount del mapa
+      setMapKey(prev => prev + 1);
+    }
+  }, []);
+
   return (
     <>
       <ProspectDialog open={isFormDialogOpen} onOpenChange={setIsFormDialogOpen} prospect={selectedProspect} />
@@ -197,7 +212,11 @@ export default function SalesPage() {
         </div>
 
         {/* Main Content with Tabs */}
-        <Tabs defaultValue="districts" onValueChange={setActiveTab} className="flex-grow flex flex-col">
+        <Tabs 
+          value={activeTab} 
+          onValueChange={handleTabChange} 
+          className="flex-grow flex flex-col"
+        >
             {/* Proximity and Tabs Header */}
             <div className="p-4 bg-background border-b sticky top-[214px] md:top-[160px] z-10">
               <div className="mb-4 space-y-2">
@@ -225,7 +244,7 @@ export default function SalesPage() {
             
             {/* Tabs Content */}
             <div className="p-4 flex-grow">
-                <TabsContent value="districts">
+                <TabsContent value="districts" className="mt-0">
                   <div className="space-y-4">
                     {loading ? <Skeleton className="h-40 w-full rounded-xl"/> : error ? (
                         <div className="text-center py-10 text-destructive">{t('error_loading')}</div>
@@ -236,12 +255,8 @@ export default function SalesPage() {
                             districtCode={districtCode}
                             districtName={name}
                             prospects={districtProspects}
-                            onEdit={handleEditProspect}
-                            onCheckIn={handleCheckIn}
-                            isSelectionMode={isSelectionMode}
+                            onBulkSelect={handleBulkSelect}
                             selectedProspects={selectedProspects}
-                            onSelectionChange={handleProspectSelectionChange}
-                            onSelectAll={handleBulkSelect}
                         />
                       ))
                     ) : (
@@ -249,8 +264,12 @@ export default function SalesPage() {
                     )}
                   </div>
                 </TabsContent>
-                <TabsContent value="map" className="h-full m-0" forceMount>
+                
+                {/* Map Tab - Con key dinámica para forzar remount */}
+                <TabsContent value="map" className="mt-0 h-[calc(100vh-380px)] min-h-[500px]">
+                  {activeTab === 'map' && (
                     <MapView 
+                      key={mapKey}
                       prospects={filteredProspects}
                       selectedProspects={selectedProspects}
                       onToggleSelection={(id) => {
@@ -261,12 +280,21 @@ export default function SalesPage() {
                         );
                       }}
                       onCreateRoute={handleCreateRoute}
-                      activeTab={activeTab}
                     />
+                  )}
                 </TabsContent>
-                <TabsContent value="list" className="space-y-3">
+                
+                <TabsContent value="list" className="mt-0 space-y-3">
                   {loading ? <Skeleton className="h-40 w-full rounded-xl"/> : filteredProspects.map(prospect => (
-                      <ProspectCard key={prospect.id} prospect={prospect} onEdit={handleEditProspect} onCheckIn={handleCheckIn} isSelectionMode={isSelectionMode} isSelected={selectedProspects.includes(prospect.id)} onSelectionChange={handleProspectSelectionChange} />
+                      <ProspectCard 
+                        key={prospect.id} 
+                        prospect={prospect} 
+                        onEdit={handleEditProspect} 
+                        onCheckIn={handleCheckIn} 
+                        isSelectionMode={isSelectionMode} 
+                        isSelected={selectedProspects.includes(prospect.id)} 
+                        onSelectionChange={handleProspectSelectionChange} 
+                      />
                   ))}
                 </TabsContent>
             </div>

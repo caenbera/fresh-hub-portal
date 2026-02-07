@@ -1,27 +1,25 @@
 // src/components/admin/sales/map-view.tsx
 'use client';
 
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Prospect } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
-  MapPin, Navigation, X, LocateFixed, Loader2
+  MapPin, Navigation, X, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { MapComponent } from './map-component';
+import dynamic from 'next/dynamic';
 
-// Tipos
 interface MapViewProps {
   prospects: Prospect[];
   selectedProspects: string[];
   onToggleSelection: (id: string) => void;
   onCreateRoute: () => void;
-  activeTab: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
+const STATUS_COLORS = {
   pending: '#f59e0b',
   contacted: '#3b82f6',
   visited: '#22c55e',
@@ -29,33 +27,60 @@ const STATUS_COLORS: Record<string, string> = {
   not_interested: '#6b7280',
 };
 
-// Coordenadas base por distrito
 const DISTRICT_CENTERS: Record<string, [number, number]> = {
   'CHI-PIL': [41.8559, -87.6659],
   'CHI-LV': [41.8445, -87.7059],
   'CHI-AP': [41.9683, -87.7289],
   'CHI-LP': [41.9296, -87.7078],
   'CHI-IP': [41.9539, -87.7359],
-  'CHI-WN': [42.0006, -87.6944],
 };
+
+// Carga dinámica del componente del mapa
+const MapComponent = dynamic(
+  () => import('./map-component').then((mod) => mod.MapComponent),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full w-full items-center justify-center bg-gray-50 rounded-xl">
+        <div className="text-center">
+          <Loader2 className="h-10 w-10 animate-spin text-green-600 mx-auto mb-3" />
+          <p className="text-gray-600 font-medium">Cargando mapa...</p>
+        </div>
+      </div>
+    )
+  }
+);
 
 export function MapView({ 
   prospects, 
   selectedProspects, 
   onToggleSelection,
-  onCreateRoute,
-  activeTab,
+  onCreateRoute 
 }: MapViewProps) {
   const t = useTranslations('AdminSalesPage');
   const [selectedClient, setSelectedClient] = useState<Prospect | null>(null);
+  const [isClient, setIsClient] = useState(false);
+  // Key única para forzar remount del mapa
+  const [mapKey, setMapKey] = useState(0);
 
-  // Preparar datos con coordenadas
+  // Asegurar que solo renderizamos en cliente
+  useEffect(() => {
+    setIsClient(true);
+    // Incrementar key cuando el componente se monta para forzar remount
+    setMapKey(prev => prev + 1);
+  }, []);
+
+  // Generar coordenadas (OPTIMIZADO)
   const prospectsWithCoords = useMemo(() => {
-    return prospects.map((p, index) => {
+    const districtCoordsCount: Record<string, number> = {};
+    
+    return prospects.map((p) => {
       const districtCode = p.zone?.split('-').slice(0, 2).join('-') || 'CHI-PIL';
       const baseCoords = DISTRICT_CENTERS[districtCode] || [41.8781, -87.6298];
       
-      // Variación determinística para evitar superposición
+      const index = districtCoordsCount[districtCode] || 0;
+      districtCoordsCount[districtCode] = index + 1;
+      
       const angle = (index * 137.5) * (Math.PI / 180);
       const radius = 0.003 + (index % 5) * 0.001;
       const lat = baseCoords[0] + Math.cos(angle) * radius;
@@ -69,8 +94,16 @@ export function MapView({
     setSelectedClient(prospect);
   }, []);
 
+  if (!isClient) {
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-gray-50 rounded-xl">
+        <Loader2 className="h-10 w-10 animate-spin text-green-600" />
+      </div>
+    );
+  }
+
   return (
-    <div className="relative h-[calc(100vh-280px)] min-h-[500px] bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
+    <div className="relative h-full min-h-[500px] bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
       {/* Toolbar */}
       <div className="absolute top-4 left-4 right-4 z-[1000] flex justify-between items-start pointer-events-none">
         <div className="flex gap-2 pointer-events-auto flex-wrap">
@@ -87,13 +120,13 @@ export function MapView({
         </div>
       </div>
 
-      {/* Mapa */}
+      {/* Mapa con key dinámica */}
       <MapComponent 
+        key={mapKey}
         prospects={prospectsWithCoords}
         selectedProspects={selectedProspects}
         onToggleSelection={onToggleSelection}
         onMarkerClick={handleMarkerClick}
-        activeTab={activeTab}
       />
 
       {/* Panel de cliente seleccionado */}
