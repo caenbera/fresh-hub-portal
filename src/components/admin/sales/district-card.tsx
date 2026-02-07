@@ -7,6 +7,7 @@ import type { Prospect } from '@/types';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/lib/utils';
 import { MapPin, Grid3X3, Zap } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface DistrictCardProps {
   districtCode: string;
