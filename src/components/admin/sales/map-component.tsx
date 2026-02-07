@@ -1,7 +1,7 @@
 // src/components/admin/sales/map-component.tsx
 'use client';
 
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { Prospect } from '@/types';
@@ -58,59 +58,29 @@ const createCustomIcon = (isSelected: boolean, status: string, category: string)
   });
 };
 
-// Componente para ajustar bounds
 function MapBounds({ prospects }: { prospects: { lat: number; lng: number }[] }) {
   const map = useMap();
-  
   useEffect(() => {
     if (prospects.length > 0) {
       const bounds = L.latLngBounds(prospects.map(p => [p.lat, p.lng]));
       map.fitBounds(bounds.pad(0.1));
     }
   }, [map, prospects]);
-
   return null;
 }
 
-export function MapComponent({ 
-  prospects, 
-  selectedProspects, 
-  onToggleSelection,
-  onMarkerClick 
-}: MapComponentProps) {
-  const center = useMemo(() => {
-    if (prospects.length === 0) return [41.8781, -87.6298] as [number, number];
-    const avgLat = prospects.reduce((sum, p) => sum + p.lat, 0) / prospects.length;
-    const avgLng = prospects.reduce((sum, p) => sum + p.lng, 0) / prospects.length;
-    return [avgLat, avgLng] as [number, number];
-  }, [prospects]);
-
+// Component for rendering markers. This component can re-render without re-initializing the map.
+function MapMarkers({ prospects, selectedProspects, onToggleSelection, onMarkerClick }: MapComponentProps) {
   return (
-    <MapContainer
-      center={center}
-      zoom={12}
-      scrollWheelZoom={true}
-      style={{ height: '100%', width: '100%' }}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        maxZoom={19}
-      />
-      
-      <MapBounds prospects={prospects} />
-      
+    <>
       {prospects.map((prospect) => {
         const isSelected = selectedProspects.includes(prospect.id);
-        
         return (
           <Marker
             key={prospect.id}
             position={[prospect.lat, prospect.lng]}
             icon={createCustomIcon(isSelected, prospect.status, prospect.category)}
-            eventHandlers={{
-              click: () => onMarkerClick(prospect),
-            }}
+            eventHandlers={{ click: () => onMarkerClick(prospect) }}
           >
             <Popup>
               <div className="p-2 min-w-[200px]">
@@ -146,6 +116,51 @@ export function MapComponent({
           </Marker>
         );
       })}
-    </MapContainer>
+    </>
   );
+}
+
+export function MapComponent({ 
+  prospects, 
+  selectedProspects, 
+  onToggleSelection,
+  onMarkerClick 
+}: MapComponentProps) {
+  const center = useMemo(() => {
+    if (prospects.length === 0) return [41.8781, -87.6298] as [number, number];
+    const avgLat = prospects.reduce((sum, p) => sum + p.lat, 0) / prospects.length;
+    const avgLng = prospects.reduce((sum, p) => sum + p.lng, 0) / prospects.length;
+    return [avgLat, avgLng] as [number, number];
+  }, [prospects]);
+
+  // Memoize the MapContainer to prevent re-initialization on parent re-renders.
+  const mapContainer = useMemo(
+    () => (
+      <MapContainer
+        center={center}
+        zoom={12}
+        scrollWheelZoom={true}
+        style={{ height: '100%', width: '100%' }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{y}.png"
+          maxZoom={19}
+        />
+        <MapBounds prospects={prospects} />
+        <MapMarkers 
+          prospects={prospects} 
+          selectedProspects={selectedProspects}
+          onToggleSelection={onToggleSelection}
+          onMarkerClick={onMarkerClick}
+        />
+      </MapContainer>
+    ),
+    // Dependency array is minimal to ensure the container itself doesn't re-render often.
+    // The child component `MapMarkers` will handle its own updates.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
+  return mapContainer;
 }
