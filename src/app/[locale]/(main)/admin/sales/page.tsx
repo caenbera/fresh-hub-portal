@@ -12,17 +12,27 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from "@/components/ui/slider"
 import {
-    Users, Map, List, Plus, Upload, Crosshair, Search
+    Users, Map, List, Plus, Upload, Crosshair, Search, Loader2
 } from 'lucide-react';
 import { ProspectDialog } from '@/components/admin/sales/prospect-dialog';
 import { ProspectImportDialog } from '@/components/admin/sales/prospect-import-dialog';
 import { DistrictCard } from '@/components/admin/sales/district-card';
-import { ProspectCard } from '@/components/admin/sales/prospect-card';
 import type { Prospect } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { updateProspect, addProspectVisit } from '@/lib/firestore/prospects';
-import { MapView } from '@/components/admin/sales/map-view';
+import dynamic from 'next/dynamic';
 
+const MapView = dynamic(
+  () => import('@/components/admin/sales/map-view').then((mod) => mod.MapView),
+  { 
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full w-full items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+);
 
 export default function SalesPage() {
   const t = useTranslations('AdminSalesPage');

@@ -10,9 +10,7 @@ import {
   MapPin, Navigation, X, LocateFixed, Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-// Importar dinámicamente para evitar SSR
-import dynamic from 'next/dynamic';
+import { MapComponent } from './map-component';
 
 // Tipos
 interface MapViewProps {
@@ -23,7 +21,7 @@ interface MapViewProps {
   activeTab: string;
 }
 
-const STATUS_COLORS = {
+const STATUS_COLORS: Record<string, string> = {
   pending: '#f59e0b',
   contacted: '#3b82f6',
   visited: '#22c55e',
@@ -40,22 +38,6 @@ const DISTRICT_CENTERS: Record<string, [number, number]> = {
   'CHI-IP': [41.9539, -87.7359],
   'CHI-WN': [42.0006, -87.6944],
 };
-
-// Componente del mapa cargado dinámicamente
-const MapComponent = dynamic(
-  () => import('./map-component').then((mod) => mod.MapComponent),
-  { 
-    ssr: false,
-    loading: () => (
-      <div className="flex items-center justify-center h-full bg-gray-50">
-        <div className="text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-green-600 mx-auto mb-3" />
-          <p className="text-gray-600 font-medium">Cargando mapa...</p>
-        </div>
-      </div>
-    )
-  }
-);
 
 export function MapView({ 
   prospects, 

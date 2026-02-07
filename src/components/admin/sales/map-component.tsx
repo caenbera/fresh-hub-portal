@@ -30,6 +30,7 @@ const createCustomIcon = (isSelected: boolean, status: string, category: string)
     'Restaurante': '🍽️',
     'Supermercado': '🏪',
     'Carnicería': '🥩',
+    'Otro': '📍',
   }[category] || '📍';
 
   return L.divIcon({
@@ -69,7 +70,11 @@ function MapController({ prospects, selectedProspects, onToggleSelection, onMark
   useEffect(() => {
     if (activeTab === 'map') {
       const timer = setTimeout(() => {
-        map.invalidateSize();
+        try {
+          map.invalidateSize();
+        } catch (e) {
+          console.error("Could not invalidate map size:", e);
+        }
       }, 100);
       return () => clearTimeout(timer);
     }
@@ -78,8 +83,14 @@ function MapController({ prospects, selectedProspects, onToggleSelection, onMark
   // Efecto para ajustar la vista a los marcadores cuando los prospectos cambian
   useEffect(() => {
     if (prospects.length > 0) {
-        const bounds = L.latLngBounds(prospects.map(p => [p.lat, p.lng]));
-        map.fitBounds(bounds.pad(0.1));
+        try {
+            const bounds = L.latLngBounds(prospects.map(p => [p.lat, p.lng]));
+            if(bounds.isValid()) {
+                map.fitBounds(bounds.pad(0.1));
+            }
+        } catch (e) {
+          console.error("Could not fit map bounds:", e);
+        }
     }
   }, [prospects, map]);
 
