@@ -21,20 +21,23 @@ import { ProspectCard } from '@/components/admin/sales/prospect-card';
 import type { Prospect } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { updateProspect, addProspectVisit } from '@/lib/firestore/prospects';
+import { MapView } from '@/components/admin/sales/map-view';
 
 // Placeholder for Map View
-const MapView = () => {
-    const t = useTranslations('AdminSalesPage');
-    return (
-        <div className="flex items-center justify-center h-full bg-gray-100 rounded-lg border-2 border-dashed min-h-[400px]">
-            <div className="text-center text-gray-500">
-                <Map className="mx-auto h-12 w-12 mb-2" />
-                <h3 className="font-bold">{t('map_view_coming_soon_title')}</h3>
-                <p className="text-sm">{t('map_view_coming_soon_desc')}</p>
-            </div>
-        </div>
-    );
-};
+<TabsContent value="map" className="h-full m-0">
+  <MapView 
+    prospects={filteredProspects}
+    selectedProspects={selectedProspects}
+    onToggleSelection={(id) => {
+      setSelectedProspects(prev => 
+        prev.includes(id) 
+          ? prev.filter(p => p !== id)
+          : [...prev, id]
+      );
+    }}
+    onCreateRoute={handleCreateRoute}
+  />
+</TabsContent>
 
 
 export default function SalesPage() {

@@ -163,3 +163,44 @@
     }
   }
 }
+/* Añadir al final de tu globals.css */
+
+/* Custom Leaflet Markers */
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Animación para selección */
+@keyframes select-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.prospect-selected {
+  animation: select-pulse 0.3s ease;
+}
+
+/* Scrollbar styling para listas */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* District card hover effects */
+.district-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.district-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+}
