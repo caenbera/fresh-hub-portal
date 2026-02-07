@@ -7,35 +7,23 @@ import { AppSidebar } from '@/components/layout/app-sidebar';
 import { DashboardHeader } from '@/components/layout/dashboard-header';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sprout } from 'lucide-react';
-import { usePathname, useRouter } from '@/navigation';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useRouter } from '@/navigation';
+import { useIsMobile } from '@/hooks/use-is-mobile';
 
 export default function MainLayout({ children }: { children: ReactNode }) {
-  const { user, loading, role } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    // This effect handles redirection AFTER loading is complete.
+    // This effect ensures only authenticated users can access main layout routes.
     if (!loading && !user) {
       router.replace('/login');
-    } else if (!loading && user && role) {
-      // Redirect to the appropriate dashboard after login
-      const currentPath = pathname;
-      if (currentPath === '/' || currentPath === '/login' || currentPath === '/signup') {
-         if (role === 'admin' || role === 'superadmin') {
-            router.replace('/admin/dashboard');
-         } else {
-            router.replace('/client/dashboard');
-         }
-      }
     }
-  }, [user, loading, role, router, pathname]);
+  }, [user, loading, router]);
 
   if (loading) {
     // Show a full-screen loader while auth context is resolving.
-    // This prevents rendering any child components prematurely.
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background">
         <div className="flex items-center gap-3 text-2xl font-semibold font-headline text-primary">
@@ -51,7 +39,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
-    // This prevents a brief flash of content if the redirect hasn't happened yet.
+    // While redirecting, render nothing to prevent a flash of content.
     return null; 
   }
 
