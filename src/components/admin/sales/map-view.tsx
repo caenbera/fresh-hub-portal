@@ -20,6 +20,7 @@ interface MapViewProps {
   selectedProspects: string[];
   onToggleSelection: (id: string) => void;
   onCreateRoute: () => void;
+  activeTab: string;
 }
 
 const STATUS_COLORS = {
@@ -60,7 +61,8 @@ export function MapView({
   prospects, 
   selectedProspects, 
   onToggleSelection,
-  onCreateRoute 
+  onCreateRoute,
+  activeTab,
 }: MapViewProps) {
   const t = useTranslations('AdminSalesPage');
   const [selectedClient, setSelectedClient] = useState<Prospect | null>(null);
@@ -109,6 +111,7 @@ export function MapView({
         selectedProspects={selectedProspects}
         onToggleSelection={onToggleSelection}
         onMarkerClick={handleMarkerClick}
+        activeTab={activeTab}
       />
 
       {/* Panel de cliente seleccionado */}

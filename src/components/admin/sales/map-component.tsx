@@ -12,6 +12,7 @@ interface MapComponentProps {
   selectedProspects: string[];
   onToggleSelection: (id: string) => void;
   onMarkerClick: (prospect: Prospect) => void;
+  activeTab: string;
 }
 
 // Icono personalizado
@@ -58,8 +59,24 @@ const createCustomIcon = (isSelected: boolean, status: string, category: string)
   });
 };
 
-// This child component will handle all the dynamic updates.
-function MapContent({ prospects, selectedProspects, onToggleSelection, onMarkerClick }: MapComponentProps) {
+// Componente para manejar el redimensionamiento del mapa cuando la pestaña se activa
+function MapResizer({ activeTab }: { activeTab: string }) {
+  const map = useMap();
+  useEffect(() => {
+    if (activeTab === 'map') {
+      // Un pequeño retraso para asegurar que el contenedor es visible y tiene su tamaño final
+      const timer = setTimeout(() => {
+        map.invalidateSize();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, map]);
+  return null;
+}
+
+
+// Este componente hijo contendrá toda la lógica dinámica
+function MapContent({ prospects, selectedProspects, onToggleSelection, onMarkerClick }: Omit<MapComponentProps, 'activeTab'>) {
   const map = useMap();
 
   useEffect(() => {
@@ -119,12 +136,13 @@ function MapContent({ prospects, selectedProspects, onToggleSelection, onMarkerC
 }
 
 
-// The MapComponent now only renders the container and the dynamic content component.
+// El componente MapComponent ahora solo renderiza el contenedor y el componente de contenido dinámico.
 export function MapComponent({ 
   prospects, 
   selectedProspects, 
   onToggleSelection,
-  onMarkerClick 
+  onMarkerClick,
+  activeTab
 }: MapComponentProps) {
   
   const center: [number, number] = [41.8781, -87.6298]; // Default Chicago center
@@ -147,6 +165,7 @@ export function MapComponent({
           onToggleSelection={onToggleSelection}
           onMarkerClick={onMarkerClick}
         />
+        <MapResizer activeTab={activeTab} />
       </MapContainer>
   );
 }

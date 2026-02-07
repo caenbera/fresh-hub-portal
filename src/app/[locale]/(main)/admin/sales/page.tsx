@@ -38,7 +38,7 @@ export default function SalesPage() {
   const [selectedProspects, setSelectedProspects] = useState<string[]>([]);
   
   const [proximityRadius, setProximityRadius] = useState(5);
-  // More state for proximity controls will be needed.
+  const [activeTab, setActiveTab] = useState('districts');
 
   const kpis = useMemo(() => {
     if (loading) return { total: 0, visited: 0, conversion: 0 };
@@ -186,7 +186,7 @@ export default function SalesPage() {
         </div>
 
         {/* Main Content with Tabs */}
-        <Tabs defaultValue="districts" className="flex-grow flex flex-col">
+        <Tabs defaultValue="districts" onValueChange={setActiveTab} className="flex-grow flex flex-col">
             {/* Proximity and Tabs Header */}
             <div className="p-4 bg-background border-b sticky top-[214px] md:top-[160px] z-10">
               <div className="mb-4 space-y-2">
@@ -238,7 +238,7 @@ export default function SalesPage() {
                     )}
                   </div>
                 </TabsContent>
-                <TabsContent value="map" className="h-full m-0">
+                <TabsContent value="map" className="h-full m-0" forceMount>
                     <MapView 
                       prospects={filteredProspects}
                       selectedProspects={selectedProspects}
@@ -250,6 +250,7 @@ export default function SalesPage() {
                         );
                       }}
                       onCreateRoute={handleCreateRoute}
+                      activeTab={activeTab}
                     />
                 </TabsContent>
                 <TabsContent value="list" className="space-y-3">
