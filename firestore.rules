@@ -130,9 +130,7 @@ service cloud.firestore {
       // An authenticated user can "claim" their invite by updating its status.
       // This is safe because they must be authenticated with the email that matches the document ID.
       // It only allows the status field to be changed to 'claimed'.
-      allow update: if isAuthed() && request.auth.token.email == email
-                      && request.resource.data.status == 'claimed'
-                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      allow update: if isAuthed() && request.auth.token.email == email && request.resource.data.status == 'claimed' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
     }
 
     // PRICE LISTS Collection
