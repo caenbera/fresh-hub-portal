@@ -51,7 +51,7 @@
     --sidebar-ring: 145 63% 49%;
 
     --pastel-green: #e8f5e9;
-
+    
     /* Custom variables from prototype */
     --primary-light: #4CAF50;
     --primary-dark: #1B5E20;
@@ -237,7 +237,7 @@ body {
     padding: 12px 15px;
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: 40;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
@@ -280,7 +280,7 @@ body {
     padding: 10px;
     position: sticky;
     top: 70px;
-    z-index: 999;
+    z-index: 39;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     overflow-x: auto;
     scrollbar-width: none;
@@ -334,7 +334,7 @@ body {
     border-bottom: 1px solid hsl(var(--border));
     position: sticky;
     top: 115px;
-    z-index: 998;
+    z-index: 38;
 }
 
 .tab-item {
