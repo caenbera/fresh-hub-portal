@@ -13,6 +13,11 @@ import { ProspectsListView } from '@/components/admin/sales/ProspectsListView';
 import { SalesStatsView } from '@/components/admin/sales/SalesStatsView';
 import { BottomActions } from '@/components/admin/sales/BottomActions';
 import { Loader2 } from 'lucide-react';
+import { ProspectDialog } from '@/components/admin/sales/prospect-dialog';
+import { ProspectDetailsDialog } from '@/components/admin/sales/prospect-details-dialog';
+import { Button } from '@/components/ui/button';
+import { Plus, Upload } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export default function SalesPage() {
   const { prospects, loading } = useProspects();
@@ -20,6 +25,13 @@ export default function SalesPage() {
   const [activeTab, setActiveTab] = useState('districts');
   const [selectedZone, setSelectedZone] = useState('CHI');
   const [selectedForRoute, setSelectedForRoute] = useState<string[]>([]); // Array of sub-zone codes
+
+  const [isProspectDialogOpen, setIsProspectDialogOpen] = useState(false);
+  const [editingProspect, setEditingProspect] = useState(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [viewingProspect, setViewingProspect] = useState(null);
+
+  const t = useTranslations('AdminSalesPage');
 
   const filteredProspects = useMemo(() => {
     if (!selectedZone || selectedZone === 'all') return prospects;
@@ -52,6 +64,11 @@ export default function SalesPage() {
   const handleAcceptCluster = (subZoneCodes: string[]) => {
     setSelectedForRoute(subZoneCodes);
   };
+
+  const handleOpenNewProspect = () => {
+    setEditingProspect(null);
+    setIsProspectDialogOpen(true);
+  };
   
   if (loading) {
     return (
@@ -75,6 +92,17 @@ export default function SalesPage() {
   const totalSelectedProspects = prospects.filter(p => selectedForRoute.includes(p.zone || '')).length;
 
   return (
+    <>
+    <ProspectDialog 
+      open={isProspectDialogOpen}
+      onOpenChange={setIsProspectDialogOpen}
+      prospect={editingProspect}
+    />
+     <ProspectDetailsDialog 
+      open={isDetailsDialogOpen}
+      onOpenChange={setIsDetailsDialogOpen}
+      prospect={viewingProspect}
+    />
     <div className="min-h-screen">
       <SalesHeader user={user} />
       <ZoneSelector 
@@ -82,7 +110,13 @@ export default function SalesPage() {
         selectedZone={selectedZone}
         onSelectZone={setSelectedZone}
       />
-      <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+      <div className="flex justify-between items-center bg-white border-b px-2 md:px-4">
+        <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+        <div className="flex items-center gap-2 pr-2">
+            <Button variant="outline" size="sm"><Upload className="h-4 w-4 mr-2"/>{t('import_button')}</Button>
+            <Button size="sm" onClick={handleOpenNewProspect}><Plus className="h-4 w-4 mr-2"/>{t('new_prospect_button')}</Button>
+        </div>
+      </div>
       
       <main className="view-container">
         <div className={`view ${activeTab === 'districts' ? 'active' : ''}`}>
@@ -122,5 +156,6 @@ export default function SalesPage() {
         />
       )}
     </div>
+    </>
   );
 }
