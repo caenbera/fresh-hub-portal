@@ -1,23 +1,27 @@
 // src/components/admin/sales/map-view.tsx
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Prospect } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  MapPin, Navigation, X, Loader2
-} from 'lucide-react';
+import { MapPin, Navigation, X, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import dynamic from 'next/dynamic';
-import { useJsApiLoader } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Polygon, MarkerF } from '@react-google-maps/api';
+import { districts } from '@/lib/district-config';
 
 interface MapViewProps {
   prospects: Prospect[];
   selectedProspects: string[];
   onToggleSelection: (id: string) => void;
   onCreateRoute: () => void;
+}
+
+// This interface is for prospects that are guaranteed to have coordinates
+interface ProspectWithCoords extends Prospect {
+  lat: number;
+  lng: number;
 }
 
 const STATUS_COLORS = {
@@ -34,23 +38,10 @@ const DISTRICT_CENTERS: Record<string, [number, number]> = {
   'CHI-AP': [41.9683, -87.7289],
   'CHI-LP': [41.9296, -87.7078],
   'CHI-IP': [41.9539, -87.7359],
+  'WI-MKE': [43.0389, -87.9065],
+  'IN-IN': [39.7684, -86.1581],
 };
 
-// Carga dinámica del componente del mapa
-const MapComponent = dynamic(
-  () => import('./map-component').then((mod) => mod.MapComponent),
-  { 
-    ssr: false,
-    loading: () => (
-      <div className="flex h-full w-full items-center justify-center bg-gray-50 rounded-xl">
-        <div className="text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-green-600 mx-auto mb-3" />
-          <p className="text-gray-600 font-medium">Cargando mapa...</p>
-        </div>
-      </div>
-    )
-  }
-);
 
 export function MapView({ 
   prospects, 
@@ -59,18 +50,42 @@ export function MapView({
   onCreateRoute 
 }: MapViewProps) {
   const t = useTranslations('AdminSalesPage');
-  const [selectedClient, setSelectedClient] = useState<Prospect | null>(null);
+  const [selectedClient, setSelectedClient] = useState<ProspectWithCoords | null>(null);
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
   });
+  
+  const containerStyle = {
+    width: '100%',
+    height: '100%',
+  };
 
-  // Generar coordenadas (OPTIMIZADO)
-  const prospectsWithCoords = useMemo(() => {
+  const center = {
+    lat: 41.8781, // Chicago center
+    lng: -87.6298,
+  };
+
+  const mapOptions = {
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false,
+      zoomControl: true,
+      zoomControlOptions: {
+          position: google.maps.ControlPosition.RIGHT_BOTTOM
+      }
+  };
+
+
+  const prospectsWithCoords: ProspectWithCoords[] = useMemo(() => {
     const districtCoordsCount: Record<string, number> = {};
     
     return prospects.map((p) => {
+      if (p.lat && p.lng) {
+        return { ...p, lat: p.lat, lng: p.lng };
+      }
+      
       const districtCode = p.zone?.split('-').slice(0, 2).join('-') || 'CHI-PIL';
       const baseCoords = DISTRICT_CENTERS[districtCode] || [41.8781, -87.6298];
       
@@ -86,14 +101,83 @@ export function MapView({
     });
   }, [prospects]);
 
-  const handleMarkerClick = useCallback((prospect: Prospect) => {
+  const handleMarkerClick = useCallback((prospect: ProspectWithCoords) => {
     setSelectedClient(prospect);
   }, []);
 
+  const getMarkerIcon = useCallback((prospect: Prospect, isSelected: boolean) => {
+    const color = STATUS_COLORS[prospect.status as keyof typeof STATUS_COLORS] || '#6b7280';
+    const scale = isSelected ? 1.5 : 1;
+    const pinPath = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5-2.5z";
+
+    return {
+      path: pinPath,
+      fillColor: color,
+      fillOpacity: isSelected ? 1 : 0.8,
+      strokeWeight: 1.5,
+      strokeColor: '#ffffff',
+      scale: scale,
+      anchor: new google.maps.Point(12, 24),
+    };
+  }, []);
+
+  const markers = useMemo(() => {
+    return prospectsWithCoords.map(prospect => (
+      <MarkerF
+        key={prospect.id}
+        position={{ lat: prospect.lat, lng: prospect.lng }}
+        onClick={() => handleMarkerClick(prospect)}
+        icon={getMarkerIcon(prospect, selectedProspects.includes(prospect.id))}
+        zIndex={selectedProspects.includes(prospect.id) ? 100 : 1}
+      />
+    ));
+  }, [prospectsWithCoords, selectedProspects, handleMarkerClick, getMarkerIcon]);
+
+  const districtPolygons = useMemo(() => {
+    return Object.values(districts).map((config) => {
+      const paths = config.boundaries.map(coord => ({ lat: coord[1], lng: coord[0] }));
+      return (
+        <Polygon
+          key={config.code}
+          paths={paths}
+          options={{
+            strokeColor: '#2E7D32',
+            strokeOpacity: 0.7,
+            strokeWeight: 2,
+            fillColor: '#4CAF50',
+            fillOpacity: 0.1,
+          }}
+        />
+      );
+    });
+  }, []);
+
+
+  if (!isLoaded) {
+    return (
+        <div className="flex h-full min-h-[500px] w-full items-center justify-center bg-gray-50 rounded-xl">
+            <div className="text-center">
+                <Loader2 className="h-10 w-10 animate-spin text-green-600 mx-auto mb-3" />
+                <p className="text-gray-600 font-medium">Cargando mapa...</p>
+            </div>
+        </div>
+    )
+  }
+
   return (
     <div className="relative h-full min-h-[500px] bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
-      {/* Toolbar */}
-      <div className="absolute top-4 left-4 right-4 z-[1000] flex justify-between items-start pointer-events-none">
+      <GoogleMap
+        mapContainerStyle={containerStyle}
+        center={center}
+        zoom={11}
+        options={mapOptions}
+      >
+        {districtPolygons}
+        {markers}
+      </GoogleMap>
+      
+      {/* Overlay UI elements */}
+       <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start pointer-events-none">
         <div className="flex gap-2 pointer-events-auto flex-wrap">
           <Badge variant="secondary" className="bg-white shadow-md px-3 py-1.5 text-sm border">
             <MapPin className="h-3.5 w-3.5 mr-1.5 text-green-600" />
@@ -108,26 +192,8 @@ export function MapView({
         </div>
       </div>
 
-      {/* Mapa con key dinámica */}
-      {isLoaded ? (
-        <MapComponent 
-            prospects={prospectsWithCoords}
-            selectedProspects={selectedProspects}
-            onToggleSelection={onToggleSelection}
-            onMarkerClick={handleMarkerClick}
-        />
-      ) : (
-        <div className="flex h-full w-full items-center justify-center bg-gray-50 rounded-xl">
-            <div className="text-center">
-                <Loader2 className="h-10 w-10 animate-spin text-green-600 mx-auto mb-3" />
-                <p className="text-gray-600 font-medium">Cargando mapa...</p>
-            </div>
-        </div>
-      )}
-
-      {/* Panel de cliente seleccionado */}
       {selectedClient && (
-        <div className="absolute bottom-4 left-4 right-4 z-[1000] max-w-md mx-auto animate-in slide-in-from-bottom-4 duration-200">
+        <div className="absolute bottom-4 left-4 right-4 z-10 max-w-md mx-auto animate-in slide-in-from-bottom-4 duration-200">
           <div className="bg-white rounded-xl shadow-2xl p-4 border border-gray-200">
             <div className="flex justify-between items-start mb-3">
               <div className="flex-1 pr-2">
@@ -195,8 +261,7 @@ export function MapView({
         </div>
       )}
 
-      {/* Leyenda */}
-      <div className="absolute bottom-4 right-4 z-[1000] bg-white/95 backdrop-blur rounded-xl shadow-lg p-4 hidden md:block border border-gray-200">
+      <div className="absolute bottom-4 right-4 z-10 bg-white/95 backdrop-blur rounded-xl shadow-lg p-4 hidden md:block border border-gray-200">
         <div className="text-sm font-bold text-gray-800 mb-3">Estados</div>
         <div className="space-y-2">
           {Object.entries(STATUS_COLORS).map(([status, color]) => (
@@ -206,7 +271,7 @@ export function MapView({
                 style={{ backgroundColor: color }}
               />
               <span className="capitalize text-gray-600 font-medium">
-                {t(`status_${status}`)}
+                {t(`status_${status}` as any)}
               </span>
             </div>
           ))}
