@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef } from 'react';
@@ -16,7 +17,7 @@ interface ProspectImportDialogProps {
 }
 
 const CSV_TEMPLATE_HEADERS = [
-  'name', 'address', 'city', 'state', 'phone', 'web', 'category', 'ethnic', 'zone', 'status', 'priority', 'notes'
+  'name', 'address', 'city', 'state', 'zip', 'lat', 'lng', 'phone', 'web', 'category', 'ethnic', 'zone', 'status', 'priority', 'notes'
 ];
 
 const CATEGORY_OPTIONS = ['Restaurante', 'Supermercado', 'Carnicería', 'Otro'];
@@ -89,6 +90,9 @@ export function ProspectImportDialog({ open, onOpenChange }: ProspectImportDialo
               address: rowData.address,
               city: rowData.city,
               state: rowData.state || 'Illinois',
+              zip: rowData.zip || '',
+              lat: rowData.lat ? parseFloat(rowData.lat) : null,
+              lng: rowData.lng ? parseFloat(rowData.lng) : null,
               phone: rowData.phone || '',
               web: rowData.web || '',
               category: CATEGORY_OPTIONS.includes(rowData.category) ? rowData.category : 'Otro',
