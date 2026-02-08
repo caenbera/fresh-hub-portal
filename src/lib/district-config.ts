@@ -128,4 +128,30 @@ export const districts: Record<string, District> = {
       "IN-LAF-12": { name: "West Residential" },
     }
   },
+  "WI-MKE": {
+    code: "WI-MKE",
+    name: "Milwaukee, Wisconsin",
+    areaKm2: 5.1,
+    boundaries: [
+      [-87.9500, 43.0600], // NW
+      [-87.8800, 43.0600], // NE
+      [-87.8800, 43.0100], // SE
+      [-87.9500, 43.0100], // SW
+      [-87.9500, 43.0600]  // Close
+    ],
+    subZones: {
+      "WI-MKE-01": { name: "Walker's Point" },
+      "WI-MKE-02": { name: "Historic Third Ward" },
+      "WI-MKE-03": { name: "Mitchell Street" },
+      "WI-MKE-04": { name: "Clarke Square" },
+      "WI-MKE-05": { name: "Lincoln Village" },
+      "WI-MKE-06": { name: "Bay View South" },
+      "WI-MKE-07": { name: "Downtown East" },
+      "WI-MKE-08": { name: "Menomonee Valley" },
+      "WI-MKE-09": { name: "Brady Street" },
+      "WI-MKE-10": { name: "Riverwest" },
+      "WI-MKE-11": { name: "East Side" },
+      "WI-MKE-12": { name: "West Allis Border" },
+    }
+  },
 };
