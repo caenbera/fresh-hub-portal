@@ -8,7 +8,7 @@ import { SalesHeader } from '@/components/admin/sales/SalesHeader';
 import { ZoneSelector } from '@/components/admin/sales/ZoneSelector';
 import { TabNavigation } from '@/components/admin/sales/TabNavigation';
 import { DistrictsView } from '@/components/admin/sales/DistrictsView';
-import { MapView } from '@/components/admin/sales/MapView';
+import { MapView } from '@/components/admin/sales/map-view';
 import { ProspectsListView } from '@/components/admin/sales/ProspectsListView';
 import { SalesStatsView } from '@/components/admin/sales/SalesStatsView';
 import { BottomActions } from '@/components/admin/sales/BottomActions';
@@ -23,7 +23,7 @@ export default function SalesPage() {
   const { prospects, loading } = useProspects();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('districts');
-  const [selectedZone, setSelectedZone] = useState('CHI');
+  const [selectedZone, setSelectedZone] = useState('all');
   const [selectedForRoute, setSelectedForRoute] = useState<string[]>([]); // Array of sub-zone codes
 
   const [isProspectDialogOpen, setIsProspectDialogOpen] = useState(false);
@@ -106,7 +106,7 @@ export default function SalesPage() {
         selectedZone={selectedZone}
         onSelectZone={setSelectedZone}
       />
-      <div className="flex justify-between items-center bg-white border-b px-2 md:px-4">
+      <div className="flex justify-between items-center bg-white border-b px-2 md:px-4 z-30 relative">
         <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
         <div className="flex items-center gap-2 pr-2">
             <Button variant="outline" size="sm" onClick={() => setIsImportDialogOpen(true)}><Upload className="h-4 w-4 mr-2"/>{t('import_button')}</Button>
@@ -127,9 +127,9 @@ export default function SalesPage() {
         <div className={`view ${activeTab === 'map' ? 'active' : ''}`}>
           <MapView 
             prospects={filteredProspects}
-            districtConfigs={districts}
-            selectedSubZones={selectedForRoute}
-            onToggleSubZone={handleToggleSubZone}
+            onToggleSelection={(id) => {}}
+            selectedProspects={[]}
+            onCreateRoute={() => {}}
           />
         </div>
         <div className={`view ${activeTab === 'list' ? 'active' : ''}`}>
