@@ -118,6 +118,14 @@ export function ProspectImportDialog({ open, onOpenChange }: ProspectImportDialo
                 zone = getZoneFromCoordinates(lat, lng) || '';
             }
 
+            // Fallback to assign a general zone based on state if zoning fails
+            if (!zone && rowData.state) {
+              const state = String(rowData.state).toUpperCase().trim();
+              if (state === 'IL' || state === 'ILLINOIS') zone = 'CHI';
+              else if (state === 'WI' || state === 'WISCONSIN') zone = 'WI';
+              else if (state === 'IN' || state === 'INDIANA') zone = 'IN';
+            }
+
             const prospectData: Partial<ProspectInput> = {
               name: rowData.name,
               address: rowData.address,
