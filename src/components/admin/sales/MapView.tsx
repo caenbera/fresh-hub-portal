@@ -33,16 +33,6 @@ export function MapView({ prospects, districtConfigs, selectedSubZones, onToggle
     lng: -87.6800
   };
 
-  const mapOptions = {
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: false,
-    zoomControl: true,
-    zoomControlOptions: {
-        position: google.maps.ControlPosition.RIGHT_BOTTOM
-    }
-  };
-
   const districtPolygons = useMemo(() => {
     return Object.entries(districtConfigs).map(([code, config]) => {
       const paths = config.boundaries.map(coord => ({ lat: coord[1], lng: coord[0] }));
@@ -65,6 +55,17 @@ export function MapView({ prospects, districtConfigs, selectedSubZones, onToggle
   if (!isLoaded) {
     return <div className="flex h-96 w-full items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-primary" /></div>;
   }
+
+  // Define mapOptions only when isLoaded is true
+  const mapOptions = {
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    zoomControl: true,
+    zoomControlOptions: {
+        position: google.maps.ControlPosition.RIGHT_BOTTOM
+    }
+  };
 
   return (
     <div className="map-container">
