@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useProspects } from '@/hooks/use-prospects';
@@ -92,7 +93,7 @@ export default function SalesPage() {
   const filteredProspects = useMemo(() => {
     if (loading) return [];
     if (selectedZone === 'all') return prospects;
-    return prospects.filter(p => p.zone?.startsWith(selectedZone));
+    return prospects.filter(p => p.zone?.split('-')[0] === selectedZone);
   }, [prospects, selectedZone, loading]);
 
   const groupedByDistrict = useMemo(() => {
@@ -122,7 +123,7 @@ export default function SalesPage() {
 
   const zoneCounts = zoneConfigs.map(zone => ({
       ...zone,
-      count: prospects.filter(p => p.zone?.startsWith(zone.code)).length
+      count: prospects.filter(p => p.zone?.split('-')[0] === zone.code).length
   }));
 
   const renderContent = () => {
