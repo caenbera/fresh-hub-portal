@@ -1,12 +1,12 @@
 'use client';
-import { CalendarWeek, Filter, MapMarkerAlt } from 'lucide-react';
+import { CalendarDays, Filter, MapPin } from 'lucide-react';
 export function SalesStatsView() {
   return (
     <div>
         <div className="sales-dashboard" style={{ background: 'linear-gradient(135deg, #7B1FA2, #4A148C)' }}>
             <div className="dashboard-header">
                 <div className="dashboard-title">
-                    <CalendarWeek size={16} className="inline mr-1" /> Esta Semana
+                    <CalendarDays size={16} className="inline mr-1" /> Esta Semana
                 </div>
                 <div className="dashboard-date">02-08 Feb</div>
             </div>
@@ -78,7 +78,7 @@ export function SalesStatsView() {
 
         <div className="district-card p-4 mt-4">
             <div className="font-bold text-base mb-4 flex items-center gap-2">
-                <MapMarkerAlt size={16} className="text-secondary" /> Top Zonas (Potencial $)
+                <MapPin size={16} className="text-secondary" /> Top Zonas (Potencial $)
             </div>
             
             <div className="flex flex-col gap-3">

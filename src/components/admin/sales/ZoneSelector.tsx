@@ -1,5 +1,5 @@
 'use client';
-import { City, Cheese, Flag } from 'lucide-react';
+import { Building, Landmark, Flag } from 'lucide-react';
 
 interface ZoneSelectorProps {
   zones: { code: string; label: string; icon: string; count: number }[];
@@ -10,10 +10,10 @@ interface ZoneSelectorProps {
 export function ZoneSelector({ zones, selectedZone, onSelectZone }: ZoneSelectorProps) {
   const getIcon = (iconName: string) => {
     switch(iconName) {
-        case 'fas fa-city': return <City size={14} />;
-        case 'fas fa-cheese': return <Cheese size={14} />;
+        case 'fas fa-city': return <Building size={14} />;
+        case 'fas fa-cheese': return <Landmark size={14} />;
         case 'fas fa-flag-usa': return <Flag size={14} />;
-        default: return <City size={14} />;
+        default: return <Building size={14} />;
     }
   }
 
