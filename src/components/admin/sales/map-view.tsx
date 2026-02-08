@@ -1,5 +1,4 @@
 
-// src/components/admin/sales/map-view.tsx
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
@@ -57,7 +56,20 @@ export function MapView({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
   });
-  
+
+  const mapOptions = useMemo(() => {
+    if (!isLoaded) return {}; // Return empty object if not loaded
+    return {
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: false,
+        zoomControl: true,
+        zoomControlOptions: {
+            position: google.maps.ControlPosition.RIGHT_BOTTOM
+        }
+    };
+  }, [isLoaded]);
+
   const containerStyle = {
     width: '100%',
     height: '100%',
@@ -156,18 +168,8 @@ export function MapView({
     )
   }
 
-  const mapOptions = {
-      mapTypeControl: false,
-      streetViewControl: false,
-      fullscreenControl: false,
-      zoomControl: true,
-      zoomControlOptions: {
-          position: google.maps.ControlPosition.RIGHT_BOTTOM
-      }
-  };
-
   return (
-    <div className="relative h-full min-h-[500px] bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
+    <div style={{ height: 'calc(100vh - 240px)' }} className="relative min-h-[600px] rounded-xl overflow-hidden border">
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={center}
