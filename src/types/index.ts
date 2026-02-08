@@ -343,6 +343,9 @@ export interface Prospect {
   address: string;
   city: string;
   state: string;
+  zip?: string;
+  lat?: number | null;
+  lng?: number | null;
   phone?: string;
   web?: string;
   zone?: string;

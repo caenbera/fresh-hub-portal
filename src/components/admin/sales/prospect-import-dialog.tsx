@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/auth-context';
-import { addProspect } from '@/lib/firestore/prospects';
+import { batchAddProspects } from '@/lib/firestore/prospects';
 import { Download, Upload, FileText, Loader2 } from 'lucide-react';
 import Papa from 'papaparse';
 
@@ -74,7 +74,7 @@ export function ProspectImportDialog({ open, onOpenChange }: ProspectImportDialo
       skipEmptyLines: true,
       complete: async (results) => {
         const data = results.data as any[];
-        let createdCount = 0;
+        const prospectsToCreate: any[] = [];
         let errorCount = 0;
 
         for (const rowData of data) {
@@ -91,8 +91,8 @@ export function ProspectImportDialog({ open, onOpenChange }: ProspectImportDialo
               city: rowData.city,
               state: rowData.state || 'Illinois',
               zip: rowData.zip || '',
-              lat: rowData.lat ? parseFloat(rowData.lat) : null,
-              lng: rowData.lng ? parseFloat(rowData.lng) : null,
+              lat: rowData.lat && !isNaN(parseFloat(rowData.lat)) ? parseFloat(rowData.lat) : null,
+              lng: rowData.lng && !isNaN(parseFloat(rowData.lng)) ? parseFloat(rowData.lng) : null,
               phone: rowData.phone || '',
               web: rowData.web || '',
               category: CATEGORY_OPTIONS.includes(rowData.category) ? rowData.category : 'Otro',
@@ -104,8 +104,7 @@ export function ProspectImportDialog({ open, onOpenChange }: ProspectImportDialo
               salespersonId: user.uid,
             };
 
-            await addProspect(prospectData as any);
-            createdCount++;
+            prospectsToCreate.push(prospectData);
 
           } catch (e: any) {
             errorCount++;
@@ -113,10 +112,20 @@ export function ProspectImportDialog({ open, onOpenChange }: ProspectImportDialo
           }
         }
 
-        toast({
-          title: "Import Complete",
-          description: `${createdCount} prospects imported. ${errorCount > 0 ? `${errorCount} rows failed.` : ''}`,
-        });
+        if (prospectsToCreate.length > 0) {
+          try {
+            await batchAddProspects(prospectsToCreate);
+            toast({
+              title: "Import Complete",
+              description: `${prospectsToCreate.length} prospects imported. ${errorCount > 0 ? `${errorCount} rows failed.` : ''}`,
+            });
+          } catch (batchError) {
+            toast({ variant: 'destructive', title: 'Batch Import Error', description: 'Could not save prospects to database.' });
+          }
+        } else {
+          toast({ variant: 'destructive', title: 'Import Failed', description: 'No valid prospect data found in the file.' });
+        }
+
 
         setIsProcessing(false);
         setSelectedFile(null);

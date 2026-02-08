@@ -5,6 +5,7 @@ import {
   deleteDoc,
   doc,
   serverTimestamp,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import type { Prospect, ProspectVisit } from '@/types';
@@ -26,6 +27,31 @@ export const addProspect = (prospectData: ProspectInput) => {
       path: prospectsCollection.path,
       operation: 'create',
       requestResourceData: dataWithTimestamp,
+    });
+    errorEmitter.emit('permission-error', permissionError);
+    throw serverError;
+  });
+};
+
+export const batchAddProspects = async (prospectsData: ProspectInput[]) => {
+  const batch = writeBatch(db);
+  const prospectsCollection = collection(db, 'prospects');
+
+  prospectsData.forEach(prospect => {
+    const docRef = doc(prospectsCollection); // Create a new doc reference
+    const dataWithTimestamp = {
+      ...prospect,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+    batch.set(docRef, dataWithTimestamp);
+  });
+
+  return batch.commit().catch(async (serverError) => {
+    const permissionError = new FirestorePermissionError({
+      path: prospectsCollection.path,
+      operation: 'create',
+      requestResourceData: { note: `${prospectsData.length} documents` },
     });
     errorEmitter.emit('permission-error', permissionError);
     throw serverError;
