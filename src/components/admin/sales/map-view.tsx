@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import { useJsApiLoader } from '@react-google-maps/api';
 
 interface MapViewProps {
   prospects: Prospect[];
@@ -59,16 +60,11 @@ export function MapView({
 }: MapViewProps) {
   const t = useTranslations('AdminSalesPage');
   const [selectedClient, setSelectedClient] = useState<Prospect | null>(null);
-  const [isClient, setIsClient] = useState(false);
-  // Key única para forzar remount del mapa
-  const [mapKey, setMapKey] = useState(0);
 
-  // Asegurar que solo renderizamos en cliente
-  useEffect(() => {
-    setIsClient(true);
-    // Incrementar key cuando el componente se monta para forzar remount
-    setMapKey(prev => prev + 1);
-  }, []);
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ''
+  });
 
   // Generar coordenadas (OPTIMIZADO)
   const prospectsWithCoords = useMemo(() => {
@@ -94,14 +90,6 @@ export function MapView({
     setSelectedClient(prospect);
   }, []);
 
-  if (!isClient) {
-    return (
-      <div className="flex h-full w-full items-center justify-center bg-gray-50 rounded-xl">
-        <Loader2 className="h-10 w-10 animate-spin text-green-600" />
-      </div>
-    );
-  }
-
   return (
     <div className="relative h-full min-h-[500px] bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
       {/* Toolbar */}
@@ -121,13 +109,21 @@ export function MapView({
       </div>
 
       {/* Mapa con key dinámica */}
-      <MapComponent 
-        key={mapKey}
-        prospects={prospectsWithCoords}
-        selectedProspects={selectedProspects}
-        onToggleSelection={onToggleSelection}
-        onMarkerClick={handleMarkerClick}
-      />
+      {isLoaded ? (
+        <MapComponent 
+            prospects={prospectsWithCoords}
+            selectedProspects={selectedProspects}
+            onToggleSelection={onToggleSelection}
+            onMarkerClick={handleMarkerClick}
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center bg-gray-50 rounded-xl">
+            <div className="text-center">
+                <Loader2 className="h-10 w-10 animate-spin text-green-600 mx-auto mb-3" />
+                <p className="text-gray-600 font-medium">Cargando mapa...</p>
+            </div>
+        </div>
+      )}
 
       {/* Panel de cliente seleccionado */}
       {selectedClient && (
