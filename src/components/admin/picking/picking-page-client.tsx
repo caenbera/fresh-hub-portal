@@ -38,7 +38,7 @@ interface PackedOrder {
   id: string;
   client: string;
   time: string;
-  items: (typeof MOCK_ORDERS)[0]['items'][0] & { finalQty: number, originalQty: number, hasShortage: boolean };
+  items: ((typeof MOCK_ORDERS)[0]['items'][0] & { finalQty: number, originalQty: number, hasShortage: boolean })[]; // ← Añadir [] aquí
 }
 
 export function PickingPageClient() {
@@ -283,7 +283,7 @@ export function PickingPageClient() {
                             <Truck />
                         </div>
                         <div className="p-2 space-y-2">
-                           {order.items.map(item => {
+                        {order.items.map((item: any) => { // ← Agregar tipado aquí
                                if (item.finalQty === 0 && !item.hasShortage) return null;
                                return (
                                     <div key={item.id} className="flex items-start gap-3 p-2 border-b last:border-0">
