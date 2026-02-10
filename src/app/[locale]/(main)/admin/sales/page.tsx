@@ -25,12 +25,14 @@ import { DistrictCard } from '@/components/admin/sales/district-card';
 import type { Prospect } from '@/types';
 import { SalesDashboard } from '@/components/admin/sales/SalesDashboard';
 import { SmartCluster } from '@/components/admin/sales/SmartCluster';
+import { useToast } from '@/hooks/use-toast';
 
 
 export default function SalesPage() {
   const { prospects, loading } = useProspects();
   const { user } = useAuth();
   const t = useTranslations('AdminSalesPage');
+  const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState('list');
   const [selectedZone, setSelectedZone] = useState('all');
@@ -78,14 +80,33 @@ export default function SalesPage() {
   const handleCreateRoute = () => {
     if (selectedProspects.length === 0) return;
     const selected = prospects.filter(p => selectedProspects.includes(p.id));
-    const validAddresses = selected.filter(p => p.address).map(p => encodeURIComponent(p.address));
+    
+    const validAddresses = selected
+      .filter(p => p.address && p.city && p.state)
+      .map(p => {
+        const fullAddress = `${p.address}, ${p.city}, ${p.state}${p.zip ? ` ${p.zip}` : ''}`;
+        return encodeURIComponent(fullAddress);
+      });
+
     if (validAddresses.length === 0) {
-      // toast...
+      toast({
+        variant: "destructive",
+        title: t('toast_no_address_title'),
+        description: t('toast_no_address_desc'),
+      });
       return;
     }
+
+    if (validAddresses.length === 1) {
+        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${validAddresses[0]}`;
+        window.open(mapsUrl, '_blank');
+        return;
+    }
+
     const origin = validAddresses[0];
     const destination = validAddresses[validAddresses.length - 1];
     const waypoints = validAddresses.slice(1, -1).join('|');
+    
     const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${waypoints}`;
     window.open(mapsUrl, '_blank');
   };
