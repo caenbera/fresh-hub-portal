@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef } from 'react';
@@ -22,8 +21,8 @@ const CSV_TEMPLATE_HEADERS = [
   'name', 'address', 'city', 'state', 'zip', 'lat', 'lng', 'phone', 'web', 'category', 'ethnic', 'zone', 'status', 'priority', 'notes'
 ];
 
-const CATEGORY_OPTIONS = ['Restaurante', 'Supermercado', 'Carnicería', 'Otro'];
-const ETHNIC_OPTIONS = ['mexicano', 'peruano', 'colombiano', 'ecuatoriano', 'venezolano', 'salvadoreno', 'guatemalteco', 'otro'];
+const CATEGORY_OPTIONS = ['Restaurante', 'Supermercado', 'Carnicería', 'Distribuidor Mayorista', 'Otro'];
+const ETHNIC_OPTIONS = ['mexicano', 'peruano', 'colombiano', 'ecuatoriano', 'venezolano', 'salvadoreno', 'guatemalteco', 'dominicano', 'africano', 'caribeño', 'internacional', 'otro'];
 const STATUS_OPTIONS = ['pending', 'contacted', 'visited', 'client', 'not_interested'];
 
 export function ProspectImportDialog({ open, onOpenChange }: ProspectImportDialogProps) {
@@ -65,10 +64,7 @@ export function ProspectImportDialog({ open, onOpenChange }: ProspectImportDialo
   };
 
   const handleImport = async () => {
-    if (!selectedFile || !user) {
-      toast({ variant: 'destructive', title: 'Error', description: 'File or user not found.'});
-      return;
-    };
+    if (!selectedFile || !user) return;
     setIsProcessing(true);
 
     Papa.parse(selectedFile, {
@@ -83,67 +79,42 @@ export function ProspectImportDialog({ open, onOpenChange }: ProspectImportDialo
         for (const rowData of data) {
           try {
             if (!rowData.name || !rowData.address || !rowData.city) {
-              console.warn('Skipping row due to missing required fields:', rowData);
               errorCount++;
               continue;
             }
 
-            let lat: number | null = null;
-            let lng: number | null = null;
-
-            if (rowData.lat && rowData.lng && !isNaN(parseFloat(rowData.lat)) && !isNaN(parseFloat(rowData.lng))) {
-              lat = parseFloat(rowData.lat);
-              lng = parseFloat(rowData.lng);
-            } else {
-              const fullAddress = `${rowData.address}, ${rowData.city}, ${rowData.state || 'IL'}`;
-              const encodedAddress = encodeURIComponent(fullAddress);
-              const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-              if (apiKey) {
-                const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`);
-                const geoData = await response.json();
-                if (geoData.status === 'OK' && geoData.results.length > 0) {
-                  const location = geoData.results[0].geometry.location;
-                  lat = location.lat;
-                  lng = location.lng;
-                } else {
-                  console.warn(`Geocoding failed for: ${fullAddress}. Status: ${geoData.status}`);
-                }
-                await new Promise(resolve => setTimeout(resolve, 50)); 
-              }
-            }
+            let lat = parseFloat(rowData.lat);
+            let lng = parseFloat(rowData.lng);
             
-            let zone = rowData.zone || '';
-            if (lat && lng) {
+            // Asignación de Zona automática
+            let finalZone = rowData.zone || '';
+            if (!isNaN(lat) && !isNaN(lng)) {
                 const calculatedZone = getZoneFromCoordinates(lat, lng);
                 if (calculatedZone) {
-                    zone = calculatedZone;
+                    finalZone = calculatedZone;
                 }
             }
             
-            // Fallback to assign a general zone based on state if zoning fails
-            if (!zone && rowData.state) {
-              const state = String(rowData.state).toUpperCase().trim();
-              if (state === 'IL' || state === 'ILLINOIS') zone = 'CHI';
-              else if (state === 'WI' || state === 'WISCONSIN') zone = 'WI';
-              else if (state === 'IN' || state === 'INDIANA') zone = 'IN';
+            // Fallback si la zona no tiene el formato ZONA-SUBZONA (ej: "CHI-PIL") le ponemos "-01"
+            if (finalZone && !finalZone.includes('-', finalZone.indexOf('-') + 1)) {
+              finalZone = `${finalZone}-01`;
             }
 
             const prospectData: Partial<ProspectInput> = {
               name: rowData.name,
               address: rowData.address,
               city: rowData.city,
-              state: rowData.state || 'Illinois',
+              state: rowData.state || 'IL',
               zip: rowData.zip || '',
-              lat: lat,
-              lng: lng,
+              lat: isNaN(lat) ? null : lat,
+              lng: isNaN(lng) ? null : lng,
               phone: rowData.phone || '',
               web: rowData.web || '',
               category: CATEGORY_OPTIONS.includes(rowData.category) ? rowData.category : 'Otro',
               ethnic: ETHNIC_OPTIONS.includes(rowData.ethnic?.toLowerCase()) ? rowData.ethnic.toLowerCase() : 'otro',
-              zone: zone,
+              zone: finalZone,
               status: STATUS_OPTIONS.includes(rowData.status?.toLowerCase()) ? rowData.status.toLowerCase() : 'pending',
-              priority: rowData.priority?.toUpperCase() === 'TRUE' || rowData.priority?.toUpperCase() === 'VERDADERO',
+              priority: rowData.priority?.toUpperCase() === 'HIGH' || rowData.priority?.toUpperCase() === 'TRUE',
               notes: rowData.notes || '',
               salespersonId: user.uid,
             };
@@ -158,25 +129,19 @@ export function ProspectImportDialog({ open, onOpenChange }: ProspectImportDialo
               createdCount++;
             }
 
-          } catch (e: any) {
+          } catch (e) {
             errorCount++;
-            console.error(`Failed to process row: ${JSON.stringify(rowData)}`, e);
+            console.error(e);
           }
         }
 
         toast({
           title: "Import Complete",
-          description: `${createdCount} created, ${updatedCount} updated. ${errorCount > 0 ? `${errorCount} rows failed.` : ''}`,
+          description: `${createdCount} created, ${updatedCount} updated. ${errorCount > 0 ? `${errorCount} errors.` : ''}`,
         });
 
         setIsProcessing(false);
-        setSelectedFile(null);
         onOpenChange(false);
-      },
-      error: (error) => {
-        console.error("CSV Parsing Error:", error);
-        toast({ variant: 'destructive', title: 'CSV Parsing Error', description: error.message });
-        setIsProcessing(false);
       }
     });
   };
@@ -190,25 +155,13 @@ export function ProspectImportDialog({ open, onOpenChange }: ProspectImportDialo
         </DialogHeader>
         <div className="space-y-6 py-4">
             <div className="p-4 rounded-lg border bg-muted/50 space-y-4">
-                <div>
-                    <h4 className="font-semibold text-sm mb-2">{t('import_step1_title')}</h4>
-                    <p className="text-xs text-muted-foreground">{t('import_step1_desc')}</p>
-                </div>
                 <Button variant="outline" size="sm" onClick={handleDownloadTemplate} className="w-full justify-start">
                     <Download className="mr-2 h-4 w-4"/>
                     {t('download_template_button')}
                 </Button>
             </div>
              <div className="p-4 rounded-lg border bg-muted/50">
-                <h4 className="font-semibold text-sm mb-2">{t('import_step2_title')}</h4>
-                <p className="text-xs text-muted-foreground mb-3">{t('import_step2_desc')}</p>
-                 <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept=".csv"
-                    onChange={handleFileChange}
-                    className="hidden"
-                />
+                 <input type="file" ref={fileInputRef} accept=".csv" onChange={handleFileChange} className="hidden" />
                 <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
                     <Upload className="mr-2 h-4 w-4"/>
                     {t('upload_file_button')}
@@ -216,13 +169,13 @@ export function ProspectImportDialog({ open, onOpenChange }: ProspectImportDialo
                 {selectedFile && (
                     <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground bg-background p-2 rounded-md border">
                         <FileText className="h-4 w-4 text-primary"/>
-                        <span className="font-medium">{selectedFile.name}</span>
+                        <span>{selectedFile.name}</span>
                     </div>
                 )}
             </div>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t('cancel')}
           </Button>
           <Button onClick={handleImport} disabled={!selectedFile || isProcessing}>

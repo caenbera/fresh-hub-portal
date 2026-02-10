@@ -3,63 +3,59 @@ import { booleanPointInPolygon } from '@turf/turf';
 import { districts, type District } from '@/lib/district-config';
 
 /**
- * Finds the district configuration for a given geographic point.
- * @param lat - Latitude of the point.
- * @param lng - Longitude of the point.
- * @returns The matching District object or null if no district contains the point.
+ * Encuentra el distrito para un punto. 
+ * Si no cae exacto en el polígono, busca en el área (grid) para evitar errores de precisión.
  */
 function findDistrictForPoint(lat: number, lng: number): District | null {
-    const pt = point([lng, lat]); // turf.js uses [longitude, latitude]
+    const pt = point([lng, lat]);
+    
+    // Intento 1: Por polígono (preciso)
     for (const districtCode in districts) {
         const district = districts[districtCode];
-        // The first array in the polygon is the outer ring.
         const poly = polygon([district.boundaries]); 
         if (booleanPointInPolygon(pt, poly)) {
             return district;
+        }
+    }
+
+    // Intento 2: Por coordenadas límite (fallback por si falla la precisión del mapa)
+    for (const districtCode in districts) {
+        const d = districts[districtCode];
+        if (lat >= d.grid.minLat && lat <= d.grid.maxLat && 
+            lng >= d.grid.minLng && lng <= d.grid.maxLng) {
+            return d;
         }
     }
     return null;
 }
 
 /**
- * Calculates the sub-zone code (e.g., 'CHI-PIL-05') for a point within a given district.
- * It does this by normalizing the point's coordinates within the district's bounding box
- * and mapping it to a 4x3 grid.
- * @param lat - Latitude of the point.
- * @param lng - Longitude of the point.
- * @param district - The district the point falls into.
- * @returns The calculated sub-zone code.
+ * Calcula matemáticamente en qué celda de la cuadrícula 4x3 cae el prospecto.
  */
 function calculateSubZone(lat: number, lng: number, district: District): string {
     const { minLat, maxLat, minLng, maxLng } = district.grid;
   
-    // Normalize position within the bounding box (0 to 1), clamping the values to handle edge cases.
-    const latNorm = Math.max(0, Math.min(1, maxLat !== minLat ? (lat - minLat) / (maxLat - minLat) : 0));
-    const lngNorm = Math.max(0, Math.min(1, maxLng !== minLng ? (lng - minLng) / (maxLng - minLng) : 0));
+    // Normalizamos la posición (de 0 a 1)
+    // Usamos 0.9999 para evitar que los prospectos en el borde exacto creen una fila/columna inexistente
+    const latNorm = Math.max(0, Math.min(0.9999, (lat - minLat) / (maxLat - minLat)));
+    const lngNorm = Math.max(0, Math.min(0.9999, (lng - minLng) / (maxLng - minLng)));
   
-    // Map normalized coordinates to a 4x3 grid
+    // Mapeo a cuadrícula 4x3
+    // Columnas (E-O): 0, 1, 2, 3
     const col = Math.floor(lngNorm * 4);
-    // Invert row calculation so higher latitude means a lower row index (top of the grid)
+    
+    // Filas (N-S): 0 es el Norte (maxLat), 2 es el Sur (minLat)
     const row = 2 - Math.floor(latNorm * 3);
   
-    // Clamp values to be safe
-    const finalCol = Math.max(0, Math.min(col, 3));
-    const finalRow = Math.max(0, Math.min(row, 2));
-
-    // Calculate cell number (1-12)
-    const cellNumber = finalRow * 4 + finalCol + 1;
+    // Cálculo del número de celda (1 al 12)
+    const cellNumber = (row * 4) + col + 1;
     const subZoneIndex = String(cellNumber).padStart(2, '0');
     
     return `${district.code}-${subZoneIndex}`;
 }
 
-/**
- * Main utility function to determine the full zone code for a given set of coordinates.
- * @param lat - Latitude.
- * @param lng - Longitude.
- * @returns The full zone code (e.g., "CHI-PIL-05") or null if no matching district is found.
- */
 export function getZoneFromCoordinates(lat: number, lng: number): string | null {
+    if (!lat || !lng) return null;
     const district = findDistrictForPoint(lat, lng);
     if (district) {
         return calculateSubZone(lat, lng, district);
