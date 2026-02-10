@@ -26,6 +26,7 @@ import { SmartCluster } from '@/components/admin/sales/SmartCluster';
 import { useToast } from '@/hooks/use-toast';
 import { RouteOptionsDialog } from '@/components/admin/sales/RouteOptionsDialog';
 import { BottomActions } from '@/components/admin/sales/BottomActions';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 export default function SalesPage() {
@@ -220,7 +221,7 @@ export default function SalesPage() {
           </div>
         </div>
 
-        <main className="p-4">
+        <main className="p-4 pb-48">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <Switch 
@@ -239,9 +240,10 @@ export default function SalesPage() {
         
         {isSelectionMode && selectedProspects.length > 0 && (
            <BottomActions 
-            count={selectedProspects.length}
+            prospects={selectedProspectsData}
             onClear={() => setSelectedProspects([])}
             onGenerate={() => setIsRouteOptionsOpen(true)}
+            onRemove={(id) => handleSelectionChange(id, false)}
           />
         )}
       </div>
@@ -249,3 +251,4 @@ export default function SalesPage() {
   );
 }
     
+
