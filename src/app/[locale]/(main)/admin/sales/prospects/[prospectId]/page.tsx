@@ -5,29 +5,27 @@ import { db } from '@/lib/firebase/config';
 import type { Prospect } from '@/types';
 import { doc, getDoc } from 'firebase/firestore';
 import { ArrowLeft } from 'lucide-react';
-import { useRouter } from '@/navigation';
+import { useRouter } from '@/navigation'; // Tu navegación personalizada
+import { useParams } from 'next/navigation'; // useParams desde next/navigation
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 
-type Props = {
-  params: { prospectId: string };
-};
-
-export default function ProspectDetailPage({ params }: Props) {
+export default function ProspectDetailPage() {
   const router = useRouter();
+  const params = useParams();
   const { user } = useAuth();
   const [prospect, setProspect] = useState<Prospect | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user || !params.prospectId) return;
+    if (!user || !params?.prospectId) return;
 
     const fetchProspect = async () => {
       try {
         setLoading(true);
-        const docRef = doc(db, 'prospects', params.prospectId);
+        const docRef = doc(db, 'prospects', params.prospectId as string);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
@@ -44,7 +42,7 @@ export default function ProspectDetailPage({ params }: Props) {
     };
 
     fetchProspect();
-  }, [user, params.prospectId]);
+  }, [user, params?.prospectId]);
 
   return (
     <div className="p-4 md:p-8">
