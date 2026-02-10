@@ -15,7 +15,6 @@ interface MapViewProps {
   prospects: Prospect[];
   selectedProspects: string[];
   onToggleSelection: (id: string) => void;
-  onCreateRoute: () => void;
 }
 
 // This interface is for prospects that are guaranteed to have coordinates
@@ -47,7 +46,6 @@ export function MapView({
   prospects, 
   selectedProspects, 
   onToggleSelection,
-  onCreateRoute 
 }: MapViewProps) {
   const t = useTranslations('AdminSalesPage');
   const [selectedClient, setSelectedClient] = useState<ProspectWithCoords | null>(null);
@@ -73,6 +71,7 @@ export function MapView({
   const containerStyle = {
     width: '100%',
     height: '100%',
+    minHeight: '600px'
   };
 
   const center = {
@@ -169,7 +168,7 @@ export function MapView({
   }
 
   return (
-    <div style={{ height: 'calc(100vh - 240px)' }} className="relative min-h-[600px] rounded-xl overflow-hidden border">
+    <div style={{ height: 'calc(100vh - 240px)', minHeight: '600px' }} className="relative rounded-xl overflow-hidden border">
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={center}

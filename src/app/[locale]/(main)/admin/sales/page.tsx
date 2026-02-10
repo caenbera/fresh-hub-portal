@@ -12,7 +12,6 @@ import { TabNavigation } from '@/components/admin/sales/TabNavigation';
 import { MapView } from '@/components/admin/sales/map-view';
 import { ProspectCard } from '@/components/admin/sales/prospect-card';
 import { SalesStatsView } from '@/components/admin/sales/SalesStatsView';
-import { BottomActions } from '@/components/admin/sales/BottomActions';
 import { Loader2, Plus, Upload, Route, Trash, Check, X, Wand } from 'lucide-react';
 import { ProspectDialog } from '@/components/admin/sales/prospect-dialog';
 import { ProspectDetailsDialog } from '@/components/admin/sales/prospect-details-dialog';
@@ -20,12 +19,12 @@ import { ProspectImportDialog } from '@/components/admin/sales/prospect-import-d
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { DistrictCard } from '@/components/admin/sales/district-card';
 import type { Prospect } from '@/types';
 import { SalesDashboard } from '@/components/admin/sales/SalesDashboard';
 import { SmartCluster } from '@/components/admin/sales/SmartCluster';
 import { useToast } from '@/hooks/use-toast';
+import { RouteOptionsDialog } from '@/components/admin/sales/RouteOptionsDialog';
 
 
 export default function SalesPage() {
@@ -44,6 +43,7 @@ export default function SalesPage() {
   const [prospectForVisit, setProspectForVisit] = useState<Prospect | null>(null);
 
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [isRouteOptionsOpen, setIsRouteOptionsOpen] = useState(false);
   
   const handleEditProspect = (prospect: Prospect | null) => {
     setProspectToEdit(prospect);
@@ -77,40 +77,6 @@ export default function SalesPage() {
     });
   };
 
-  const handleCreateRoute = () => {
-    if (selectedProspects.length === 0) return;
-    const selected = prospects.filter(p => selectedProspects.includes(p.id));
-    
-    const validAddresses = selected
-      .filter(p => p.address && p.city && p.state)
-      .map(p => {
-        const fullAddress = `${p.address}, ${p.city}, ${p.state}${p.zip ? ` ${p.zip}` : ''}`;
-        return encodeURIComponent(fullAddress);
-      });
-
-    if (validAddresses.length === 0) {
-      toast({
-        variant: "destructive",
-        title: t('toast_no_address_title'),
-        description: t('toast_no_address_desc'),
-      });
-      return;
-    }
-
-    if (validAddresses.length === 1) {
-        const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${validAddresses[0]}`;
-        window.open(mapsUrl, '_blank');
-        return;
-    }
-
-    const origin = validAddresses[0];
-    const destination = validAddresses[validAddresses.length - 1];
-    const waypoints = validAddresses.slice(1, -1).join('|');
-    
-    const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&waypoints=${waypoints}`;
-    window.open(mapsUrl, '_blank');
-  };
-
   const filteredProspects = useMemo(() => {
     if (loading) return [];
     if (selectedZone === 'all') return prospects;
@@ -127,6 +93,10 @@ export default function SalesPage() {
       return acc;
     }, {} as Record<string, Prospect[]>);
   }, [filteredProspects]);
+
+  const selectedProspectsData = useMemo(() => {
+    return prospects.filter(p => selectedProspects.includes(p.id));
+  }, [prospects, selectedProspects]);
 
   if (loading) {
     return (
@@ -178,7 +148,6 @@ export default function SalesPage() {
             prospects={filteredProspects}
             selectedProspects={selectedProspects}
             onToggleSelection={handleSelectionChange}
-            onCreateRoute={handleCreateRoute}
           />
         );
       case 'list':
@@ -219,6 +188,11 @@ export default function SalesPage() {
       <ProspectImportDialog
         open={isImportDialogOpen}
         onOpenChange={setIsImportDialogOpen}
+      />
+      <RouteOptionsDialog
+        open={isRouteOptionsOpen}
+        onOpenChange={setIsRouteOptionsOpen}
+        selectedProspects={selectedProspectsData}
       />
       
       <div className="min-h-screen">
@@ -269,7 +243,7 @@ export default function SalesPage() {
               </div>
               <div className="flex items-center gap-2">
                 <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setSelectedProspects([])}><Trash className="h-4 w-4"/></Button>
-                <Button className="h-9" onClick={handleCreateRoute}><Route className="h-4 w-4 mr-2"/> {t('action_route')}</Button>
+                <Button className="h-9" onClick={() => setIsRouteOptionsOpen(true)}><Route className="h-4 w-4 mr-2"/> {t('action_route')}</Button>
               </div>
            </div>
         )}

@@ -83,5 +83,19 @@
     "search_address": "Search address or prospect...",
     "radius": "Radius",
     "map_view_coming_soon_title": "Map View Coming Soon",
-    "map_view_coming_soon_desc": "Visualize your prospects on an interactive map."
+    "map_view_coming_soon_desc": "Visualize your prospects on an interactive map.",
+    "route_options_title": "Where do you want to start the route from?",
+    "route_options_desc": "Select the starting point for your route with the {count} selected prospects.",
+    "route_option_current_location_title": "My Current Location",
+    "route_option_current_location_desc": "Ideal for routes on the go.",
+    "route_option_first_prospect_title": "First Prospect on the List",
+    "route_option_first_prospect_desc": "Start from the first selected client.",
+    "route_option_custom_address_title": "Custom Address",
+    "route_option_custom_address_placeholder": "e.g., Central Warehouse, 123 Main St...",
+    "route_options_start_button": "Start Route",
+    "geolocation_not_supported": "Geolocation not supported",
+    "location_denied_title": "Location Access Denied",
+    "location_denied_desc": "Please enable location services in your browser settings.",
+    "address_required_title": "Address Required",
+    "address_required_desc": "Please enter a starting address."
 }

@@ -83,5 +83,19 @@
     "search_address": "Buscar dirección o prospecto...",
     "radius": "Radio",
     "map_view_coming_soon_title": "Vista de Mapa Próximamente",
-    "map_view_coming_soon_desc": "Visualiza tus prospectos en un mapa interactivo."
+    "map_view_coming_soon_desc": "Visualiza tus prospectos en un mapa interactivo.",
+    "route_options_title": "¿Desde dónde quieres iniciar la ruta?",
+    "route_options_desc": "Selecciona el punto de partida para tu ruta con los {count} prospectos seleccionados.",
+    "route_option_current_location_title": "Mi Ubicación Actual",
+    "route_option_current_location_desc": "Ideal para rutas al momento.",
+    "route_option_first_prospect_title": "Primer Prospecto de la Lista",
+    "route_option_first_prospect_desc": "Empezar desde el primer cliente seleccionado.",
+    "route_option_custom_address_title": "Dirección Personalizada",
+    "route_option_custom_address_placeholder": "Ej: Bodega Central, 123 Main St...",
+    "route_options_start_button": "Empezar Ruta",
+    "geolocation_not_supported": "Geolocalización no soportada",
+    "location_denied_title": "Acceso a Ubicación Denegado",
+    "location_denied_desc": "Por favor, activa los servicios de ubicación en la configuración de tu navegador.",
+    "address_required_title": "Dirección Requerida",
+    "address_required_desc": "Por favor, introduce una dirección de partida."
 }
