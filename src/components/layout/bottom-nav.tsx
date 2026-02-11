@@ -126,7 +126,6 @@ export function BottomNavBar({ navConfig }: { navConfig: NavDefinition }) {
 }
 
 function MoreMenuLink({ item, onClose }: { item: NavItem; onClose: () => void }) {
-  const Icon = item.icon;
   return (
     <Link
       href={item.href}
@@ -134,8 +133,8 @@ function MoreMenuLink({ item, onClose }: { item: NavItem; onClose: () => void })
       className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted text-sm font-medium"
     >
       <div className="flex items-center gap-3">
-        {React.createElement(item.icon, { className: "w-5 h-5 text-muted-foreground" })}
-        <span>{item.label}</span>
+          {React.createElement(item.icon, { className: "w-5 h-5 text-muted-foreground" })}
+          <span>{item.label}</span>
       </div>
       <ChevronRight className="w-4 h-4 text-muted-foreground" />
     </Link>
@@ -294,6 +293,35 @@ function MoreMenuSheetContent({ onClose }: { onClose: () => void }) {
                   )
                 })}
               </Accordion>
+            )}
+
+            {role === 'superadmin' && (
+                <>
+                    <Separator className="my-2" />
+                    <Accordion type="multiple" className="w-full" collapsible>
+                        <AccordionItem value={navGroups.client.label}>
+                            <AccordionTrigger className="px-2 py-3 text-xs font-semibold text-muted-foreground uppercase hover:no-underline">
+                                {navGroups.client.label}
+                            </AccordionTrigger>
+                            <AccordionContent className="pb-0">
+                                <Accordion type="multiple" className="w-full">
+                                    {navGroups.client.groups.map(subGroup => (
+                                        <AccordionItem value={subGroup.label} key={subGroup.label} className="border-b-0">
+                                            <AccordionTrigger className="px-2 py-2 text-sm font-medium text-muted-foreground hover:no-underline">
+                                                {subGroup.label}
+                                            </AccordionTrigger>
+                                            <AccordionContent className="pb-0">
+                                                <div className="flex flex-col gap-1 pl-4 pb-2 border-l ml-2">
+                                                    {subGroup.items.map(item => <MoreMenuLink key={item.href} item={item} onClose={onClose} />)}
+                                                </div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                </Accordion>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </>
             )}
 
             <Separator className="my-2" />
