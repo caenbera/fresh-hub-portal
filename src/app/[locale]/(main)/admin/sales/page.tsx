@@ -202,7 +202,7 @@ export default function SalesPage() {
       
       <div className="min-h-screen">
         
-        <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
+        <div className="sticky z-30 bg-background/95 backdrop-blur-sm top-0">
           <ZoneSelector 
             zones={zoneCounts} 
             selectedZone={selectedZone}
@@ -214,12 +214,12 @@ export default function SalesPage() {
               <div className="p-1">
                 <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
               </div>
-              <div className="flex items-center gap-2 p-2 border-t">
-                <Button variant="outline" size="sm" onClick={() => setIsImportDialogOpen(true)} className="flex-1">
+              <div className="flex items-center gap-1 p-1 border-t">
+                <Button variant="outline" size="sm" onClick={() => setIsImportDialogOpen(true)} className="flex-1 whitespace-normal text-center h-auto py-2">
                   <Upload className="h-4 w-4 mr-2"/>
                   {t('import_button')}
                 </Button>
-                <Button size="sm" onClick={() => handleEditProspect(null)} className="flex-1">
+                <Button size="sm" onClick={() => handleEditProspect(null)} className="flex-1 whitespace-normal text-center h-auto py-2">
                   <Plus className="h-4 w-4 mr-2"/>
                   {t('new_prospect_button')}
                 </Button>
