@@ -1,8 +1,21 @@
 "use client";
 
-import { Sidebar, SidebarHeader, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarSeparator } from '@/components/ui/sidebar';
+import {
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarSeparator,
+} from '@/components/ui/sidebar';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import { useAuth } from '@/context/auth-context';
-import { LayoutGrid, ShoppingCart, Package, Users, History, Home, ClipboardList, Leaf, Truck, ShoppingBag, Boxes, UserCircle, Trophy, Headset } from 'lucide-react';
+import { LayoutGrid, ShoppingCart, Package, Users, History, Home, ClipboardList, Leaf, Truck, ShoppingBag, Boxes, UserCircle, Trophy, Headset, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -44,6 +57,39 @@ function SidebarSkeleton() {
     </div>
   );
 }
+
+const CollapsibleSidebarGroup = ({ title, items, defaultOpen = false }: { title: string; items: NavItem[]; defaultOpen?: boolean }) => {
+  const pathname = usePathname();
+  const isActiveGroup = items.some(item => pathname.startsWith(item.href));
+
+  return (
+    <Collapsible defaultOpen={defaultOpen || isActiveGroup} className="w-full">
+      <CollapsibleTrigger className="group flex w-full items-center justify-between rounded-md px-2 h-8 text-sm font-medium text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+        <span>{title}</span>
+        <ChevronRight className="h-4 w-4 transition-transform duration-200 group-data-[state=open]:rotate-90" />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <SidebarMenu className="pl-3 py-1">
+          {items.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname.startsWith(item.href)}
+                tooltip={item.label}
+              >
+                <Link href={item.href}>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
+
 
 export function AppSidebar() {
   const { role, loading } = useAuth();
@@ -156,23 +202,6 @@ export function AppSidebar() {
   if (isMobile) {
     return <BottomNavBar navConfig={navConfig} />;
   }
-
-  const renderNavItems = (items: NavItem[]) => {
-    return items.map((item) => (
-      <SidebarMenuItem key={item.href}>
-        <SidebarMenuButton
-          asChild
-          isActive={pathname.startsWith(item.href)}
-          tooltip={item.label}
-        >
-          <Link href={item.href}>
-            <item.icon />
-            <span>{item.label}</span>
-          </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    ));
-  };
   
   return (
     <Sidebar>
@@ -182,96 +211,61 @@ export function AppSidebar() {
           <span className="font-bold font-headline text-xl">Fresh Hub</span>
         </Link>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="p-2">
         {role === 'superadmin' && (
           <>
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('group_management')}</SidebarGroupLabel>
-              <SidebarMenu>{renderNavItems(navItems.management)}</SidebarMenu>
-            </SidebarGroup>
-             <SidebarGroup>
-              <SidebarGroupLabel>{t('group_sales')}</SidebarGroupLabel>
-              <SidebarMenu>{renderNavItems(navItems.sales)}</SidebarMenu>
-            </SidebarGroup>
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('group_catalog')}</SidebarGroupLabel>
-              <SidebarMenu>{renderNavItems(navItems.catalog)}</SidebarMenu>
-            </SidebarGroup>
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('group_procurement')}</SidebarGroupLabel>
-              <SidebarMenu>{renderNavItems(navItems.procurement)}</SidebarMenu>
-            </SidebarGroup>
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('group_warehouse')}</SidebarGroupLabel>
-              <SidebarMenu>{renderNavItems(navItems.warehouse)}</SidebarMenu>
-            </SidebarGroup>
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('group_administration')}</SidebarGroupLabel>
-              <SidebarMenu>{renderNavItems(navItems.administration)}</SidebarMenu>
-            </SidebarGroup>
-            <SidebarSeparator />
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('clientPortal')}</SidebarGroupLabel>
-              <SidebarMenu>{renderNavItems(navItems.client)}</SidebarMenu>
-            </SidebarGroup>
+            <CollapsibleSidebarGroup title={t('group_management')} items={navItems.management} defaultOpen />
+            <CollapsibleSidebarGroup title={t('group_sales')} items={navItems.sales} />
+            <CollapsibleSidebarGroup title={t('group_catalog')} items={navItems.catalog} />
+            <CollapsibleSidebarGroup title={t('group_procurement')} items={navItems.procurement} />
+            <CollapsibleSidebarGroup title={t('group_warehouse')} items={navItems.warehouse} />
+            <CollapsibleSidebarGroup title={t('group_administration')} items={navItems.administration} />
+            <SidebarSeparator className="my-2" />
+            <CollapsibleSidebarGroup title={t('clientPortal')} items={navItems.client} />
           </>
         )}
 
         {role === 'admin' && (
           <>
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('group_management')}</SidebarGroupLabel>
-              <SidebarMenu>{renderNavItems(navItems.management)}</SidebarMenu>
-            </SidebarGroup>
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('group_sales')}</SidebarGroupLabel>
-              <SidebarMenu>{renderNavItems(navItems.sales)}</SidebarMenu>
-            </SidebarGroup>
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('group_catalog')}</SidebarGroupLabel>
-              <SidebarMenu>{renderNavItems(navItems.catalog)}</SidebarMenu>
-            </SidebarGroup>
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('group_procurement')}</SidebarGroupLabel>
-              <SidebarMenu>{renderNavItems(navItems.procurement)}</SidebarMenu>
-            </SidebarGroup>
+            <CollapsibleSidebarGroup title={t('group_management')} items={navItems.management} defaultOpen />
+            <CollapsibleSidebarGroup title={t('group_sales')} items={navItems.sales} />
+            <CollapsibleSidebarGroup title={t('group_catalog')} items={navItems.catalog} />
+            <CollapsibleSidebarGroup title={t('group_procurement')} items={navItems.procurement} />
           </>
         )}
         
         {role === 'salesperson' && (
-          <SidebarGroup>
-            <SidebarGroupLabel>{t('group_sales')}</SidebarGroupLabel>
-            <SidebarMenu>{renderNavItems(navItems.sales)}</SidebarMenu>
-          </SidebarGroup>
+          <CollapsibleSidebarGroup title={t('group_sales')} items={navItems.sales} defaultOpen />
         )}
 
         {role === 'purchaser' && (
            <>
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('group_procurement')}</SidebarGroupLabel>
-              <SidebarMenu>{renderNavItems(navItems.procurement)}</SidebarMenu>
-            </SidebarGroup>
-            <SidebarGroup>
-              <SidebarGroupLabel>{t('group_catalog')}</SidebarGroupLabel>
-              <SidebarMenu>{renderNavItems(navItems.catalog.filter(item => item.href.includes('/products')))}</SidebarMenu>
-            </SidebarGroup>
+            <CollapsibleSidebarGroup title={t('group_procurement')} items={navItems.procurement} defaultOpen />
+            <CollapsibleSidebarGroup title={t('group_catalog')} items={navItems.catalog.filter(item => item.href.includes('/products'))} />
           </>
         )}
 
         {role === 'picker' && (
-          <SidebarGroup>
-            <SidebarGroupLabel>{t('group_warehouse')}</SidebarGroupLabel>
-            <SidebarMenu>{renderNavItems(navItems.warehouse)}</SidebarMenu>
-          </SidebarGroup>
+          <CollapsibleSidebarGroup title={t('group_warehouse')} items={navItems.warehouse} defaultOpen />
         )}
         
         {role === 'client' &&
-            <SidebarGroup>
-                <SidebarGroupLabel>{t('clientPortal')}</SidebarGroupLabel>
-                <SidebarMenu>
-                    {renderNavItems(navItems.client)}
-                </SidebarMenu>
-            </SidebarGroup>
+            <SidebarMenu className="p-0">
+                {navItems.client.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={pathname.startsWith(item.href)}
+                            tooltip={item.label}
+                        >
+                        <Link href={item.href}>
+                            <item.icon />
+                            <span>{item.label}</span>
+                        </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                ))}
+            </SidebarMenu>
         }
       </SidebarContent>
     </Sidebar>

@@ -2,6 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 👇 MEJORAS PARA PREVENIR OVERFLOW HORIZONTAL 👇 */
+html, body {
+    width: 100%;
+    overflow-x: hidden;
+    max-width: 100vw;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    padding-bottom: 80px;
+    box-sizing: border-box;
+}
+
+/* Prevenir overflow en contenedores */
+* {
+    box-sizing: border-box;
+}
+
+/* Contenedores principales no deben desbordarse */
+.container, .max-w-screen-xl, .max-w-screen-lg, .max-w-screen-md, .max-w-screen-sm {
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+/* 👆 FIN DE MEJORAS PARA OVERFLOW 👆 */
+
 @layer base {
   :root {
     --background: 0 0% 98%; /* gray-50 */
@@ -164,6 +191,62 @@
         print-color-adjust: exact; /* Propiedad estándar añadida */
     }
   }
+  
+  /* 👇 CORRECCIONES FINALES PARA OVERFLOW 👇 */
+  /* Forzar contención en móviles */
+  .mobile-container {
+    @apply w-full max-w-full overflow-x-hidden;
+  }
+  
+  /* Prevenir desbordamiento en textos */
+  .text-truncate {
+    @apply truncate max-w-full;
+  }
+  
+  /* Contenedores flexibles */
+  .flex-container {
+    @apply flex flex-wrap;
+  }
+  
+  /* Corrección específica para badges largos */
+  .badge-container {
+    @apply flex flex-wrap gap-1;
+  }
+}
+
+/* Correcciones específicas para elementos problemáticos */
+@media (max-width: 640px) {
+  /* Forzar que nada se salga */
+  * {
+    max-width: 100% !important;
+  }
+  
+  /* Contenedores de tarjetas */
+  .prospect-card-wrapper {
+    @apply w-full px-2;
+  }
+  
+  /* Corregir padding en elementos con posición absoluta */
+  [class*="absolute"] {
+    max-width: 100%;
+  }
+  
+  /* Prevenir overflow en badges */
+  .badge {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Corregir botones */
+  .btn-group {
+    @apply flex flex-wrap gap-2;
+  }
+  
+  /* Corregir grids */
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* Añadir al final de tu globals.css */
@@ -215,6 +298,10 @@ body {
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     overflow-x: auto;
     scrollbar-width: none;
+    width: 100vw;
+    left: 0;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
 }
 
 .zone-bar::-webkit-scrollbar {
@@ -606,3 +693,22 @@ body {
     color: var(--text-light);
     margin-top: 2px;
 }
+
+/* 👇 CLASES DE DEBUG - QUITAR EN PRODUCCIÓN 👇 */
+@media (max-width: 768px) {
+    .debug-overflow {
+        position: relative;
+    }
+    
+    .debug-overflow::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: -10px;
+        bottom: 0;
+        width: 10px;
+        background: rgba(255, 0, 0, 0.3);
+        pointer-events: none;
+    }
+}
+/* 👆 FIN DE CLASES DE DEBUG 👆 */

@@ -138,24 +138,24 @@ export function ProspectCard({
         )}
         onClick={handleCardClick}
       >
-        <div className="relative p-4">
+        <div className="relative p-3 sm:p-4">
           {!isSelectionMode && (
-            <div className="absolute top-4 right-4 z-10">
+            <div className="absolute top-3 right-2 z-10">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                className="h-8 w-8 sm:h-9 sm:w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                 onClick={(e) => {
                   e.stopPropagation();
                   window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(prospect.address)}`, '_blank');
                 }}
               >
-                <Navigation className="h-5 w-5" />
+                <Navigation className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </div>
           )}
 
-          <div className="flex items-start gap-3 pr-10">
+          <div className="flex items-start gap-2 sm:gap-3 pr-10 sm:pr-12">
             {isSelectionMode && (
               <div className="pt-1">
                 <Checkbox
@@ -168,8 +168,8 @@ export function ProspectCard({
             )}
             
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <h3 className="font-bold text-lg text-gray-900 truncate">
+              <div className="flex items-center gap-2 mb-1 flex-wrap min-w-0">
+                <h3 className="font-bold text-base sm:text-lg text-gray-900 truncate max-w-full">
                   {prospect.name}
                 </h3>
                 <Badge 
@@ -180,13 +180,13 @@ export function ProspectCard({
                 </Badge>
               </div>
 
-              <div className="flex items-center gap-2 text-gray-600 text-sm mb-2">
+              <div className="flex items-center gap-2 text-gray-600 text-sm mb-2 min-w-0">
                 <MapPin className="h-4 w-4 text-green-600 shrink-0" />
-                <span className="truncate">{prospect.address}</span>
+                <span className="truncate max-w-full">{prospect.address}</span>
               </div>
 
-              <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <div className="font-mono text-sm font-bold text-green-700 bg-green-100 px-2 py-1 rounded">
+              <div className="flex items-center gap-1 sm:gap-2 mb-2 sm:mb-3 flex-wrap">
+                <div className="font-mono text-xs sm:text-sm font-bold text-green-700 bg-green-100 px-1.5 sm:px-2 py-1 rounded truncate max-w-full">
                   {prospect.zone || 'SIN-ZONA'}
                 </div>
                 <Badge variant="secondary" className="text-xs capitalize bg-gray-100 text-gray-700">
@@ -198,10 +198,10 @@ export function ProspectCard({
                 </Badge>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap w-full">
                 <Button 
                   size="sm" 
-                  className="bg-green-600 hover:bg-green-700 text-white h-9"
+                  className="bg-green-600 hover:bg-green-700 text-white h-9 flex-1 sm:flex-none"
                   onClick={(e) => { 
                     e.stopPropagation(); 
                     onCheckIn(prospect); 
@@ -209,7 +209,7 @@ export function ProspectCard({
                 >
                   <Check className="h-4 w-4 mr-1.5" />
                   <span className="hidden sm:inline">{t('action_visit')}</span>
-                  <span className="sm:hidden">Visitar</span>
+                  <span className="sm:hidden text-xs">Visitar</span>
                 </Button>
                 
                 {!isSelectionMode && (
@@ -217,18 +217,18 @@ export function ProspectCard({
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="h-9 border-gray-300"
+                      className="h-9 border-gray-300 flex-1 sm:flex-none"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {isOpen ? (
                         <>
-                          <Minus className="h-4 w-4 mr-1.5" />
-                          Menos
+                          <Minus className="h-4 w-4" />
+                          <span className="hidden sm:inline ml-1.5">Menos</span>
                         </>
                       ) : (
                         <>
-                          <Plus className="h-4 w-4 mr-1.5" />
-                          Más
+                          <Plus className="h-4 w-4" />
+                          <span className="hidden sm:inline ml-1.5">Más</span>
                         </>
                       )}
                     </Button>

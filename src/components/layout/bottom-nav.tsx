@@ -11,11 +11,12 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { LogOut, UserCircle, MoreHorizontal, ChevronRight, LayoutGrid, Tag, Trophy, Headset, FileText, Bell } from 'lucide-react';
+import { LogOut, UserCircle, MoreHorizontal, ChevronRight, LayoutGrid, Tag, Trophy, Headset, FileText, Bell, ShoppingCart, Package, Users, Truck, ShoppingBag, Boxes, ClipboardList } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import type { NavDefinition, NavItem } from './app-sidebar'; // Importar NavItem desde app-sidebar
+import type { NavDefinition, NavItem } from './app-sidebar'; 
 import { NotificationSheetContent } from './notification-sheet';
 import { useNotifications } from '@/context/notification-context';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export function BottomNavBar({ navConfig }: { navConfig: NavDefinition }) {
   const pathname = usePathname();
@@ -25,7 +26,6 @@ export function BottomNavBar({ navConfig }: { navConfig: NavDefinition }) {
   const { role } = useAuth();
   const { unreadCount, markAllAsRead } = useNotifications();
 
-  // Usar el tipo NavItem importado de app-sidebar
   let baseNavItems: NavItem[];
   
   if (role === 'client') {
@@ -97,7 +97,6 @@ export function BottomNavBar({ navConfig }: { navConfig: NavDefinition }) {
                     <SheetContent side="bottom" className="h-auto w-full rounded-t-2xl p-0">
                       <MoreMenuSheetContent 
                         onClose={() => setIsMoreSheetOpen(false)}
-                        navConfig={navConfig}
                       />
                     </SheetContent>
                   </Sheet>
@@ -126,7 +125,19 @@ export function BottomNavBar({ navConfig }: { navConfig: NavDefinition }) {
   );
 }
 
-function MoreMenuSheetContent({ onClose, navConfig }: { onClose: () => void, navConfig: NavDefinition }) {
+function MoreMenuLink({ item, onClose }: { item: NavItem, onClose: () => void }) {
+  return (
+    <Link href={item.href} onClick={onClose} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted text-sm font-medium">
+      <div className="flex items-center gap-3">
+          <item.icon className="w-5 h-5 text-muted-foreground" />
+          <span>{item.label}</span>
+      </div>
+      <ChevronRight className="w-4 h-4 text-muted-foreground" />
+    </Link>
+  );
+}
+
+function MoreMenuSheetContent({ onClose }: { onClose: () => void }) {
     const { userProfile, role } = useAuth();
     const router = useRouter();
     const { toast } = useToast();
@@ -147,10 +158,66 @@ function MoreMenuSheetContent({ onClose, navConfig }: { onClose: () => void, nav
         return name.split(' ').map(n => n[0]).join('').toUpperCase();
     };
 
-    const clientNavForSuperAdmin = [
-        { href: '/client/dashboard', label: t('dashboard'), icon: LayoutGrid },
-        ...navConfig.desktop.client.slice(1)
-    ];
+    const navGroups = {
+      management: {
+        label: t('group_management'),
+        items: [
+          { href: '/admin/dashboard', label: t('dashboard'), icon: LayoutGrid },
+          { href: '/admin/orders', label: t('manageOrders'), icon: ShoppingCart },
+          { href: '/admin/clients', label: t('manageClients'), icon: Users },
+          { href: '/admin/support', label: t('support'), icon: Headset },
+        ]
+      },
+      sales: {
+        label: t('group_sales'),
+        items: [{ href: '/admin/sales', label: t('prospects'), icon: Users }]
+      },
+      catalog: {
+        label: t('group_catalog'),
+        items: [
+          { href: '/admin/products', label: t('manageProducts'), icon: Package },
+          { href: '/admin/suppliers', label: t('suppliers'), icon: Truck },
+          { href: '/admin/rewards', label: t('rewards'), icon: Trophy },
+        ]
+      },
+      procurement: {
+        label: t('group_procurement'),
+        items: [
+          { href: '/admin/purchasing', label: t('purchasing'), icon: ShoppingBag },
+          { href: '/admin/purchase-orders', label: t('purchaseOrders'), icon: ClipboardList },
+        ]
+      },
+      warehouse: {
+        label: t('group_warehouse'),
+        items: [{ href: '/admin/picking', label: t('picking'), icon: Boxes }]
+      },
+      administration: {
+        label: t('group_administration'),
+        items: [{ href: '/admin/users', label: t('manageUsers'), icon: Users }]
+      },
+      client: {
+        label: t('clientPortal'),
+        items: [
+          { href: '/client/dashboard', label: t('dashboard'), icon: LayoutGrid },
+          { href: '/client/new-order', label: t('newOrder'), icon: ShoppingCart },
+          { href: '/client/history', label: t('orderHistory'), icon: History },
+          { href: '/client/offers', label: t('offers'), icon: Tag },
+          { href: '/client/rewards', label: t('my_rewards'), icon: Trophy },
+          { href: '/client/invoices', label: t('invoices'), icon: FileText },
+          { href: '/client/support', label: t('support'), icon: Headset },
+          { href: '/client/account', label: t('my_account'), icon: UserCircle },
+        ]
+      }
+    };
+    
+    const adminVisibleGroups = ['management', 'sales', 'catalog', 'procurement'];
+    const superAdminVisibleGroups = Object.keys(navGroups);
+
+    const getVisibleGroups = () => {
+      if (role === 'superadmin') return superAdminVisibleGroups;
+      if (role === 'admin') return adminVisibleGroups;
+      return [];
+    }
 
     return (
         <div className="flex flex-col p-4 max-h-[80vh] overflow-y-auto">
@@ -158,7 +225,6 @@ function MoreMenuSheetContent({ onClose, navConfig }: { onClose: () => void, nav
               <SheetTitle>
                 <div className="flex items-center gap-3">
                     <Avatar>
-                        {/* Eliminado AvatarImage porque photoUrl no existe en UserProfile */}
                         <AvatarFallback>{getInitials(userProfile?.businessName)}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
@@ -167,81 +233,40 @@ function MoreMenuSheetContent({ onClose, navConfig }: { onClose: () => void, nav
                     </div>
                 </div>
               </SheetTitle>
-              <SheetDescription className="hidden">
-                  User account and navigation menu.
-              </SheetDescription>
             </SheetHeader>
-            <div className="ml-auto -mt-10">
+            <div className="ml-auto -mt-8">
                 <LanguageSwitcher />
             </div>
 
             <Separator className="my-2" />
+            
+            {(role === 'admin' || role === 'superadmin') ? (
+              <Accordion type="multiple" className="w-full">
+                {getVisibleGroups().map(key => {
+                  const group = navGroups[key as keyof typeof navGroups];
+                  if (!group) return null;
+                  return (
+                    <AccordionItem value={group.label} key={group.label}>
+                      <AccordionTrigger className="px-2 py-3 text-xs font-semibold text-muted-foreground uppercase hover:no-underline">
+                        {group.label}
+                      </AccordionTrigger>
+                      <AccordionContent className="pb-0">
+                        <div className="flex flex-col gap-1 pl-4 pb-2 border-l ml-2">
+                           {group.items.map(item => <MoreMenuLink key={item.href} item={item} onClose={onClose} />)}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  )
+                })}
+              </Accordion>
+            ) : (
+               Object.values(navGroups.client.items).map(item => (
+                <MoreMenuLink key={item.href} item={item} onClose={onClose} />
+              ))
+            )}
 
-             {role === 'superadmin' && (
-                <>
-                <p className="px-2 pt-2 pb-1 text-xs font-semibold text-muted-foreground uppercase">{t('adminPanel')}</p>
-                 {navConfig.desktop.superadmin.map(item => (
-                    <Link key={item.href} href={item.href} onClick={onClose} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted text-sm font-medium">
-                        <div className="flex items-center gap-3">
-                            <item.icon className="w-5 h-5 text-muted-foreground" />
-                            <span>{item.label}</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    </Link>
-                ))}
-                <Separator className="my-2" />
-                <p className="px-2 pt-2 pb-1 text-xs font-semibold text-muted-foreground uppercase">{t('clientPortal')}</p>
-                 {clientNavForSuperAdmin.map(item => (
-                    <Link key={item.href} href={item.href} onClick={onClose} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted text-sm font-medium">
-                        <div className="flex items-center gap-3">
-                            <item.icon className="w-5 h-5 text-muted-foreground" />
-                            <span>{item.label}</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                    </Link>
-                ))}
-                 <Separator className="my-2" />
-                </>
-             )}
-            <Link href="/client/account" onClick={onClose} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted text-sm font-medium">
-                <div className="flex items-center gap-3">
-                    <UserCircle className="w-5 h-5 text-muted-foreground" />
-                    <span>{t('my_account')}</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </Link>
-            <Link href="/client/offers" onClick={onClose} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted text-sm font-medium">
-                <div className="flex items-center gap-3">
-                    <Tag className="w-5 h-5 text-muted-foreground" />
-                    <span>{t('offers')}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <span className="text-xs bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full font-semibold">{t('new_badge')}</span>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                </div>
-            </Link>
-            <Link href="/client/rewards" onClick={onClose} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted text-sm font-medium">
-                <div className="flex items-center gap-3">
-                    <Trophy className="w-5 h-5 text-muted-foreground" />
-                    <span>{t('my_rewards')}</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </Link>
-            <Link href="/client/support" onClick={onClose} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted text-sm font-medium">
-                <div className="flex items-center gap-3">
-                    <Headset className="w-5 h-5 text-muted-foreground" />
-                    <span>{t('support')}</span>
-                </div>
-                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </Link>
-             <Link href="/client/invoices" onClick={onClose} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted text-sm font-medium">
-                <div className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-muted-foreground" />
-                    <span>{t('invoices')}</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </Link>
             <Separator className="my-2" />
+
             <Button variant="ghost" className="w-full justify-start p-2 text-sm font-medium text-destructive hover:text-destructive" onClick={handleSignOut}>
                 <LogOut className="w-5 h-5 mr-3" />
                 <span>{t('logout')}</span>
