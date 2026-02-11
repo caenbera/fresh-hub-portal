@@ -298,7 +298,7 @@ function MoreMenuSheetContent({ onClose }: { onClose: () => void }) {
             {role === 'superadmin' && (
                 <>
                     <Separator className="my-2" />
-                    <Accordion type="multiple" className="w-full" collapsible>
+                    <Accordion type="multiple" className="w-full">
                         <AccordionItem value={navGroups.client.label}>
                             <AccordionTrigger className="px-2 py-3 text-xs font-semibold text-muted-foreground uppercase hover:no-underline">
                                 {navGroups.client.label}
@@ -333,3 +333,5 @@ function MoreMenuSheetContent({ onClose }: { onClose: () => void }) {
         </div>
     );
 }
+
+    
