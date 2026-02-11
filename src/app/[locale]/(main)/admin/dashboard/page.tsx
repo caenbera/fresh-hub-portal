@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -76,6 +77,7 @@ export default function DashboardPage() {
   const t = useTranslations('Dashboard');
 
   const [period, setPeriod] = useState('month');
+  const [currentDate, setCurrentDate] = useState('');
 
   const { orders, loading: ordersLoading } = useAllOrders();
   const { users, loading: usersLoading } = useUsers();
@@ -84,8 +86,10 @@ export default function DashboardPage() {
 
   const loading = ordersLoading || usersLoading || productsLoading || poLoading;
   
-  const now = new Date();
-  const currentDate = now.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  useEffect(() => {
+    setCurrentDate(new Date().toLocaleDateString(locale, { day: 'numeric', month: 'short' }));
+  }, [locale]);
+
 
   // Memoized calculations
   const kpiData = useMemo(() => {
@@ -142,6 +146,7 @@ export default function DashboardPage() {
 
   const salesChartData = useMemo(() => {
       if (loading) return [];
+      const now = new Date();
       const last7Days = Array.from({ length: 7 }, (_, i) => subDays(now, i)).reverse();
       
       const salesByDay = last7Days.map(day => {
