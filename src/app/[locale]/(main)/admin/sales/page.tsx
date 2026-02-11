@@ -5,7 +5,6 @@ import { useAuth } from '@/context/auth-context';
 import { districts } from '@/lib/district-config';
 import { useTranslations } from 'next-intl';
 
-import { SalesHeader } from '@/components/admin/sales/SalesHeader';
 import { ZoneSelector } from '@/components/admin/sales/ZoneSelector';
 import { TabNavigation } from '@/components/admin/sales/TabNavigation';
 import { MapView } from '@/components/admin/sales/map-view';
@@ -202,7 +201,6 @@ export default function SalesPage() {
       />
       
       <div className="min-h-screen">
-        <SalesHeader user={user} />
         
         <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
           <ZoneSelector 
