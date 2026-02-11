@@ -152,6 +152,7 @@
       color: white !important;
       padding: 10px;
       -webkit-print-color-adjust: exact;
+      print-color-adjust: exact; /* Propiedad estándar añadida */
     }
     .print-table td {
         padding: 10px;
@@ -160,9 +161,11 @@
     .print-table tr:nth-child(even) {
         background-color: var(--pastel-green) !important;
         -webkit-print-color-adjust: exact;
+        print-color-adjust: exact; /* Propiedad estándar añadida */
     }
   }
 }
+
 /* Añadir al final de tu globals.css */
 
 /* Custom Leaflet Markers */

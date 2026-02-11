@@ -25,17 +25,20 @@ type ProductUpdateInput = Partial<ProductInput>;
 const productsCollection = collection(db, 'products');
 
 export const addProduct = (productData: ProductInput) => {
-  const dataWithTimestamp: WithFieldValue<ProductInput> = {
+  // Cast to WithFieldValue<Product> to allow serverTimestamp() for createdAt
+  const dataWithTimestamp = {
     ...productData,
     createdAt: serverTimestamp(),
-  };
-  addDoc(productsCollection, dataWithTimestamp).catch(async (serverError) => {
+  } as WithFieldValue<Product>;
+
+  return addDoc(productsCollection, dataWithTimestamp).catch(async (serverError) => {
     const permissionError = new FirestorePermissionError({
       path: productsCollection.path,
       operation: 'create',
       requestResourceData: dataWithTimestamp,
     });
     errorEmitter.emit('permission-error', permissionError);
+    throw serverError;
   });
 };
 
@@ -50,24 +53,26 @@ export const updateProduct = (id: string, productData: ProductUpdateInput) => {
     }
   });
 
-  updateDoc(productDoc, dataToUpdate).catch(async (serverError) => {
+  return updateDoc(productDoc, dataToUpdate).catch(async (serverError) => {
     const permissionError = new FirestorePermissionError({
       path: productDoc.path,
       operation: 'update',
       requestResourceData: dataToUpdate,
     });
     errorEmitter.emit('permission-error', permissionError);
+    throw serverError;
   });
 };
 
 export const deleteProduct = (id: string) => {
   const productDoc = doc(db, 'products', id);
-  deleteDoc(productDoc).catch(async (serverError) => {
+  return deleteDoc(productDoc).catch(async (serverError) => {
     const permissionError = new FirestorePermissionError({
       path: productDoc.path,
       operation: 'delete',
     });
     errorEmitter.emit('permission-error', permissionError);
+    throw serverError;
   });
 };
 

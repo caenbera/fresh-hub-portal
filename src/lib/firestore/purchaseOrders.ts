@@ -1,4 +1,3 @@
-
 import {
   collection,
   addDoc,
@@ -28,14 +27,14 @@ interface ReceptionUpdateData {
     items: ReceptionFormItems[];
 }
 
-
 const purchaseOrdersCollection = collection(db, 'purchaseOrders');
 
 export const addPurchaseOrder = (poData: PurchaseOrderInput) => {
-  const dataWithTimestamp: WithFieldValue<PurchaseOrderInput> = {
+  // Cast to WithFieldValue<PurchaseOrder> to allow serverTimestamp() for createdAt
+  const dataWithTimestamp = {
     ...poData,
     createdAt: serverTimestamp(),
-  };
+  } as WithFieldValue<PurchaseOrder>;
 
   return addDoc(purchaseOrdersCollection, dataWithTimestamp).catch(async (serverError) => {
     const permissionError = new FirestorePermissionError({
@@ -56,6 +55,7 @@ export const updatePurchaseOrder = (id: string, receptionData: ReceptionUpdateDa
     // and the new total. For now, we're just updating the items and status.
     const newSubtotal = receptionData.items.reduce((sum, item) => sum + item.price * item.receivedQty, 0);
 
+    // Cast to WithFieldValue<Partial<PurchaseOrder>> to allow serverTimestamp() for completedAt
     const dataToUpdate = {
         status: receptionData.status,
         subtotal: newSubtotal,
@@ -68,7 +68,7 @@ export const updatePurchaseOrder = (id: string, receptionData: ReceptionUpdateDa
             receivedQty: item.receivedQty, // This is the new field
         })),
         completedAt: serverTimestamp(),
-    };
+    } as WithFieldValue<Partial<PurchaseOrder>>;
 
     return updateDoc(poDoc, dataToUpdate).catch(async (serverError) => {
       const permissionError = new FirestorePermissionError({
