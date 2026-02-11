@@ -126,10 +126,11 @@ export function BottomNavBar({ navConfig }: { navConfig: NavDefinition }) {
 }
 
 function MoreMenuLink({ item, onClose }: { item: NavItem, onClose: () => void }) {
+  const Icon = item.icon;
   return (
     <Link href={item.href} onClick={onClose} className="flex items-center justify-between gap-3 p-2 rounded-lg hover:bg-muted text-sm font-medium">
       <div className="flex items-center gap-3">
-          <item.icon className="w-5 h-5 text-muted-foreground" />
+          <Icon className="w-5 h-5 text-muted-foreground" />
           <span>{item.label}</span>
       </div>
       <ChevronRight className="w-4 h-4 text-muted-foreground" />
