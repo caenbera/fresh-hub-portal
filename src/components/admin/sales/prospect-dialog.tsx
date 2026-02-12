@@ -129,122 +129,124 @@ export function ProspectDialog({ open, onOpenChange, prospect }: ProspectDialogP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-xl max-h-[90vh]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-xl max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-4 border-b">
           <DialogTitle>{prospect ? t('edit_prospect_title') : t('new_prospect_title')}</DialogTitle>
           <DialogDescription>{prospect ? t('edit_prospect_desc') : t('new_prospect_desc')}</DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 overflow-y-auto pr-2">
-            <FormField control={form.control} name="name" render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('label_name')}</FormLabel>
-                <FormControl><Input {...field} /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )}/>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField control={form.control} name="category" render={({ field }) => (
+        <div className="flex-grow overflow-y-auto px-6">
+            <Form {...form}>
+            <form id="prospect-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('label_category')}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value="Restaurante">{t('filter_restaurants')}</SelectItem>
-                      <SelectItem value="Supermercado">{t('filter_supermarkets')}</SelectItem>
-                      <SelectItem value="Carnicería">{t('filter_butchers')}</SelectItem>
-                      <SelectItem value="Otro">Otro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
+                    <FormLabel>{t('label_name')}</FormLabel>
+                    <FormControl><Input {...field} /></FormControl>
+                    <FormMessage />
                 </FormItem>
-              )}/>
-               <FormField control={form.control} name="ethnic" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('label_ethnic')}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value="mexicano">Mexicano</SelectItem>
-                      <SelectItem value="peruano">Peruano</SelectItem>
-                      <SelectItem value="colombiano">Colombiano</SelectItem>
-                      <SelectItem value="ecuatoriano">Ecuatoriano</SelectItem>
-                      <SelectItem value="venezolano">Venezolano</SelectItem>
-                      <SelectItem value="salvadoreno">Salvadoreño</SelectItem>
-                      <SelectItem value="guatemalteco">Guatemalteco</SelectItem>
-                      <SelectItem value="otro">Otro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}/>
-            </div>
-            <FormField control={form.control} name="address" render={({ field }) => (
-              <FormItem><FormLabel>{t('label_address')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-            )}/>
-             <div className="grid grid-cols-3 gap-4">
-                <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>{t('label_city')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>{t('label_state')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
-                <FormField control={form.control} name="zip" render={({ field }) => (<FormItem><FormLabel>Zip</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)}/>
-             </div>
-             <FormField control={form.control} name="zone" render={({ field }) => (
-              <FormItem><FormLabel>{t('label_zone')}</FormLabel><FormControl><Input placeholder="e.g., CHI-PIL-06" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
-            )}/>
-             <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>{t('label_phone')}</FormLabel><FormControl><Input type="tel" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)}/>
-                <FormField control={form.control} name="web" render={({ field }) => (<FormItem><FormLabel>{t('label_web')}</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)}/>
-             </div>
-            <FormField control={form.control} name="notes" render={({ field }) => (
-              <FormItem><FormLabel>{t('label_notes')}</FormLabel><FormControl><Textarea placeholder={t('notes_placeholder')} {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
-            )}/>
-            <div className="grid grid-cols-2 gap-4">
-                <FormField control={form.control} name="status" render={({ field }) => (
+                )}/>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField control={form.control} name="category" render={({ field }) => (
                     <FormItem>
-                        <FormLabel>{t('label_status')}</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                            <SelectContent>
-                                <SelectItem value="pending">{t('status_pending')}</SelectItem>
-                                <SelectItem value="contacted">{t('status_contacted')}</SelectItem>
-                                <SelectItem value="visited">{t('status_visited')}</SelectItem>
-                                <SelectItem value="client">{t('status_client')}</SelectItem>
-                                <SelectItem value="not_interested">{t('status_not_interested')}</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
+                    <FormLabel>{t('label_category')}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                        <SelectContent>
+                        <SelectItem value="Restaurante">{t('filter_restaurants')}</SelectItem>
+                        <SelectItem value="Supermercado">{t('filter_supermarkets')}</SelectItem>
+                        <SelectItem value="Carnicería">{t('filter_butchers')}</SelectItem>
+                        <SelectItem value="Otro">Otro</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
                     </FormItem>
                 )}/>
-                 <FormField
-                    control={form.control}
-                    name="potentialValue"
-                    render={({ field }) => (
+                <FormField control={form.control} name="ethnic" render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>{t('label_ethnic')}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                        <SelectContent>
+                        <SelectItem value="mexicano">Mexicano</SelectItem>
+                        <SelectItem value="peruano">Peruano</SelectItem>
+                        <SelectItem value="colombiano">Colombiano</SelectItem>
+                        <SelectItem value="ecuatoriano">Ecuatoriano</SelectItem>
+                        <SelectItem value="venezolano">Venezolano</SelectItem>
+                        <SelectItem value="salvadoreno">Salvadoreño</SelectItem>
+                        <SelectItem value="guatemalteco">Guatemalteco</SelectItem>
+                        <SelectItem value="otro">Otro</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}/>
+                </div>
+                <FormField control={form.control} name="address" render={({ field }) => (
+                <FormItem><FormLabel>{t('label_address')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <div className="grid grid-cols-3 gap-4">
+                    <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>{t('label_city')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>{t('label_state')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="zip" render={({ field }) => (<FormItem><FormLabel>Zip</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)}/>
+                </div>
+                <FormField control={form.control} name="zone" render={({ field }) => (
+                <FormItem><FormLabel>{t('label_zone')}</FormLabel><FormControl><Input placeholder="e.g., CHI-PIL-06" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>{t('label_phone')}</FormLabel><FormControl><Input type="tel" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="web" render={({ field }) => (<FormItem><FormLabel>{t('label_web')}</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)}/>
+                </div>
+                <FormField control={form.control} name="notes" render={({ field }) => (
+                <FormItem><FormLabel>{t('label_notes')}</FormLabel><FormControl><Textarea placeholder={t('notes_placeholder')} {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
+                )}/>
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField control={form.control} name="status" render={({ field }) => (
                         <FormItem>
-                        <FormLabel>{t('label_potential_value')}</FormLabel>
-                        <FormControl>
-                            <Input
-                            type="number"
-                            placeholder="e.g., 5000"
-                            {...field}
-                            value={field.value || ''}
-                            />
-                        </FormControl>
-                        <FormMessage />
+                            <FormLabel>{t('label_status')}</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    <SelectItem value="pending">{t('status_pending')}</SelectItem>
+                                    <SelectItem value="contacted">{t('status_contacted')}</SelectItem>
+                                    <SelectItem value="visited">{t('status_visited')}</SelectItem>
+                                    <SelectItem value="client">{t('status_client')}</SelectItem>
+                                    <SelectItem value="not_interested">{t('status_not_interested')}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
                         </FormItem>
-                    )}
-                />
-            </div>
-            <FormField control={form.control} name="priority" render={({ field }) => (
-              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-2">
-                <div className="space-y-0.5"><FormLabel>{t('label_priority')}</FormLabel></div>
-                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-              </FormItem>
-            )}/>
-            <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>{t('cancel')}</Button>
-              <Button type="submit" disabled={isLoading}>{isLoading ? t('saving') : t('save')}</Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                    )}/>
+                    <FormField
+                        control={form.control}
+                        name="potentialValue"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>{t('label_potential_value')}</FormLabel>
+                            <FormControl>
+                                <Input
+                                type="number"
+                                placeholder="e.g., 5000"
+                                {...field}
+                                value={field.value || ''}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+                <FormField control={form.control} name="priority" render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-2">
+                    <div className="space-y-0.5"><FormLabel>{t('label_priority')}</FormLabel></div>
+                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                </FormItem>
+                )}/>
+            </form>
+            </Form>
+        </div>
+        <DialogFooter className="p-6 pt-4 border-t">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>{t('cancel')}</Button>
+            <Button type="submit" form="prospect-form" disabled={isLoading}>{isLoading ? t('saving') : t('save')}</Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
