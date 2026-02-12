@@ -173,6 +173,7 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
             // --- Determine Calculation Logic ---
             const calculateFromPrice = rowData.calcular_desde_precio_venta?.toUpperCase() === 'VERDADERO';
             const pricingMethod = rowData.markup ? 'markup' : 'margin';
+            const calculationDirection = calculateFromPrice ? 'priceToCost' : 'costToPrice';
             
             // --- Read & Parse Values ---
             let costo_proveedor = rowData.costo_proveedor && !isNaN(parseFloat(rowData.costo_proveedor)) ? parseFloat(rowData.costo_proveedor) : null;
@@ -219,7 +220,7 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
               if(rowData.es_caja !== undefined) updatePayload.isBox = rowData.es_caja.toUpperCase() === 'VERDADERO';
               updatePayload.photoUrl = rowData.foto_url || ''; // Always update, even if empty
               updatePayload.pricingMethod = pricingMethod;
-              updatePayload.calculationDirection = calculateFromPrice ? 'priceToCost' : 'costToPrice';
+              updatePayload.calculationDirection = calculationDirection;
 
               const suppliers = [...existingProduct.suppliers];
               let supplierEntry = suppliers.find(s => s.supplierId === supplierId);
@@ -253,7 +254,7 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
                 suppliers: [{ supplierId, cost: costo_proveedor ?? 0, isPrimary: true, supplierProductName: rowData.nombre_producto_proveedor || '' }],
                 photoUrl: rowData.foto_url || '',
                 pricingMethod: pricingMethod,
-                calculationDirection: calculateFromPrice ? 'priceToCost' : 'costToPrice',
+                calculationDirection: calculationDirection,
               };
 
               if (!createPayload.name.es || !createPayload.category.es || !createPayload.unit.es || createPayload.salePrice <= 0) {
