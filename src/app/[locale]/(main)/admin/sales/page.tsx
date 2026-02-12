@@ -45,6 +45,7 @@ export default function SalesPage() {
 
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedProspects, setSelectedProspects] = useState<string[]>([]);
+  const [isRouteGenerated, setIsRouteGenerated] = useState(false);
   
   const [prospectToEdit, setProspectToEdit] = useState<Prospect | null>(null);
   const [prospectForVisit, setProspectForVisit] = useState<Prospect | null>(null);
@@ -125,6 +126,7 @@ export default function SalesPage() {
   const clearSelection = useCallback(() => {
     setSelectedProspects([]);
     setIsSelectionMode(false);
+    setIsRouteGenerated(false);
   }, []);
 
   if (loading) {
@@ -170,13 +172,13 @@ export default function SalesPage() {
       case 'map':
         return <p>Map view coming soon!</p>
       case 'list': {
-        const prospectList = (isSelectionMode && selectedProspects.length > 0)
+        const prospectList = (selectedProspects.length > 0)
           ? prospects.filter(p => selectedProspects.includes(p.id))
           : filteredProspects;
 
         return (
           <div>
-            {isSelectionMode && selectedProspects.length > 0 ? (
+            {selectedProspects.length > 0 ? (
               <div className="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg mb-4 flex items-center justify-between">
                 <p className="text-sm font-semibold">
                   Mostrando {selectedProspects.length} prospectos de tu ruta actual.
@@ -245,7 +247,7 @@ export default function SalesPage() {
         open={isRouteOptionsOpen}
         onOpenChange={setIsRouteOptionsOpen}
         selectedProspects={selectedProspectsData}
-        onClear={clearSelection}
+        onGenerateRoute={() => setIsRouteGenerated(true)}
       />
       
       <div className="min-h-screen w-full overflow-x-hidden">
@@ -311,7 +313,7 @@ export default function SalesPage() {
           {renderContent()}
         </main>
         
-        {isSelectionMode && selectedProspects.length > 0 && (
+        {isSelectionMode && selectedProspects.length > 0 && !isRouteGenerated && (
            <BottomActions 
             prospects={selectedProspectsData}
             onClear={clearSelection}

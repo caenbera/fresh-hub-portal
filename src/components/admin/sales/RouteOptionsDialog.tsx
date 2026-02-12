@@ -14,10 +14,10 @@ interface RouteOptionsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedProspects: Prospect[];
-  onClear: () => void;
+  onGenerateRoute: () => void;
 }
 
-export function RouteOptionsDialog({ open, onOpenChange, selectedProspects, onClear }: RouteOptionsDialogProps) {
+export function RouteOptionsDialog({ open, onOpenChange, selectedProspects, onGenerateRoute }: RouteOptionsDialogProps) {
   const t = useTranslations('AdminSalesPage');
   const { toast } = useToast();
   const [customAddress, setCustomAddress] = useState('');
@@ -60,8 +60,8 @@ export function RouteOptionsDialog({ open, onOpenChange, selectedProspects, onCl
         const origin = `${position.coords.latitude},${position.coords.longitude}`;
         const url = buildMapsUrl(origin, destinations);
         window.open(url, '_blank');
+        onGenerateRoute();
         onOpenChange(false);
-        onClear();
       },
       () => {
         toast({ variant: 'destructive', title: t('location_denied_title'), description: t('location_denied_desc') });
@@ -79,16 +79,16 @@ export function RouteOptionsDialog({ open, onOpenChange, selectedProspects, onCl
     if (destinations.length === 1) {
         const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${destinations[0]}`;
         window.open(mapsUrl, '_blank');
+        onGenerateRoute();
         onOpenChange(false);
-        onClear();
         return;
     }
 
     const origin = destinations.shift()!;
     const url = buildMapsUrl(origin, destinations);
     window.open(url, '_blank');
+    onGenerateRoute();
     onOpenChange(false);
-    onClear();
   };
 
   const handleStartFromCustomAddress = () => {
@@ -104,8 +104,8 @@ export function RouteOptionsDialog({ open, onOpenChange, selectedProspects, onCl
     }
     const url = buildMapsUrl(origin, destinations);
     window.open(url, '_blank');
+    onGenerateRoute();
     onOpenChange(false);
-    onClear();
   };
 
   return (
