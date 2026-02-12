@@ -67,7 +67,7 @@ export interface Product {
   suppliers: ProductSupplier[];
   salePrice: number;
   pricingMethod?: 'margin' | 'markup';
-  calculationDirection?: 'costToPrice' | 'priceToCost';
+  calculationDirection?: 'costToPrice' | 'costToPrice';
   stock: number;
   minStock: number;
   active: boolean;

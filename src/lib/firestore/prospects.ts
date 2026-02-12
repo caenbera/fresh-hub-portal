@@ -20,10 +20,21 @@ import { FirestorePermissionError } from '@/firebase/errors';
 export type ProspectInput = Omit<Prospect, 'id' | 'createdAt' | 'updatedAt'>;
 type VisitInput = Omit<ProspectVisit, 'id' | 'date'>;
 
+// Helper to remove undefined values before sending to Firestore
+const cleanData = (data: any) => {
+    const cleaned: any = {};
+    for (const key in data) {
+        if (data[key] !== undefined) {
+            cleaned[key] = data[key];
+        }
+    }
+    return cleaned;
+}
+
 export const addProspect = (prospectData: ProspectInput) => {
   const prospectsCollection = collection(db, 'prospects');
   const dataWithTimestamp = {
-    ...prospectData,
+    ...cleanData(prospectData),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
@@ -41,7 +52,7 @@ export const addProspect = (prospectData: ProspectInput) => {
 export const updateProspect = (prospectId: string, prospectData: Partial<ProspectInput>) => {
   const prospectDoc = doc(db, 'prospects', prospectId);
   const dataWithTimestamp = {
-    ...prospectData,
+    ...cleanData(prospectData),
     updatedAt: serverTimestamp(),
   };
   return updateDoc(prospectDoc, dataWithTimestamp).catch(async (serverError) => {

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -23,6 +22,7 @@ const prospectSchema = z.object({
   address: z.string().min(5, "Address is required."),
   city: z.string().min(2, "City is required."),
   state: z.string().min(2, "State is required, e.g., IL.").default("Illinois"),
+  zip: z.string().optional(),
   phone: z.string().optional(),
   web: z.string().optional(),
   category: z.enum(['Restaurante', 'Supermercado', 'Carnicería', 'Otro']),
@@ -55,6 +55,7 @@ export function ProspectDialog({ open, onOpenChange, prospect }: ProspectDialogP
       address: '',
       city: 'Chicago',
       state: 'Illinois',
+      zip: '',
       phone: '',
       web: '',
       category: 'Restaurante',
@@ -69,13 +70,22 @@ export function ProspectDialog({ open, onOpenChange, prospect }: ProspectDialogP
 
   useEffect(() => {
     if (open && prospect) {
-      form.reset(prospect);
+      form.reset({
+        ...prospect,
+        zip: prospect.zip || '',
+        phone: prospect.phone || '',
+        web: prospect.web || '',
+        zone: prospect.zone || '',
+        notes: prospect.notes || '',
+        potentialValue: prospect.potentialValue || 0,
+      });
     } else if (open) {
       form.reset({
         name: '',
         address: '',
         city: 'Chicago',
         state: 'Illinois',
+        zip: '',
         phone: '',
         web: '',
         category: 'Restaurante',
@@ -172,9 +182,10 @@ export function ProspectDialog({ open, onOpenChange, prospect }: ProspectDialogP
             <FormField control={form.control} name="address" render={({ field }) => (
               <FormItem><FormLabel>{t('label_address')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
             )}/>
-             <div className="grid grid-cols-2 gap-4">
+             <div className="grid grid-cols-3 gap-4">
                 <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>{t('label_city')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
                 <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>{t('label_state')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>)}/>
+                <FormField control={form.control} name="zip" render={({ field }) => (<FormItem><FormLabel>Zip</FormLabel><FormControl><Input {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)}/>
              </div>
              <FormField control={form.control} name="zone" render={({ field }) => (
               <FormItem><FormLabel>{t('label_zone')}</FormLabel><FormControl><Input placeholder="e.g., CHI-PIL-06" {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
@@ -228,7 +239,7 @@ export function ProspectDialog({ open, onOpenChange, prospect }: ProspectDialogP
                 <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
               </FormItem>
             )}/>
-            <DialogFooter>
+            <DialogFooter className="pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>{t('cancel')}</Button>
               <Button type="submit" disabled={isLoading}>{isLoading ? t('saving') : t('save')}</Button>
             </DialogFooter>
@@ -238,5 +249,3 @@ export function ProspectDialog({ open, onOpenChange, prospect }: ProspectDialogP
     </Dialog>
   );
 }
-
-    
