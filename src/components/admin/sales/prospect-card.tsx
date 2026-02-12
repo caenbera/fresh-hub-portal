@@ -131,7 +131,7 @@ export function ProspectCard({
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <Card 
         className={cn(
-          "overflow-hidden transition-all duration-200 border-l-4",
+          "w-full overflow-hidden transition-all duration-200 border-l-4",
           prospect.priority ? "border-l-orange-500" : statusInfo.borderColor,
           isSelected ? "ring-2 ring-green-600 border-green-600 bg-green-50/30" : "hover:shadow-md",
           isSelectionMode && "cursor-pointer"
@@ -140,24 +140,24 @@ export function ProspectCard({
       >
         <div className="relative p-3 sm:p-4">
           {!isSelectionMode && (
-            <div className="absolute top-3 right-2 z-10">
+            <div className="absolute top-2 right-2 z-10">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 sm:h-9 sm:w-9 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                 onClick={(e) => {
                   e.stopPropagation();
                   window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(prospect.address)}`, '_blank');
                 }}
               >
-                <Navigation className="h-4 w-4 sm:h-5 sm:w-5" />
+                <Navigation className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </div>
           )}
 
-          <div className="flex items-start gap-2 sm:gap-3 pr-10 sm:pr-12">
+          <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-3">
             {isSelectionMode && (
-              <div className="pt-1">
+              <div className="pt-1 flex-shrink-0">
                 <Checkbox
                   checked={isSelected}
                   onCheckedChange={(checked) => onSelectionChange(prospect.id, !!checked)}
@@ -167,41 +167,41 @@ export function ProspectCard({
               </div>
             )}
             
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap min-w-0">
-                <h3 className="font-bold text-base sm:text-lg text-gray-900 truncate max-w-full">
+            <div className="flex-1 min-w-0 w-full">
+              <div className="flex items-start gap-2 mb-1 flex-wrap">
+                <h3 className="font-bold text-base sm:text-lg text-gray-900 break-words">
                   {prospect.name}
                 </h3>
                 <Badge 
                   variant="outline" 
-                  className={cn("text-xs font-semibold px-2 py-0.5 border-0", statusInfo.className)}
+                  className={cn("text-xs font-semibold px-2 py-0.5 border-0 shrink-0 whitespace-nowrap", statusInfo.className)}
                 >
                   {statusInfo.label}
                 </Badge>
               </div>
 
-              <div className="flex items-center gap-2 text-gray-600 text-sm mb-2 min-w-0">
-                <MapPin className="h-4 w-4 text-green-600 shrink-0" />
-                <span className="truncate max-w-full">{prospect.address}</span>
+              <div className="flex items-start gap-2 text-gray-600 text-sm mb-2">
+                <MapPin className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                <span className="break-words">{prospect.address}</span>
               </div>
 
               <div className="flex items-center gap-1 sm:gap-2 mb-2 sm:mb-3 flex-wrap">
-                <div className="font-mono text-xs sm:text-sm font-bold text-green-700 bg-green-100 px-1.5 sm:px-2 py-1 rounded truncate max-w-full">
+                <div className="font-mono text-xs sm:text-sm font-bold text-green-700 bg-green-100 px-1.5 sm:px-2 py-1 rounded whitespace-nowrap shrink-0">
                   {prospect.zone || 'SIN-ZONA'}
                 </div>
-                <Badge variant="secondary" className="text-xs capitalize bg-gray-100 text-gray-700">
+                <Badge variant="secondary" className="text-xs capitalize bg-gray-100 text-gray-700 whitespace-nowrap shrink-0">
                   {prospect.ethnic}
                 </Badge>
-                <Badge variant="secondary" className="text-xs capitalize bg-gray-100 text-gray-700 flex items-center gap-1">
+                <Badge variant="secondary" className="text-xs capitalize bg-gray-100 text-gray-700 flex items-center gap-1 whitespace-nowrap shrink-0">
                   <CategoryIcon category={prospect.category} />
                   {prospect.category}
                 </Badge>
               </div>
 
-              <div className="flex gap-2 flex-wrap w-full">
+              <div className="flex gap-2 flex-col sm:flex-row w-full">
                 <Button 
                   size="sm" 
-                  className="bg-green-600 hover:bg-green-700 text-white h-9 flex-1 sm:flex-none"
+                  className="bg-green-600 hover:bg-green-700 text-white h-9 w-full text-sm"
                   onClick={(e) => { 
                     e.stopPropagation(); 
                     onCheckIn(prospect); 
@@ -209,7 +209,7 @@ export function ProspectCard({
                 >
                   <Check className="h-4 w-4 mr-1.5" />
                   <span className="hidden sm:inline">{t('action_visit')}</span>
-                  <span className="sm:hidden text-xs">Visitar</span>
+                  <span className="sm:hidden">Visitar</span>
                 </Button>
                 
                 {!isSelectionMode && (
@@ -217,7 +217,7 @@ export function ProspectCard({
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="h-9 border-gray-300 flex-1 sm:flex-none"
+                      className="h-9 border-gray-300 w-full text-sm"
                       onClick={(e) => e.stopPropagation()}
                     >
                       {isOpen ? (
@@ -240,23 +240,23 @@ export function ProspectCard({
         </div>
 
         <CollapsibleContent>
-          <div className="px-4 pb-4 pt-2 border-t border-gray-100 bg-gray-50/50">
+          <div className="px-3 sm:px-4 pb-4 pt-2 border-t border-gray-100 bg-gray-50/50">
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 mt-2">
-              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+            <div className="grid grid-cols-1 gap-3 mb-4 mt-2">
+              <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200">
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 flex-shrink-0">
                   <Phone className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs text-gray-500 mb-0.5">Teléfono</div>
-                  <div className="font-medium text-sm truncate">
+                  <div className="font-medium text-sm break-words">
                     {prospect.phone || t('no_phone')}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+              <div className="flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200">
+                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
                   <Globe className="h-5 w-5" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -265,7 +265,7 @@ export function ProspectCard({
                     href={prospect.web} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="font-medium text-sm text-blue-600 hover:underline truncate block"
+                    className="font-medium text-sm text-blue-600 hover:underline break-words block"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {prospect.web ? 'Ver sitio' : 'N/A'}
@@ -274,15 +274,15 @@ export function ProspectCard({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mb-4" onClick={(e) => e.stopPropagation()}>
+            <div className="grid grid-cols-1 gap-2 mb-4" onClick={(e) => e.stopPropagation()}>
               <Button 
                 asChild 
                 variant="outline" 
-                className="h-11 justify-start border-green-200 hover:bg-green-50 hover:border-green-300"
+                className="h-11 justify-start border-green-200 hover:bg-green-50 hover:border-green-300 w-full"
                 disabled={!prospect.phone}
               >
                 <a href={`tel:${cleanPhoneNumber(prospect.phone)}`}>
-                  <Phone className="mr-2 h-4 w-4 text-green-600" />
+                  <Phone className="mr-2 h-4 w-4 text-green-600 flex-shrink-0" />
                   <span className="text-green-700">Llamar</span>
                 </a>
               </Button>
@@ -290,7 +290,7 @@ export function ProspectCard({
               <Button 
                 asChild 
                 variant="outline" 
-                className="h-11 justify-start border-green-200 hover:bg-green-50 hover:border-green-300"
+                className="h-11 justify-start border-green-200 hover:bg-green-50 hover:border-green-300 w-full"
                 disabled={!prospect.phone}
               >
                 <a 
@@ -298,7 +298,7 @@ export function ProspectCard({
                   target="_blank" 
                   rel="noopener noreferrer"
                 >
-                  <BotMessageSquare className="mr-2 h-4 w-4 text-green-600" />
+                  <BotMessageSquare className="mr-2 h-4 w-4 text-green-600 flex-shrink-0" />
                   <span className="text-green-700">WhatsApp</span>
                 </a>
               </Button>
@@ -310,7 +310,7 @@ export function ProspectCard({
                 {t('visit_history_title')}
               </h4>
               
-              <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
+              <div className="space-y-3 max-h-48 overflow-y-auto">
                 {visitsLoading ? (
                   <Skeleton className="h-16 w-full rounded-lg"/>
                 ) : visits.length > 0 ? (
@@ -319,14 +319,14 @@ export function ProspectCard({
                       key={visit.id} 
                       className="flex gap-3 p-3 bg-white rounded-lg border border-gray-200"
                     >
-                      <div className="flex flex-col items-center">
+                      <div className="flex flex-col items-center flex-shrink-0">
                         <OutcomeIcon outcome={visit.outcome} />
                         {index !== visits.length - 1 && (
                           <div className="w-px h-full bg-gray-200 mt-1"></div>
                         )}
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-gray-800 leading-relaxed">{visit.notes}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-800 leading-relaxed break-words">{visit.notes}</p>
                         <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1.5">
                           <Clock className="h-3 w-3"/>
                           {formatDistanceToNow(visit.date.toDate(), { 

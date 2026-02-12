@@ -4,7 +4,7 @@ import { useProspects } from '@/hooks/use-prospects';
 import { useAuth } from '@/context/auth-context';
 import { useTranslations } from 'next-intl';
 
-import { DrilldownFilters } from '@/components/admin/sales/DrilldownFilters'; // NEW
+import { DrilldownFilters } from '@/components/admin/sales/DrilldownFilters';
 import { TabNavigation } from '@/components/admin/sales/TabNavigation';
 import { MapView } from '@/components/admin/sales/map-view';
 import { ProspectCard } from '@/components/admin/sales/prospect-card';
@@ -24,6 +24,7 @@ import { SmartCluster } from '@/components/admin/sales/SmartCluster';
 import { useToast } from '@/hooks/use-toast';
 import { RouteOptionsDialog } from '@/components/admin/sales/RouteOptionsDialog';
 import { BottomActions } from '@/components/admin/sales/BottomActions';
+import { districts } from '@/lib/district-config';
 
 type Selections = {
   state?: string;
@@ -38,8 +39,8 @@ export default function SalesPage() {
   const t = useTranslations('AdminSalesPage');
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState('list');
-  const [filters, setFilters] = useState<Selections>({}); // NEW STATE FOR FILTERS
+  const [activeTab, setActiveTab] = useState('districts');
+  const [filters, setFilters] = useState<Selections>({});
 
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedProspects, setSelectedProspects] = useState<string[]>([]);
@@ -129,16 +130,22 @@ export default function SalesPage() {
               }} />
             {Object.keys(groupedByDistrict)
               .filter(code => code !== 'Uncategorized')
-              .map(districtCode => (
-                <DistrictCard
-                  key={districtCode}
-                  districtCode={districtCode}
-                  districtName={groupedByDistrict[districtCode][0]?.city || districtCode} // Approximation
-                  prospects={groupedByDistrict[districtCode]}
-                  selectedProspects={selectedProspects}
-                  onBulkSelect={handleBulkSelect}
-                />
-            ))}
+              .map(districtCode => {
+                const city = groupedByDistrict[districtCode][0]?.city || '';
+                const districtName = districts[districtCode]?.name || districtCode;
+                const fullDistrictName = city ? `${city} - ${districtName}` : districtName;
+
+                return (
+                  <DistrictCard
+                    key={districtCode}
+                    districtCode={districtCode}
+                    districtName={fullDistrictName}
+                    prospects={groupedByDistrict[districtCode]}
+                    selectedProspects={selectedProspects}
+                    onBulkSelect={handleBulkSelect}
+                  />
+                )
+            })}
           </div>
         );
       case 'map':
@@ -154,17 +161,18 @@ export default function SalesPage() {
         );
       case 'list':
         return (
-          <div className="space-y-3">
+          <div className="space-y-3 w-full overflow-x-hidden">
             {filteredProspects.map(prospect => (
-              <ProspectCard 
-                key={prospect.id}
-                prospect={prospect}
-                onEdit={handleEditProspect}
-                onCheckIn={handleCheckIn}
-                isSelectionMode={isSelectionMode}
-                isSelected={selectedProspects.includes(prospect.id)}
-                onSelectionChange={handleSelectionChange}
-              />
+              <div className="w-full overflow-hidden" key={prospect.id}>
+                <ProspectCard 
+                  prospect={prospect}
+                  onEdit={handleEditProspect}
+                  onCheckIn={handleCheckIn}
+                  isSelectionMode={isSelectionMode}
+                  isSelected={selectedProspects.includes(prospect.id)}
+                  onSelectionChange={handleSelectionChange}
+                />
+              </div>
             ))}
           </div>
         );
@@ -197,44 +205,53 @@ export default function SalesPage() {
         selectedProspects={selectedProspectsData}
       />
       
-      <div className="min-h-screen">
+      <div className="min-h-screen w-full overflow-x-hidden">
         
-        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-sm">
+        <header className="sticky top-0 z-30 w-full overflow-x-hidden bg-background/95 backdrop-blur-sm">
           <DrilldownFilters prospects={prospects} onFilterChange={setFilters} />
           <div className="bg-white border-b">
             <div className="md:hidden">
               <div className="p-1">
                 <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
               </div>
-              <div className="flex items-center gap-1 p-1 border-t">
-                <Button variant="outline" size="sm" onClick={() => setIsImportDialogOpen(true)} className="flex-1 whitespace-normal text-center h-auto py-2">
+              <div className="flex items-stretch gap-1 p-1 border-t">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setIsImportDialogOpen(true)} 
+                  className="w-1/2 min-w-0 h-auto py-2 flex flex-col items-center justify-center text-xs"
+                >
+                  <Upload className="h-4 w-4 mb-0.5" />
+                  <span className="text-center">{t('import_button')}</span>
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={() => handleEditProspect(null)} 
+                  className="w-1/2 min-w-0 h-auto py-2 flex flex-col items-center justify-center text-xs"
+                >
+                  <Plus className="h-4 w-4 mb-0.5" />
+                  <span className="text-center">{t('new_prospect_button')}</span>
+                </Button>
+              </div>
+            </div>
+
+            <div className="hidden md:flex md:justify-between md:items-center md:px-3 md:py-1">
+              <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setIsImportDialogOpen(true)} className="text-sm">
                   <Upload className="h-4 w-4 mr-2"/>
                   {t('import_button')}
                 </Button>
-                <Button size="sm" onClick={() => handleEditProspect(null)} className="flex-1 whitespace-normal text-center h-auto py-2">
+                <Button size="sm" onClick={() => handleEditProspect(null)} className="text-sm">
                   <Plus className="h-4 w-4 mr-2"/>
                   {t('new_prospect_button')}
                 </Button>
               </div>
             </div>
-
-            <div className="hidden md:flex md:justify-between md:items-center md:px-4 md:py-1">
-              <TabNavigation activeTab={activeTab} setActiveTab={setActiveTab} />
-              <div className="flex items-center gap-2">
-                 <Button variant="outline" size="sm" onClick={() => setIsImportDialogOpen(true)}>
-                    <Upload className="h-4 w-4 mr-2"/>
-                    {t('import_button')}
-                  </Button>
-                  <Button size="sm" onClick={() => handleEditProspect(null)}>
-                    <Plus className="h-4 w-4 mr-2"/>
-                    {t('new_prospect_button')}
-                  </Button>
-              </div>
-            </div>
           </div>
         </header>
 
-        <main className="p-4 pb-48">
+        <main className="p-3 pb-48 md:p-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <Switch 
