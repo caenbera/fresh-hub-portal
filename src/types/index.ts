@@ -356,6 +356,7 @@ export interface Prospect {
   createdAt: Timestamp;
   updatedAt: Timestamp;
   notes?: string;
+  potentialValue?: number;
 }
 
 export interface ProspectVisit {

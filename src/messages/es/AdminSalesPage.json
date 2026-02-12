@@ -48,6 +48,7 @@
     "notes_placeholder": "Añade notas relevantes...",
     "label_status": "Estado",
     "label_priority": "Alta Prioridad",
+    "label_potential_value": "Valor Potencial ($)",
     "save": "Guardar Prospecto",
     "saving": "Guardando...",
     "cancel": "Cancelar",

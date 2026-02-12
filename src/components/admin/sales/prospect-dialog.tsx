@@ -30,6 +30,7 @@ const prospectSchema = z.object({
   status: z.enum(['pending', 'contacted', 'visited', 'client', 'not_interested']),
   priority: z.boolean().default(false),
   notes: z.string().optional(),
+  potentialValue: z.coerce.number().min(0, "Potential value must be a positive number.").optional(),
 });
 
 type FormValues = z.infer<typeof prospectSchema>;
@@ -60,7 +61,8 @@ export function ProspectDialog({ open, onOpenChange, prospect }: ProspectDialogP
       zone: '',
       status: 'pending',
       priority: false,
-      notes: ''
+      notes: '',
+      potentialValue: 0,
     }
   });
 
@@ -80,7 +82,8 @@ export function ProspectDialog({ open, onOpenChange, prospect }: ProspectDialogP
         zone: '',
         status: 'pending',
         priority: false,
-        notes: ''
+        notes: '',
+        potentialValue: 0,
       });
     }
   }, [open, prospect, form]);
@@ -182,7 +185,7 @@ export function ProspectDialog({ open, onOpenChange, prospect }: ProspectDialogP
             <FormField control={form.control} name="notes" render={({ field }) => (
               <FormItem><FormLabel>{t('label_notes')}</FormLabel><FormControl><Textarea placeholder={t('notes_placeholder')} {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>
             )}/>
-             <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="status" render={({ field }) => (
                     <FormItem>
                         <FormLabel>{t('label_status')}</FormLabel>
@@ -199,13 +202,31 @@ export function ProspectDialog({ open, onOpenChange, prospect }: ProspectDialogP
                         <FormMessage />
                     </FormItem>
                 )}/>
-                <FormField control={form.control} name="priority" render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-2">
-                    <div className="space-y-0.5"><FormLabel>{t('label_priority')}</FormLabel></div>
-                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
-                  </FormItem>
-                )}/>
+                 <FormField
+                    control={form.control}
+                    name="potentialValue"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>{t('label_potential_value')}</FormLabel>
+                        <FormControl>
+                            <Input
+                            type="number"
+                            placeholder="e.g., 5000"
+                            {...field}
+                            value={field.value || ''}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
             </div>
+            <FormField control={form.control} name="priority" render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mt-2">
+                <div className="space-y-0.5"><FormLabel>{t('label_priority')}</FormLabel></div>
+                <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+              </FormItem>
+            )}/>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>{t('cancel')}</Button>
               <Button type="submit" disabled={isLoading}>{isLoading ? t('saving') : t('save')}</Button>
