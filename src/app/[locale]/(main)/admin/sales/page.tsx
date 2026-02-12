@@ -143,10 +143,13 @@ export default function SalesPage() {
         return (
           <div className="space-y-4">
              <SalesDashboard />
-              <SmartCluster onAcceptCluster={(codes) => {
-                const prospectIds = prospects.filter(p => codes.includes(p.zone || '')).map(p => p.id);
-                handleBulkSelect(prospectIds, true);
-                setIsSelectionMode(true);
+              <SmartCluster prospects={prospects} onAcceptCluster={(prospectIds) => {
+                  handleBulkSelect(prospectIds, true);
+                  setIsSelectionMode(true);
+                  toast({
+                      title: "Ruta Inteligente Aplicada",
+                      description: `Se han seleccionado ${prospectIds.length} prospectos.`,
+                  });
               }} />
             {Object.keys(groupedByDistrict)
               .filter(code => code !== 'Uncategorized')
