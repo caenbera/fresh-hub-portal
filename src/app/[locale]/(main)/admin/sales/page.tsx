@@ -180,31 +180,31 @@ export default function SalesPage() {
           : filteredProspects;
 
         return (
-          <div>
+          <div className="w-full">
             {selectedProspects.length > 0 ? (
-              <div className="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg mb-4 flex items-center justify-between">
-                <p className="text-sm font-semibold">
+              <div className="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-center sm:text-left">
                   Mostrando {selectedProspects.length} prospectos de tu ruta actual.
                 </p>
-                <Button variant="ghost" size="sm" onClick={clearSelection}>
+                <Button variant="ghost" size="sm" onClick={clearSelection} className="w-full sm:w-auto">
                   Limpiar selección
                 </Button>
               </div>
             ) : (
-              <div className="relative mb-4">
+              <div className="relative mb-4 w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                  placeholder="Buscar por nombre, dirección, zona..."
-                  className="pl-10"
+                  placeholder="Buscar..."
+                  className="pl-9 pr-3 w-full text-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
             )}
             
-            <div className="space-y-3 w-full overflow-x-hidden">
+            <div className="space-y-3 w-full">
               {prospectList.length > 0 ? prospectList.map(prospect => (
-                <div className="w-full overflow-hidden" key={prospect.id}>
+                <div className="w-full" key={prospect.id}>
                   <ProspectCard 
                     prospect={prospect}
                     onEdit={handleEditProspect}
@@ -299,15 +299,15 @@ export default function SalesPage() {
           </div>
         </header>
 
-        <main className="p-3 pb-48 md:p-4">
-          <div className="flex items-center justify-between mb-4">
+        <main className="p-2 pb-48 md:p-3">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
               <Switch 
                 id="selection-mode" 
                 checked={isSelectionMode}
                 onCheckedChange={setIsSelectionMode}
               />
-              <Label htmlFor="selection-mode" className="text-sm font-medium">
+              <Label htmlFor="selection-mode" className="text-xs sm:text-sm font-medium">
                 {t('select_for_route')}
               </Label>
             </div>
