@@ -9,14 +9,14 @@ import { TabNavigation } from '@/components/admin/sales/TabNavigation';
 import { MapView } from '@/components/admin/sales/map-view';
 import { ProspectCard } from '@/components/admin/sales/prospect-card';
 import { SalesStatsView } from '@/components/admin/sales/SalesStatsView';
-import { Loader2, Plus, Upload, Route, Trash, Check, X, Wand } from 'lucide-react';
+import { Loader2, Plus, Upload, Route, Trash, Check, X, Wand, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { ProspectDialog } from '@/components/admin/sales/prospect-dialog';
 import { ProspectDetailsDialog } from '@/components/admin/sales/prospect-details-dialog';
 import { ProspectImportDialog } from '@/components/admin/sales/prospect-import-dialog';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DistrictCard } from '@/components/admin/sales/district-card';
 import type { Prospect } from '@/types';
 import { SalesDashboard } from '@/components/admin/sales/SalesDashboard';
@@ -41,6 +41,7 @@ export default function SalesPage() {
 
   const [activeTab, setActiveTab] = useState('districts');
   const [filters, setFilters] = useState<Selections>({});
+  const [searchTerm, setSearchTerm] = useState('');
 
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedProspects, setSelectedProspects] = useState<string[]>([]);
@@ -85,14 +86,26 @@ export default function SalesPage() {
 
   const filteredProspects = useMemo(() => {
     if (loading) return [];
-    return prospects.filter(p => {
+    let initialProspects = prospects.filter(p => {
         if (filters.state && p.state !== filters.state) return false;
         if (filters.city && p.city !== filters.city) return false;
         if (filters.category && p.category !== filters.category) return false;
         if (filters.ethnic && p.ethnic !== filters.ethnic) return false;
         return true;
     });
-  }, [prospects, filters, loading]);
+
+    if (!searchTerm) {
+        return initialProspects;
+    }
+    
+    const lowercasedTerm = searchTerm.toLowerCase();
+    return initialProspects.filter(p => 
+        p.name.toLowerCase().includes(lowercasedTerm) ||
+        p.address.toLowerCase().includes(lowercasedTerm) ||
+        (p.zone && p.zone.toLowerCase().includes(lowercasedTerm))
+    );
+
+  }, [prospects, filters, loading, searchTerm]);
 
   const groupedByDistrict = useMemo(() => {
     return filteredProspects.reduce((acc, prospect) => {
@@ -132,7 +145,8 @@ export default function SalesPage() {
               .filter(code => code !== 'Uncategorized')
               .map(districtCode => {
                 const city = groupedByDistrict[districtCode][0]?.city || '';
-                const districtName = districts[districtCode]?.name || districtCode;
+                const districtConfig = districts[districtCode];
+                const districtName = districtConfig?.name || districtCode;
                 const fullDistrictName = city ? `${city} - ${districtName}` : districtName;
 
                 return (
@@ -159,23 +173,58 @@ export default function SalesPage() {
             }}
           />
         );
-      case 'list':
+      case 'list': {
+        const prospectList = (isSelectionMode && selectedProspects.length > 0)
+          ? prospects.filter(p => selectedProspects.includes(p.id))
+          : filteredProspects;
+
         return (
-          <div className="space-y-3 w-full overflow-x-hidden">
-            {filteredProspects.map(prospect => (
-              <div className="w-full overflow-hidden" key={prospect.id}>
-                <ProspectCard 
-                  prospect={prospect}
-                  onEdit={handleEditProspect}
-                  onCheckIn={handleCheckIn}
-                  isSelectionMode={isSelectionMode}
-                  isSelected={selectedProspects.includes(prospect.id)}
-                  onSelectionChange={handleSelectionChange}
+          <div>
+            {isSelectionMode && selectedProspects.length > 0 ? (
+              <div className="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg mb-4 flex items-center justify-between">
+                <p className="text-sm font-semibold">
+                  Mostrando {selectedProspects.length} prospectos de tu ruta actual.
+                </p>
+                <Button variant="ghost" size="sm" onClick={() => {
+                  setSelectedProspects([]);
+                  setIsSelectionMode(false);
+                }}>
+                  Limpiar selección
+                </Button>
+              </div>
+            ) : (
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Buscar por nombre, dirección, zona..."
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-            ))}
+            )}
+            
+            <div className="space-y-3 w-full overflow-x-hidden">
+              {prospectList.length > 0 ? prospectList.map(prospect => (
+                <div className="w-full overflow-hidden" key={prospect.id}>
+                  <ProspectCard 
+                    prospect={prospect}
+                    onEdit={handleEditProspect}
+                    onCheckIn={handleCheckIn}
+                    isSelectionMode={isSelectionMode}
+                    isSelected={selectedProspects.includes(prospect.id)}
+                    onSelectionChange={handleSelectionChange}
+                  />
+                </div>
+              )) : (
+                <div className="text-center py-10 text-muted-foreground">
+                    <p>No se encontraron prospectos.</p>
+                </div>
+              )}
+            </div>
           </div>
         );
+      }
       case 'stats':
         return <SalesStatsView />;
       default:
