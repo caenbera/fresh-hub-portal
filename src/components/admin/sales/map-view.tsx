@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import type { Prospect } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation, X, Loader2 } from 'lucide-react';
+import { MapPin, Navigation, X, Loader2, Store, Utensils, Beef } from 'lucide-react';
 import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, Polygon } from '@react-google-maps/api';
 import { districts } from '@/lib/district-config';
 
@@ -125,11 +125,10 @@ export function MapView({ prospects, selectedProspects, onToggleSelection }: Map
             break;
     }
     
-    // Using Data URI to create a fully custom SVG icon
     const svg = `
         <svg width="${28 * scale}" height="${40 * scale}" viewBox="0 0 28 40" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M14 0C6.268 0 0 6.268 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.268 21.732 0 14 0z" fill="${color}" stroke="white" stroke-width="1.5"/>
-            <g transform="translate(7 7) scale(0.6)">
+            <g transform="translate(7 7) scale(0.8)">
                 <path d="${iconPath}" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
             </g>
         </svg>`;
