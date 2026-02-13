@@ -107,21 +107,39 @@ export function MapView({ prospects, selectedProspects, onToggleSelection }: Map
 
   const getMarkerIcon = useCallback((prospect: Prospect, isSelected: boolean): google.maps.Icon | undefined => {
     if (!isLoaded) return undefined;
+
     const color = STATUS_COLORS[prospect.status] || '#6b7280';
-    // Increased scale for better visibility
-    const scale = isSelected ? 2.2 : 1.5;
-    const pinPath = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5-2.5-1.12 2.5-2.5-2.5z";
+    const scale = isSelected ? 1.4 : 1.2;
+
+    // Simplified SVG paths for icons, designed for a 14x14 viewbox
+    let iconPath = 'M7 1a6 6 0 0 0 0 12c3.314 0 6-2.686 6-6a6 6 0 0 0-6-6zm0 8a2 2 0 1 1 0-4 2 2 0 0 1 0 4z'; // Default: MapPin circle
+    switch (prospect.category.toLowerCase()) {
+        case 'restaurante':
+            iconPath = "M6 2v10m4-10v10M2 7h10"; // Simplified Utensils
+            break;
+        case 'supermercado':
+            iconPath = "M1 4h12M1 7h12M2 4l1 8h8l1-8"; // Simplified Store
+            break;
+        case 'carnicería':
+            iconPath = "M11.58 1.44a1 1 0 0 0-1.55.29L4 11.5h1.5l1-2h5l1 2h1.5L8.42 1.73a1 1 0 0 0-1.55-.29zM6.5 7.5l2-4 2 4h-4z"; // Simplified Beef/Meat
+            break;
+    }
+    
+    // Using Data URI to create a fully custom SVG icon
+    const svg = `
+        <svg width="${28 * scale}" height="${40 * scale}" viewBox="0 0 28 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 0C6.268 0 0 6.268 0 14c0 10.5 14 26 14 26s14-15.5 14-26C28 6.268 21.732 0 14 0z" fill="${color}" stroke="white" stroke-width="1.5"/>
+            <g transform="translate(7 7) scale(0.6)">
+                <path d="${iconPath}" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            </g>
+        </svg>`;
 
     return {
-      path: pinPath,
-      fillColor: color,
-      fillOpacity: isSelected ? 1 : 0.9,
-      strokeWeight: 1.5,
-      strokeColor: '#ffffff',
-      scale: scale,
-      anchor: new google.maps.Point(12, 24),
+        url: `data:image/svg+xml;base64,${btoa(svg)}`,
+        anchor: new google.maps.Point(14 * scale, 40 * scale),
     };
-  }, [isLoaded]);
+}, [isLoaded]);
+
 
   if (!isLoaded) {
     return (
