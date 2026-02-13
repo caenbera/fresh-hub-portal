@@ -104,8 +104,8 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
         nombre_producto_proveedor: supplierInfo?.supplierProductName ?? '',
         costo_proveedor: cost,
         calcular_desde_precio_venta: product.calculationDirection === 'priceToCost' ? 'VERDADERO' : 'FALSO',
-        margen: margin,
-        markup: markup,
+        margen: product.pricingMethod === 'margin' ? margin : '',
+        markup: product.pricingMethod === 'markup' ? markup : '',
         precio_venta: price,
         stock_actual: product.stock,
         stock_minimo: product.minStock,
@@ -160,8 +160,9 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
             const sku = rowData.sku;
             if (!sku) continue;
 
-            const calculationDirection = rowData.calcular_desde_precio_venta?.toUpperCase() === 'VERDADERO' ? 'priceToCost' : 'costToPrice';
+            const calculateFromPrice = rowData.calcular_desde_precio_venta?.toUpperCase() === 'VERDADERO';
             const pricingMethod = rowData.markup ? 'markup' : 'margin';
+            const calculationDirection = calculateFromPrice ? 'priceToCost' : 'costToPrice';
             
             let costo_proveedor = rowData.costo_proveedor && !isNaN(parseFloat(rowData.costo_proveedor)) ? parseFloat(rowData.costo_proveedor) : null;
             let precio_venta = rowData.precio_venta && !isNaN(parseFloat(rowData.precio_venta)) ? parseFloat(rowData.precio_venta) : null;
@@ -263,7 +264,7 @@ export function ProductImportDialog({ open, onOpenChange, supplierId, supplierNa
         setIsProcessing(false);
         onOpenChange(false);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error("CSV Parsing Error:", error);
         toast({ variant: 'destructive', title: 'Error de Lectura de CSV', description: error.message });
         setIsProcessing(false);

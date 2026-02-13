@@ -173,7 +173,11 @@ export default function SalesPage() {
           </div>
         );
       case 'map':
-        return <p>Map view coming soon!</p>
+        return <MapView 
+                  prospects={filteredProspects}
+                  selectedProspects={selectedProspects}
+                  onToggleSelection={(id) => handleSelectionChange(id, !selectedProspects.includes(id))}
+                />;
       case 'list': {
         const prospectList = (selectedProspects.length > 0)
           ? prospects.filter(p => selectedProspects.includes(p.id))

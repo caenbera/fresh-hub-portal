@@ -173,7 +173,16 @@ export function ProspectDialog({ open, onOpenChange, prospect }: ProspectDialogP
                         <SelectItem value="venezolano">Venezolano</SelectItem>
                         <SelectItem value="salvadoreno">Salvadoreño</SelectItem>
                         <SelectItem value="guatemalteco">Guatemalteco</SelectItem>
-                        <SelectItem value="otro">Otro</SelectItem>
+                        <SelectItem value="hondureño">Hondureño</SelectItem>
+                        <SelectItem value="cubano">Cubano</SelectItem>
+                        <SelectItem value="dominicano">Dominicano</SelectItem>
+                        <SelectItem value="argentino">Argentino</SelectItem>
+                        <SelectItem value="puertorriqueño">Puertorriqueño</SelectItem>
+                        <SelectItem value="internacional">Internacional</SelectItem>
+                        <SelectItem value="jamaicano">Jamaicano</SelectItem>
+                        <SelectItem value="africano">Africano</SelectItem>
+                        <SelectItem value="mixto">Mixto</SelectItem>
+                        <SelectItem value="latino">Latino</SelectItem>                       <SelectItem value="otro">Otro</SelectItem>
                         </SelectContent>
                     </Select>
                     <FormMessage />
