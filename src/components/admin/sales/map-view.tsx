@@ -6,7 +6,7 @@ import type { Prospect } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Navigation, X, Loader2 } from 'lucide-react';
-import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, MarkerF, InfoWindowF, Polygon } from '@react-google-maps/api';
 import { districts } from '@/lib/district-config';
 
 interface MapViewProps {
@@ -21,12 +21,13 @@ interface ProspectWithCoords extends Prospect {
   lng: number;
 }
 
+// New high-contrast color palette
 const STATUS_COLORS: Record<Prospect['status'], string> = {
-  pending: '#f59e0b',
-  contacted: '#3b82f6',
-  visited: '#22c55e',
-  client: '#a855f7',
-  not_interested: '#6b7280',
+  pending: '#f97316', // Orange-500 (Vibrant Orange)
+  contacted: '#06b6d4', // Cyan-500 (Vibrant Turquoise)
+  visited: '#d946ef', // Fuchsia-500 (Vibrant Magenta)
+  client: '#8b5cf6', // Violet-500 (Vibrant Purple)
+  not_interested: '#6b7280', // Gray-500 (Kept as is)
 };
 
 const DISTRICT_CENTERS: Record<string, [number, number]> = {
@@ -80,6 +81,26 @@ export function MapView({ prospects, selectedProspects, onToggleSelection }: Map
     return { lat: avgLat, lng: avgLng };
   }, [prospectsWithCoords]);
 
+  const districtPolygons = useMemo(() => {
+    return Object.values(districts).map((district) => {
+        const paths = district.boundaries.map(coord => ({ lat: coord[1], lng: coord[0] }));
+        return (
+            <Polygon
+                key={district.code}
+                paths={paths}
+                options={{
+                    strokeColor: '#4A5568', // A neutral dark gray
+                    strokeOpacity: 0.6,
+                    strokeWeight: 1.5,
+                    fillColor: '#718096', // A neutral gray
+                    fillOpacity: 0.1,
+                    clickable: false,
+                }}
+            />
+        );
+    });
+  }, []);
+
   const handleMarkerClick = useCallback((prospect: ProspectWithCoords) => {
     setSelectedProspect(prospect);
   }, []);
@@ -87,7 +108,8 @@ export function MapView({ prospects, selectedProspects, onToggleSelection }: Map
   const getMarkerIcon = useCallback((prospect: Prospect, isSelected: boolean): google.maps.Icon | undefined => {
     if (!isLoaded) return undefined;
     const color = STATUS_COLORS[prospect.status] || '#6b7280';
-    const scale = isSelected ? 1.5 : 1;
+    // Increased scale for better visibility
+    const scale = isSelected ? 2.2 : 1.5;
     const pinPath = "M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5-2.5-1.12 2.5-2.5-2.5z";
 
     return {
@@ -124,6 +146,7 @@ export function MapView({ prospects, selectedProspects, onToggleSelection }: Map
           fullscreenControl: false,
         }}
       >
+        {districtPolygons}
         {prospectsWithCoords.map(prospect => (
           <MarkerF
             key={prospect.id}
